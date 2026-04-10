@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V1.0</title>
+  <title>Strem Tweaker V1.1</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -36,8 +36,8 @@
     .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:600}
     .pill.connected{background:rgba(56,211,159,.15);color:var(--ok);border-color:rgba(56,211,159,.3)}
     .pill.disconnected{background:rgba(255,109,134,.15);color:var(--ko);border-color:rgba(255,109,134,.3)}
-    .chev{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;border:1px solid var(--line);background:rgba(17,23,42,.55);font-size:16px;transition:transform .2s ease}
-    .panel.collapsed .chev{transform:rotate(-90deg)}.login-body{margin-top:14px}.panel.collapsed .login-body{display:none}
+    .chev{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;border:1px solid var(--line);background:rgba(17,23,42,.55);font-size:18px;font-weight:bold;transition:transform .2s ease, background .2s ease}
+    .panel.collapsed .login-body{display:none}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{display:grid;gap:6px;margin-top:12px}label{color:var(--muted);font-size:13px}
     input,textarea{width:100%;border:1px solid rgba(255,255,255,.08);background:rgba(8,12,24,.5);color:var(--text);outline:none;border-radius:16px;padding:14px 14px;font:inherit}textarea{min-height:80px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
     input:focus,textarea:focus{border-color:rgba(126,168,255,.8);box-shadow:0 0 0 3px rgba(126,168,255,.15)}
@@ -173,7 +173,7 @@
         <span id="headerEmail" class="header-email hidden"></span>
       </div>
     </div>
-    <section class="hero glass"><div class="version">V1.0</div><h1>Strem Tweaker</h1><p class="muted">Version finale : Interface compacte et autoscroll intelligent.</p></section>
+    <section class="hero glass"><div class="version">V1.1</div><h1>Strem Tweaker</h1><p class="muted">Connexion rapide, indicateurs +/- et auto-scroll des extensions.</p></section>
 
     <section id="loginPanel" class="panel glass">
       <div id="loginHead" class="login-head">
@@ -183,7 +183,7 @@
           </div>
           <p class="muted desc">Se replie et charge les addons automatiquement.</p>
         </div>
-        <div class="login-meta"><div id="loginStatePill" class="pill disconnected">Non connecté</div><div class="chev">⌃</div></div>
+        <div class="login-meta"><div id="loginStatePill" class="pill disconnected">Non connecté</div><div id="loginChev" class="chev">-</div></div>
       </div>
       <div class="login-body">
 
@@ -256,7 +256,7 @@
   </div>
 
 <script>
-const STORAGE_KEY = 'strem-tweaker-v1.0';
+const STORAGE_KEY = 'strem-tweaker-v1.1';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
 
@@ -266,7 +266,7 @@ const FALLBACK_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy5
 const state = { email:'', password:'', authKey:'', addons:[], syncing:false, debugOpen:false, loginCollapsed:false, dragItem:null, dragClone:null, dragOffsetY:0, dragChanged:false, lastPointerY:0, scrollSpeed:0 };
 const el = {
   email: document.getElementById('email'), password: document.getElementById('password'), authKey: document.getElementById('authKey'), toggleAuthKey: document.getElementById('toggleAuthKey'), headerEmail: document.getElementById('headerEmail'),
-  loginBtn: document.getElementById('loginBtn'), clearBtn: document.getElementById('clearBtn'), copyBtn: document.getElementById('copyBtn'),
+  loginBtn: document.getElementById('loginBtn'), clearBtn: document.getElementById('clearBtn'), copyBtn: document.getElementById('copyBtn'), chev: document.getElementById('loginChev'),
   statusDot: document.getElementById('statusDot'), statusText: document.getElementById('statusText'), debugToggle: document.getElementById('debugToggle'), debugWrap: document.getElementById('debugWrap'), debugBox: document.getElementById('debugBox'),
   loginPanel: document.getElementById('loginPanel'), loginHead: document.getElementById('loginHead'), loginStatePill: document.getElementById('loginStatePill'), addonsCard: document.getElementById('addonsCard'), addonsList: document.getElementById('addonsList'), emptyState: document.getElementById('emptyState'), countLabel: document.getElementById('countLabel'), fitWrap: document.getElementById('fitWrap'), mainWrap: document.getElementById('mainWrap'),
   btnSaveJson: document.getElementById('btnSaveJson'), btnRestoreJson: document.getElementById('btnRestoreJson'), fileRestore: document.getElementById('fileRestore'),
@@ -291,6 +291,16 @@ function init(){
 
 function bind(){
   el.loginBtn.addEventListener('click', loginAndGetKey);
+
+  [el.email, el.password, el.authKey].forEach(function(input) {
+    input.addEventListener('keydown', function(e) {
+      if(e.key === 'Enter') {
+        e.preventDefault();
+        loginAndGetKey();
+      }
+    });
+  });
+
   el.clearBtn.addEventListener('click', clearAll);
   el.copyBtn.addEventListener('click', copyAuthKey);
   el.debugToggle.addEventListener('click', function(){ state.debugOpen = !state.debugOpen; renderDebug(); saveLocal(); });
@@ -409,7 +419,11 @@ function importAddons(evt) {
 }
 
 function renderDebug(){ el.debugWrap.classList.toggle('hidden', !state.debugOpen); el.debugToggle.textContent = state.debugOpen ? 'Masquer debug' : 'Afficher debug'; }
-function renderLoginPanel(){ el.loginPanel.classList.toggle('collapsed', state.loginCollapsed); }
+
+function renderLoginPanel(){ 
+  el.loginPanel.classList.toggle('collapsed', state.loginCollapsed); 
+  if(el.chev) el.chev.textContent = state.loginCollapsed ? '+' : '-';
+}
 
 function updateLoginPill(){ 
   const isAuth = !!state.authKey;
@@ -518,7 +532,7 @@ const svgGrip = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 const svgEye = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
 const svgEyeOff = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
 const svgEdit = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
-const svgGear = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
+const svgGear = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
 const svgCross = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
 const svgUpdate = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>';
 const svgToTop = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 12 6 7 11"></polyline><line x1="12" y1="18" x2="12" y2="6"></line><line x1="4" y1="3" x2="20" y2="3"></line></svg>';
@@ -679,13 +693,30 @@ function renderList(activeAddon){
       </div>
     `;
 
-    // Toggle expand
+    // Toggle expand with Auto-Scroll
     const mainRow = card.querySelector('.addon-main');
     ['click'].forEach(function(evt){ 
         mainRow.addEventListener(evt, function(e){ 
             if(e.target.closest('.toggle-btn') || e.target.closest('.drag-handle')) return;
             e.preventDefault(); 
-            card.classList.toggle('expanded'); 
+            const isExpanded = card.classList.toggle('expanded'); 
+
+            if (isExpanded) {
+              // Petit délai pour laisser le layout se mettre à jour avec display: flex
+              setTimeout(() => {
+                const wrapRect = el.fitWrap.getBoundingClientRect();
+                const cardRect = card.getBoundingClientRect();
+
+                // Si la carte dépasse en bas de la vue, on scroll juste assez pour la voir
+                if (cardRect.bottom > wrapRect.bottom) {
+                  el.fitWrap.scrollBy({ top: cardRect.bottom - wrapRect.bottom + 8, behavior: 'smooth' });
+                } 
+                // Optionnel : si la carte dépasse en haut (peu probable sur un clic, mais au cas où)
+                else if (cardRect.top < wrapRect.top) {
+                  el.fitWrap.scrollBy({ top: cardRect.top - wrapRect.top - 8, behavior: 'smooth' });
+                }
+              }, 10);
+            }
         }); 
     });
 
