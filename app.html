@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker v1.0-15</title>
+  <title>Strem Tweaker v1.0-17</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -87,7 +87,7 @@
 <body>
   <div class="wrap">
     <div class="sticky"><div class="status glass"><span id="statusDot" class="dot orange"></span><div id="statusText" class="status-text">En attente.</div></div></div>
-    <section class="hero glass"><div class="version">v1.0-15</div><h1>Strem Tweaker</h1><p class="muted">Les addons désactivés sont maintenant sauvegardés directement dans le compte Stremio et préservent leur position exacte.</p></section>
+    <section class="hero glass"><div class="version">v1.0-17</div><h1>Strem Tweaker</h1><p class="muted">Les addons désactivés persistent via l'API Stremio et sont visibles de n'importe quel navigateur.</p></section>
 
     <section id="loginPanel" class="panel glass">
       <div id="loginHead" class="login-head">
@@ -114,8 +114,14 @@
     </section>
   </div>
 <script>
-const STORAGE_KEY = 'strem-tweaker-v1.0-15';
+const STORAGE_KEY = 'strem-tweaker-v1.0-17';
 const API_BASE = 'https://api.strem.io/api/';
+
+// The dummy valid URL used to encapsulate disabled addons so Stremio API accepts them.
+// Using 127.0.0.1 with an unused port makes the official Stremio app fail instantly (0ms timeout), 
+// keeping your Stremio startup fast, while Strem Tweaker can extract the real URL perfectly!
+const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
+
 const state = { email:'', password:'', authKey:'', addons:[], syncing:false, debugOpen:false, loginCollapsed:false, dragItem:null, dragClone:null, dragOffsetY:0, dragChanged:false };
 const el = {
   email: document.getElementById('email'), password: document.getElementById('password'), authKey: document.getElementById('authKey'),
@@ -160,6 +166,7 @@ function bind(){
 function hydrate(){ el.email.value = state.email || ''; el.password.value = state.password || ''; el.authKey.value = state.authKey || ''; }
 function loadLocal(){ try{ const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return; const s = JSON.parse(raw); state.email = s.email || ''; state.password = s.password || ''; state.authKey = s.authKey || ''; state.debugOpen = !!s.debugOpen; state.loginCollapsed = !!s.loginCollapsed; }catch(_){} }
 function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({ email:state.email, password:state.password, authKey:state.authKey, debugOpen:state.debugOpen, loginCollapsed:state.loginCollapsed })); }
+
 function renderDebug(){ el.debugWrap.classList.toggle('hidden', !state.debugOpen); el.debugToggle.textContent = state.debugOpen ? 'Masquer debug' : 'Afficher debug'; }
 function renderLoginPanel(){ el.loginPanel.classList.toggle('collapsed', state.loginCollapsed); }
 
@@ -199,16 +206,17 @@ async function copyAuthKey(){ try{ const value = el.authKey.value.trim(); if(!va
 
 async function loadAddons(){ 
   if(!state.authKey){ setStatus('red','AuthKey manquante.'); el.addonsCard.classList.add('hidden'); return; } 
-  setStatus('orange','Chargement des addons...'); logDebug({ step:'addons:get:start' }); disableTop(true); 
+  setStatus('orange','Chargement des addons depuis Stremio...'); logDebug({ step:'addons:get:start' }); disableTop(true); 
   try{ 
+    // Fetch active & disabled addons from Stremio API directly
     const resp = await fetch(API_BASE + 'addonCollectionGet', { method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, body: JSON.stringify({ type:'AddonCollectionGet', authKey:state.authKey, update:true }) }); 
     const data = await resp.json(); logDebug({ step:'addons:get:response', status:resp.status, ok:resp.ok, data:data }); 
     if(!resp.ok || data.error || (data.result && data.result.error)){ throw new Error((data.error && data.error.message) || data.error || (data.result && data.result.error) || 'Impossible de charger les addons'); } 
 
     const fetched = Array.isArray(data.result && data.result.addons) ? data.result.addons : []; 
 
-    fetched.forEach(function(a){ 
-      if(a.transportUrl && a.transportUrl.startsWith('disabled-')){
+    fetched.forEach(function(a){
+      if(a.transportUrl && a.transportUrl.startsWith(DISABLED_PREFIX)){
         a._disabled = true;
       } else {
         a._disabled = false;
@@ -217,7 +225,7 @@ async function loadAddons(){
 
     state.addons = fetched;
 
-    state.loginCollapsed = true; saveLocal(); renderLoginPanel(); updateLoginPill(); updateLayoutMode(); el.addonsCard.classList.remove('hidden'); renderList(); setStatus('green', state.addons.length ? 'Addons chargés.' : 'Aucun addon trouvé.'); 
+    state.loginCollapsed = true; saveLocal(); renderLoginPanel(); updateLoginPill(); updateLayoutMode(); el.addonsCard.classList.remove('hidden'); renderList(); setStatus('green', state.addons.length ? 'Addons synchronisés avec succès.' : 'Aucun addon trouvé.'); 
   } catch(error){ 
     state.addons=[]; renderList(); updateLayoutMode(); el.addonsCard.classList.add('hidden'); setStatus('red','Erreur chargement : ' + (error.message || 'échec inconnu')); 
   } finally{ disableTop(false); } 
@@ -238,12 +246,14 @@ function getEyeOffSvg() {
 function toggleAddon(addon) {
   addon._disabled = !addon._disabled;
   if(addon._disabled) {
-    if(!addon.transportUrl.startsWith('disabled-')){
-      addon.transportUrl = 'disabled-' + addon.transportUrl;
+    if(!addon.transportUrl.startsWith(DISABLED_PREFIX)){
+      // Encapsulate the real URL into our dummy localhost URL
+      addon.transportUrl = DISABLED_PREFIX + encodeURIComponent(addon.transportUrl);
     }
   } else {
-    if(addon.transportUrl.startsWith('disabled-')){
-      addon.transportUrl = addon.transportUrl.replace(/^disabled-/, '');
+    if(addon.transportUrl.startsWith(DISABLED_PREFIX)){
+      // Extract the real URL back
+      addon.transportUrl = decodeURIComponent(addon.transportUrl.substring(DISABLED_PREFIX.length));
     }
   }
   renderList();
@@ -327,7 +337,9 @@ function onMove(evt){
 function onEnd(evt){ 
   if(!state.dragItem) return; if(evt) evt.preventDefault(); const movedAddon = state.dragItem; 
   removeClone(); state.dragItem = null; document.body.classList.remove('dragging'); renderList(movedAddon); 
-  if(state.dragChanged){ syncOrder(); } else { setStatus('green', "Aucun changement d'ordre."); } 
+  if(state.dragChanged){ 
+    syncOrder(); 
+  } else { setStatus('green', "Aucun changement d'ordre."); } 
 }
 
 function indexFromPointerY(clientY){ 
@@ -341,7 +353,8 @@ async function syncOrder(){
   try{ 
     state.syncing = true; document.querySelectorAll('.drag-handle, .toggle-btn').forEach(function(node){ node.style.pointerEvents = 'none'; }); 
 
-    // Send ALL addons, preserving the order and the 'disabled-' prefix for disabled ones
+    // We send ALL addons to Stremio exactly as they are in 'state.addons'.
+    // The disabled ones possess the 'http://127.0.0.1:65432/...' prefix instead of their real URL.
     const resp = await fetch(API_BASE + 'addonCollectionSet', { method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, body: JSON.stringify({ type:'AddonCollectionSet', authKey:state.authKey, addons:state.addons }) }); 
     const data = await resp.json(); logDebug({ step:'addons:set:response', status:resp.status, ok:resp.ok, data:data }); 
     if(!resp.ok || !(data.result && data.result.success)){ throw new Error((data.error && data.error.message) || (data.result && data.result.error) || data.error || 'Échec de synchronisation'); } 
