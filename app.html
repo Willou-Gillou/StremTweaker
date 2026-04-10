@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Strem Tweaker v1.0-14</title>
+  <style>
+    :root{
+      --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
+      --blue:#7da8ff;--blue2:#4b7dff;--ok:#38d39f;--ko:#ff6d86;--wait:#ffb84d;--shadow:0 18px 42px rgba(0,0,0,.28);--radius:22px;
+      --addons-scale:1;--addon-h:54px;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;padding:0;height:100dvh;overflow:hidden;}
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);background:radial-gradient(circle at 15% 0%, rgba(125,168,255,.12), transparent 28%),radial-gradient(circle at 100% 10%, rgba(56,211,159,.06), transparent 20%),linear-gradient(180deg,var(--bg1),var(--bg2));}
+    body.dragging{overflow:hidden}
+    .wrap{max-width:860px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;padding:14px 14px calc(14px + env(safe-area-inset-bottom));overflow-y:auto;}
+    .sticky{position:sticky;top:0;z-index:30;flex-shrink:0;padding-top:max(8px, env(safe-area-inset-top));background:linear-gradient(180deg,rgba(11,17,38,.96),rgba(11,17,38,.0));backdrop-filter:blur(12px);margin:-14px -14px 12px;padding-left:14px;padding-right:14px}
+    .glass{background:var(--glass);border:1px solid var(--line);box-shadow:var(--shadow);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:var(--radius)}
+    .status{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:18px;background:rgba(15,20,38,.75);border:1px solid var(--line)}
+    .dot{width:12px;height:12px;border-radius:999px;background:var(--wait);flex:0 0 auto;box-shadow:0 0 16px currentColor}.green{background:var(--ok);color:var(--ok)}.red{background:var(--ko);color:var(--ko)}.orange{background:var(--wait);color:var(--wait)}
+    .status-text{font-size:14px;line-height:1.4}
+    .hero,.panel{padding:16px;flex-shrink:0}.hero{margin-bottom:14px}
+    h1,h2,p{margin:0}h1{font-size:24px;letter-spacing:-.02em}h2{font-size:17px}
+    .version{color:#a7d5ff;font-size:12px;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px}.muted{color:var(--muted);font-size:13px;line-height:1.45;margin-top:6px}
+    .login-head{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer}.login-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:600}
+    .pill.connected{background:rgba(56,211,159,.15);color:var(--ok);border-color:rgba(56,211,159,.3)}
+    .pill.disconnected{background:rgba(255,109,134,.15);color:var(--ko);border-color:rgba(255,109,134,.3)}
+    .chev{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;border:1px solid var(--line);background:rgba(17,23,42,.55);font-size:16px;transition:transform .2s ease}
+    .panel.collapsed .chev{transform:rotate(-90deg)}.login-body{margin-top:14px}.panel.collapsed .login-body{display:none}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{display:grid;gap:6px;margin-top:12px}label{color:var(--muted);font-size:13px}
+    input,textarea{width:100%;border:1px solid rgba(255,255,255,.08);background:rgba(8,12,24,.5);color:var(--text);outline:none;border-radius:16px;padding:14px 14px;font:inherit}textarea{min-height:80px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+    input:focus,textarea:focus{border-color:rgba(126,168,255,.8);box-shadow:0 0 0 3px rgba(126,168,255,.15)}
+    .actions,.subactions{display:grid;gap:10px;margin-top:14px}.actions{grid-template-columns:1fr 1fr auto}.subactions{grid-template-columns:1fr 1fr}
+    button{border:1px solid rgba(255,255,255,.08);background:rgba(17,24,46,.8);color:var(--text);font:inherit;cursor:pointer;border-radius:16px;padding:14px 14px;min-height:50px;transition:transform .15s ease,opacity .15s ease,box-shadow .15s ease,background .15s ease}button:hover{transform:translateY(-1px)}button:active{transform:scale(.98)}button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .primary{background:linear-gradient(135deg, rgba(75,125,255,.95), rgba(126,168,255,.9));box-shadow:0 8px 20px rgba(75,125,255,.25);border:none} .ghost{background:rgba(17,24,46,.4)}
+    .debug-toggle{margin-top:12px;color:#a7d5ff;background:none;border:0;padding:0;min-height:auto;text-align:left;font-size:13px}.hidden{display:none!important}
+    .addons-panel{display:flex;flex-direction:column;flex:1;min-height:0;margin-bottom:0;}
+    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;flex-shrink:0}
+    .addons-fit{flex:1;min-height:0;overflow:hidden;position:relative;margin-top:12px;}
+    .addons-inner{transform:scale(var(--addons-scale));transform-origin:top center;transition:transform .18s ease;width:100%}
+    .list{display:grid;gap:8px;padding:4px}
+
+    .addon-card{display:grid;grid-template-columns:40px 1fr 36px 40px;align-items:center;gap:10px;height:var(--addon-h);padding:6px 8px;border-radius:18px;border:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg, rgba(28,38,68,.7), rgba(18,25,48,.6));box-shadow:0 4px 12px rgba(0,0,0,.15);transition:transform .15s ease, opacity .15s ease, filter .15s ease}
+    .addon-card.drag-source{opacity:0.3;filter:grayscale(0.5);transform:scale(0.98)}
+    .addon-card.flash{animation:flash .3s ease}
+    .addon-card.is-disabled{opacity:0.55;filter:grayscale(0.8);background:rgba(20,25,40,.5)}
+    .addon-card.is-disabled .addon-title{text-decoration:line-through;color:var(--muted)}
+
+    .rank{width:32px;height:32px;border-radius:12px;display:grid;place-items:center;font-weight:700;font-size:12px;color:#cce0ff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.05)}
+    .addon-title{font-weight:600;font-size:14px;line-height:1.2;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:color .2s}
+
+    .toggle-btn{width:36px;height:36px;display:grid;place-items:center;color:var(--blue);cursor:pointer;border-radius:10px;transition:background .2s, color .2s}
+    .toggle-btn:active{background:rgba(255,255,255,.1)}
+    .toggle-btn svg{width:20px;height:20px}
+    .is-disabled .toggle-btn{color:var(--ko)}
+
+    .drag-handle{width:40px;height:40px;display:grid;place-items:center;color:rgba(255,255,255,.4);cursor:grab;touch-action:none;justify-self:end;border-radius:10px;transition:color .2s, background .2s}
+    .drag-handle:active{cursor:grabbing;color:rgba(255,255,255,.9);background:rgba(255,255,255,.08)}
+    .drag-handle svg{width:20px;height:20px}
+
+    .floating-card{position:fixed;z-index:999;background:linear-gradient(180deg, rgba(38,52,94,.95), rgba(24,34,64,.95));border:1px solid rgba(255,255,255,.15);box-shadow:0 30px 60px rgba(0,0,0,.4), 0 0 0 1px rgba(126,168,255,.3);border-radius:18px;pointer-events:none;transform-origin:top left;transform:scale(calc(var(--addons-scale, 1) * 1.03)) rotate(-1deg);transition:none;display:grid;grid-template-columns:40px 1fr 36px 40px;align-items:center;gap:10px;padding:6px 8px;}
+    .floating-card .drag-handle{color:rgba(255,255,255,.9)}
+    .empty{color:var(--muted);margin-top:14px;padding:14px;border:1px dashed var(--line);border-radius:16px;background:rgba(13,19,36,.42)}
+
+    body.addons-mode .hero{display:none}
+    body.addons-mode #loginPanel{padding:10px 14px}
+    body.addons-mode #loginPanel .muted{display:none}
+    body.addons-mode .sticky{margin-bottom:8px}
+
+    @keyframes flash{0%{transform:scale(.98)}50%{transform:scale(1.02);background:rgba(126,168,255,.1)}100%{transform:scale(1)}}
+    @media (max-width:640px){
+      .wrap{padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
+      .sticky{margin:-12px -12px 8px;padding-left:12px;padding-right:12px}
+      .row,.actions,.subactions{grid-template-columns:1fr}
+      .panel{padding:12px}
+      .addon-card{grid-template-columns:30px 1fr 34px 34px;gap:8px;height:50px;padding:5px 6px}
+      .floating-card{grid-template-columns:30px 1fr 34px 34px;gap:8px;height:50px;padding:5px 6px}
+      .rank{width:30px;height:30px;font-size:11px}
+      .addon-title{font-size:13px}
+      .toggle-btn{width:34px;height:34px}
+      .drag-handle{width:34px;height:34px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="sticky"><div class="status glass"><span id="statusDot" class="dot orange"></span><div id="statusText" class="status-text">En attente.</div></div></div>
+    <section class="hero glass"><div class="version">v1.0-14</div><h1>Strem Tweaker</h1><p class="muted">Ajout du bouton d'activation/désactivation (œil) conservé en local.</p></section>
+
+    <section id="loginPanel" class="panel glass">
+      <div id="loginHead" class="login-head">
+        <div><h2>Connexion</h2><p class="muted">Se replie et charge les addons automatiquement.</p></div>
+        <div class="login-meta"><div id="loginStatePill" class="pill disconnected">Non connecté</div><div class="chev">⌃</div></div>
+      </div>
+      <div class="login-body">
+        <div class="row">
+          <div class="field"><label for="email">Email</label><input id="email" type="email" placeholder="email@exemple.com" autocomplete="username"></div>
+          <div class="field"><label for="password">Mot de passe</label><input id="password" type="password" placeholder="mot de passe" autocomplete="current-password"></div>
+        </div>
+        <div class="actions"><button id="loginBtn" class="primary" type="button">Connexion & Charger</button><button id="loadBtn" class="ghost" type="button">Recharger</button><button id="clearBtn" class="ghost" type="button">Effacer</button></div>
+        <div class="field hidden"><label for="authKey">AuthKey</label><textarea id="authKey" placeholder="La clé apparaît ici après connexion"></textarea></div>
+        <div class="subactions"><button id="copyBtn" class="ghost hidden" type="button">Copier clé</button><button id="saveBtn" class="ghost hidden" type="button">Sauvegarder</button></div>
+        <button id="debugToggle" class="debug-toggle" type="button">Afficher debug</button>
+        <div id="debugWrap" class="field hidden"><textarea id="debugBox" readonly placeholder="Réponses API"></textarea></div>
+      </div>
+    </section>
+
+    <section id="addonsCard" class="panel glass addons-panel hidden">
+      <div class="toolbar"><h2>Ordre des addons</h2><div class="pill"><span id="countLabel">0 addon</span></div></div>
+      <div id="fitWrap" class="addons-fit"><div id="fitInner" class="addons-inner"><div id="addonsList" class="list"></div></div></div>
+      <div id="emptyState" class="empty hidden">Aucun addon trouvé.</div>
+    </section>
+  </div>
+<script>
+const STORAGE_KEY = 'strem-tweaker-v1.0-14';
+const API_BASE = 'https://api.strem.io/api/';
+const state = { email:'', password:'', authKey:'', addons:[], disabledAddons:[], syncing:false, debugOpen:false, loginCollapsed:false, dragItem:null, dragClone:null, dragOffsetY:0, dragChanged:false };
+const el = {
+  email: document.getElementById('email'), password: document.getElementById('password'), authKey: document.getElementById('authKey'),
+  loginBtn: document.getElementById('loginBtn'), loadBtn: document.getElementById('loadBtn'), clearBtn: document.getElementById('clearBtn'), copyBtn: document.getElementById('copyBtn'), saveBtn: document.getElementById('saveBtn'),
+  statusDot: document.getElementById('statusDot'), statusText: document.getElementById('statusText'), debugToggle: document.getElementById('debugToggle'), debugWrap: document.getElementById('debugWrap'), debugBox: document.getElementById('debugBox'),
+  loginPanel: document.getElementById('loginPanel'), loginHead: document.getElementById('loginHead'), loginStatePill: document.getElementById('loginStatePill'), addonsCard: document.getElementById('addonsCard'), addonsList: document.getElementById('addonsList'), emptyState: document.getElementById('emptyState'), countLabel: document.getElementById('countLabel'), fitWrap: document.getElementById('fitWrap'), fitInner: document.getElementById('fitInner')
+};
+
+init();
+
+function init(){ 
+  loadLocal(); bind(); hydrate(); renderDebug(); renderLoginPanel(); updateLoginPill(); 
+  if(state.authKey) {
+    setStatus('orange','AuthKey locale trouvée, chargement...');
+    loadAddons(); 
+  } else {
+    logDebug('Application initialisée.');
+  }
+  updateLayoutMode(); 
+}
+
+function bind(){
+  el.loginBtn.addEventListener('click', loginAndGetKey);
+  el.loadBtn.addEventListener('click', function(){ state.authKey = el.authKey.value.trim(); if(!state.authKey){ setStatus('red', 'Aucune AuthKey disponible.'); return; } saveLocal(); loadAddons(); });
+  el.clearBtn.addEventListener('click', clearAll);
+  el.copyBtn.addEventListener('click', copyAuthKey);
+  el.saveBtn.addEventListener('click', function(){ state.email = el.email.value.trim(); state.password = el.password.value; state.authKey = el.authKey.value.trim(); saveLocal(); updateLoginPill(); setStatus(state.authKey ? 'green' : 'orange', state.authKey ? 'Données sauvegardées localement.' : 'Champs sauvegardés sans AuthKey.'); updateLayoutMode(); });
+  el.debugToggle.addEventListener('click', function(){ state.debugOpen = !state.debugOpen; renderDebug(); saveLocal(); });
+  el.loginHead.addEventListener('click', function(e){ if(e.target.closest('button') || e.target.tagName==='INPUT') return; state.loginCollapsed = !state.loginCollapsed; renderLoginPanel(); saveLocal(); requestAnimationFrame(fitAddons); });
+
+  window.addEventListener('pointermove', onMove, { passive:false });
+  window.addEventListener('pointerup', onEnd, { passive:false });
+  window.addEventListener('pointercancel', onEnd, { passive:false });
+  window.addEventListener('touchmove', onMove, { passive:false });
+  window.addEventListener('touchend', onEnd, { passive:false });
+  window.addEventListener('touchcancel', onEnd, { passive:false });
+  window.addEventListener('mousemove', onMove, { passive:false });
+  window.addEventListener('mouseup', onEnd, { passive:false });
+  window.addEventListener('resize', fitAddons);
+}
+
+function hydrate(){ el.email.value = state.email || ''; el.password.value = state.password || ''; el.authKey.value = state.authKey || ''; }
+function loadLocal(){ try{ const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return; const s = JSON.parse(raw); state.email = s.email || ''; state.password = s.password || ''; state.authKey = s.authKey || ''; state.debugOpen = !!s.debugOpen; state.loginCollapsed = !!s.loginCollapsed; state.disabledAddons = Array.isArray(s.disabledAddons) ? s.disabledAddons : []; }catch(_){} }
+function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({ email:state.email, password:state.password, authKey:state.authKey, debugOpen:state.debugOpen, loginCollapsed:state.loginCollapsed, disabledAddons:state.disabledAddons })); }
+function renderDebug(){ el.debugWrap.classList.toggle('hidden', !state.debugOpen); el.debugToggle.textContent = state.debugOpen ? 'Masquer debug' : 'Afficher debug'; }
+function renderLoginPanel(){ el.loginPanel.classList.toggle('collapsed', state.loginCollapsed); }
+
+function updateLoginPill(){ 
+  const isAuth = !!state.authKey;
+  el.loginStatePill.textContent = isAuth ? 'Connecté' : 'Non connecté'; 
+  el.loginStatePill.className = 'pill ' + (isAuth ? 'connected' : 'disconnected');
+}
+
+function updateLayoutMode(){ document.body.classList.toggle('addons-mode', !!state.addons.length); }
+
+function clearAll(){ state.email=''; state.password=''; state.authKey=''; state.addons=[]; state.disabledAddons=[]; state.loginCollapsed=false; localStorage.removeItem(STORAGE_KEY); hydrate(); renderList(); renderLoginPanel(); updateLoginPill(); updateLayoutMode(); el.addonsCard.classList.add('hidden'); logDebug('Données effacées.'); setStatus('orange','Données effacées.'); }
+function setStatus(color, text){ el.statusDot.className = 'dot ' + color; el.statusText.textContent = text; }
+function logDebug(value){ el.debugBox.value = typeof value === 'string' ? value : JSON.stringify(value, null, 2); }
+function disableTop(flag){ [el.loginBtn, el.loadBtn, el.clearBtn, el.copyBtn, el.saveBtn].forEach(function(b){ b.disabled = flag; }); }
+
+async function loginAndGetKey(){ 
+  const email = el.email.value.trim(); const password = el.password.value; 
+  if(!email || !password){ setStatus('red', "Renseigne l'email et le mot de passe."); logDebug('Email ou mot de passe manquant.'); return; } 
+  state.email = email; state.password = password; 
+  setStatus('orange','Connexion en cours...'); logDebug({ step:'login:start', email:email }); disableTop(true); 
+  try{ 
+    const resp = await fetch(API_BASE + 'login', { method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, body: JSON.stringify({ type:'Login', email:email, password:password, facebook:false }) }); 
+    const data = await resp.json(); logDebug({ step:'login:response', status:resp.status, ok:resp.ok, data:data }); 
+    const authKey = (data && data.result && data.result.authKey) || data.authKey || ''; 
+    if(!resp.ok || !authKey){ const err = (data && data.error && data.error.message) || (data && data.result && data.result.error) || data.error || "Impossible de récupérer l'AuthKey"; throw new Error(typeof err === 'string' ? err : JSON.stringify(err)); } 
+    state.authKey = authKey; el.authKey.value = authKey; 
+    saveLocal(); 
+    setStatus('green','Connecté avec succès. Chargement des addons...');
+    await loadAddons();
+  } catch(error){ 
+    state.authKey=''; el.authKey.value=''; saveLocal(); updateLoginPill(); logDebug({ step:'login:error', message:error.message || 'échec inconnu' }); setStatus('red','Erreur login : ' + (error.message || 'échec inconnu')); disableTop(false);
+  } 
+}
+
+async function copyAuthKey(){ try{ const value = el.authKey.value.trim(); if(!value) throw new Error('Aucune AuthKey à copier.'); if(navigator.clipboard && navigator.clipboard.writeText){ await navigator.clipboard.writeText(value); } else { el.authKey.select(); document.execCommand('copy'); } setStatus('green','AuthKey copiée.'); } catch(error){ setStatus('red','Erreur copie : ' + (error.message || 'échec inconnu')); } }
+
+async function loadAddons(){ 
+  if(!state.authKey){ setStatus('red','AuthKey manquante.'); el.addonsCard.classList.add('hidden'); return; } 
+  setStatus('orange','Chargement des addons...'); logDebug({ step:'addons:get:start' }); disableTop(true); 
+  try{ 
+    const resp = await fetch(API_BASE + 'addonCollectionGet', { method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, body: JSON.stringify({ type:'AddonCollectionGet', authKey:state.authKey, update:true }) }); 
+    const data = await resp.json(); logDebug({ step:'addons:get:response', status:resp.status, ok:resp.ok, data:data }); 
+    if(!resp.ok || data.error || (data.result && data.result.error)){ throw new Error((data.error && data.error.message) || data.error || (data.result && data.result.error) || 'Impossible de charger les addons'); } 
+
+    // Merge remote active addons with locally disabled addons
+    const fetched = Array.isArray(data.result && data.result.addons) ? data.result.addons : []; 
+    const fetchedUrls = fetched.map(function(a){ return a.transportUrl; });
+    const localDisabled = state.disabledAddons.filter(function(a){ return !fetchedUrls.includes(a.transportUrl); });
+
+    fetched.forEach(function(a){ a._disabled = false; });
+    localDisabled.forEach(function(a){ a._disabled = true; });
+
+    state.addons = fetched.concat(localDisabled);
+    // Cleanup state.disabledAddons just in case some were re-enabled elsewhere
+    state.disabledAddons = state.addons.filter(function(a){ return a._disabled; });
+
+    state.loginCollapsed = true; saveLocal(); renderLoginPanel(); updateLoginPill(); updateLayoutMode(); el.addonsCard.classList.remove('hidden'); renderList(); setStatus('green', state.addons.length ? 'Addons chargés.' : 'Aucun addon trouvé.'); 
+  } catch(error){ 
+    state.addons=[]; renderList(); updateLayoutMode(); el.addonsCard.classList.add('hidden'); setStatus('red','Erreur chargement : ' + (error.message || 'échec inconnu')); 
+  } finally{ disableTop(false); } 
+}
+
+function getGripSvg() {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line></svg>';
+}
+
+function getEyeSvg() {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+}
+
+function getEyeOffSvg() {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+}
+
+function toggleAddon(addon) {
+  addon._disabled = !addon._disabled;
+  state.disabledAddons = state.addons.filter(function(a){ return a._disabled; });
+  saveLocal();
+  renderList();
+  syncOrder();
+}
+
+function renderList(activeAddon){ 
+  el.addonsList.innerHTML=''; const count = state.addons.length; el.countLabel.textContent = count + (count > 1 ? ' addons' : ' addon'); el.emptyState.classList.toggle('hidden', count !== 0); 
+  state.addons.forEach(function(addon, index){ 
+    const manifest = addon.manifest || {}; const title = manifest.name || manifest.id || 'Addon'; 
+    const card = document.createElement('div'); 
+    card.className = 'addon-card' + (state.dragItem === addon ? ' drag-source' : '') + (activeAddon === addon ? ' flash' : '') + (addon._disabled ? ' is-disabled' : ''); 
+    card.dataset.index = String(index); 
+    card.innerHTML = '<div class="rank">' + (index + 1) + '</div><div class="addon-title">' + escapeHtml(title) + '</div>' + 
+                     '<div class="toggle-btn" title="Activer/Désactiver">' + (addon._disabled ? getEyeOffSvg() : getEyeSvg()) + '</div>' + 
+                     '<div class="drag-handle">' + getGripSvg() + '</div>'; 
+
+    const handle = card.querySelector('.drag-handle'); 
+    ['pointerdown','touchstart','mousedown'].forEach(function(evt){ handle.addEventListener(evt, function(e){ startDrag(e, addon); }, { passive:false }); }); 
+
+    const toggleBtn = card.querySelector('.toggle-btn');
+    ['click','touchstart'].forEach(function(evt){ toggleBtn.addEventListener(evt, function(e){ e.preventDefault(); e.stopPropagation(); toggleAddon(addon); }, { passive:false }); });
+
+    el.addonsList.appendChild(card); 
+  }); 
+  requestAnimationFrame(fitAddons); 
+}
+
+function fitAddons(){ 
+  if(el.addonsCard.classList.contains('hidden')) return; 
+  const available = el.fitWrap.clientHeight; 
+  el.fitInner.style.transform = 'scale(1)'; 
+  document.documentElement.style.setProperty('--addons-scale', '1'); 
+  const natural = el.fitInner.scrollHeight; 
+  if(!natural || !available) return; 
+  const scale = Math.min(1, available / natural); 
+  document.documentElement.style.setProperty('--addons-scale', String(scale)); 
+  el.fitInner.style.transform = 'scale(' + scale + ')'; 
+}
+
+function getPoint(evt){ if(evt.touches && evt.touches[0]) return { x: evt.touches[0].clientX, y: evt.touches[0].clientY }; if(evt.changedTouches && evt.changedTouches[0]) return { x: evt.changedTouches[0].clientX, y: evt.changedTouches[0].clientY }; return { x: evt.clientX, y: evt.clientY }; }
+
+function startDrag(evt, addon){ 
+  if(state.syncing) return; evt.preventDefault(); evt.stopPropagation(); 
+  const point = getPoint(evt); const card = evt.currentTarget.closest('.addon-card'); const rect = card.getBoundingClientRect(); 
+  state.dragItem = addon; state.dragChanged = false; state.dragOffsetY = point.y - rect.top; 
+  createClone(card, rect); 
+  card.classList.add('drag-source'); 
+  updateClonePosition(point.y); 
+  document.body.classList.add('dragging'); setStatus('orange', "Glisse pour réorganiser..."); 
+}
+
+function createClone(card, rect){ 
+  removeClone(); 
+  state.dragClone = card.cloneNode(true); 
+  state.dragClone.classList.add('floating-card'); 
+  const scale = parseFloat(document.documentElement.style.getPropertyValue('--addons-scale') || 1);
+  state.dragClone.style.width = (rect.width / scale) + 'px'; 
+  state.dragClone.style.height = (rect.height / scale) + 'px'; 
+  state.dragClone.style.left = rect.left + 'px'; 
+  state.dragClone.style.top = rect.top + 'px'; 
+  document.body.appendChild(state.dragClone); 
+}
+
+function removeClone(){ if(state.dragClone && state.dragClone.parentNode){ state.dragClone.parentNode.removeChild(state.dragClone); } state.dragClone = null; }
+
+function updateClonePosition(clientY){ 
+  if(!state.dragClone) return; 
+  state.dragClone.style.top = (clientY - state.dragOffsetY) + 'px'; 
+}
+
+function onMove(evt){ 
+  if(!state.dragItem) return; evt.preventDefault(); 
+  const point = getPoint(evt); updateClonePosition(point.y); 
+  const nextIndex = indexFromPointerY(point.y); const currentIndex = state.addons.indexOf(state.dragItem); 
+  if(nextIndex !== -1 && nextIndex !== currentIndex){ 
+    state.addons.splice(currentIndex, 1); state.addons.splice(nextIndex, 0, state.dragItem); state.dragChanged = true; renderList(state.dragItem); 
+  } 
+}
+
+function onEnd(evt){ 
+  if(!state.dragItem) return; if(evt) evt.preventDefault(); const movedAddon = state.dragItem; 
+  removeClone(); state.dragItem = null; document.body.classList.remove('dragging'); renderList(movedAddon); 
+  if(state.dragChanged){ syncOrder(); } else { setStatus('green', "Aucun changement d'ordre."); } 
+}
+
+function indexFromPointerY(clientY){ 
+  const cards = Array.from(el.addonsList.querySelectorAll('.addon-card')); if(!cards.length) return -1; 
+  for(let i=0;i<cards.length;i++){ const rect = cards[i].getBoundingClientRect(); if(clientY < rect.top + rect.height / 2){ return i; } } 
+  return cards.length - 1; 
+}
+
+async function syncOrder(){ 
+  if(state.syncing) return; setStatus('orange', "Mise à jour de l'ordre en cours..."); 
+  try{ 
+    state.syncing = true; document.querySelectorAll('.drag-handle, .toggle-btn').forEach(function(node){ node.style.pointerEvents = 'none'; }); 
+    const activeAddons = state.addons.filter(function(a){ return !a._disabled; });
+    const resp = await fetch(API_BASE + 'addonCollectionSet', { method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, body: JSON.stringify({ type:'AddonCollectionSet', authKey:state.authKey, addons:activeAddons }) }); 
+    const data = await resp.json(); logDebug({ step:'addons:set:response', status:resp.status, ok:resp.ok, data:data }); 
+    if(!resp.ok || !(data.result && data.result.success)){ throw new Error((data.error && data.error.message) || (data.result && data.result.error) || data.error || 'Échec de synchronisation'); } 
+    setStatus('green', 'Ordre mis à jour immédiatement.'); 
+  } catch(error){ setStatus('red', 'Erreur synchronisation : ' + (error.message || 'échec inconnu')); await loadAddons(); } 
+  finally{ state.syncing = false; state.dragChanged = false; document.querySelectorAll('.drag-handle, .toggle-btn').forEach(function(node){ node.style.pointerEvents = 'auto'; }); } 
+}
+
+function escapeHtml(text){ return String(text).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'", '&#039;'); }
+</script>
+</body>
+</html>
