@@ -34,7 +34,7 @@
     .header-user-menu{position:relative;}
     .header-email{font-size:11px; color:#cce0ff; font-weight:600; background:rgba(125,168,255,0.12); padding:6px 10px; border-radius:10px; border:1px solid rgba(125,168,255,0.25); white-space:nowrap; max-width:140px; overflow:hidden; text-overflow:ellipsis; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:background 0.2s;}
     .header-email:hover{background:rgba(125,168,255,0.2);}
-    .user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--bg2);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;z-index:100;min-width:160px;transform-origin:top right;animation:dropIn 0.15s ease;}
+    .user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--bg2);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;z-index:100;min-width:180px;transform-origin:top right;animation:dropIn 0.15s ease;}
     .dropdown-item{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:13px;color:var(--ko);cursor:pointer;border-radius:8px;transition:background 0.2s;}
     .dropdown-item:hover{background:rgba(255,109,134,0.1);}
     @keyframes dropIn { from{opacity:0; transform:scale(0.95);} to{opacity:1; transform:scale(1);} }
@@ -183,9 +183,11 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-left:2px;"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
           <div id="userDropdown" class="user-dropdown hidden">
-            <div style="padding:4px 12px 8px; font-size:11px; color:var(--muted); border-bottom:1px solid var(--line); margin-bottom:4px; text-align:center; font-weight:600; letter-spacing:0.05em; pointer-events:none;">
-              Strem Tweaker V1.3
+            <div style="padding:8px 12px; font-size:11px; color:var(--muted); display:flex; justify-content:space-between; align-items:center;">
+              <span>Strem Tweaker</span>
+              <strong style="color:var(--blue);">V1.3</strong>
             </div>
+            <div style="height:1px; background:var(--line); margin:0 0 4px 0;"></div>
             <div class="dropdown-item" id="btnLogout">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
               Se déconnecter
@@ -195,7 +197,7 @@
 
       </div>
     </div>
-    <section class="hero glass"><div class="version">V1.3</div><h1>Strem Tweaker</h1><p class="muted">Menu de déconnexion et conservation de session multi-versions.</p></section>
+    <section class="hero glass"><div class="version">V1.3</div><h1>Strem Tweaker</h1><p class="muted">Icone de mise à jour synchronisée, version affichée dans le menu.</p></section>
 
     <section id="loginPanel" class="panel glass">
       <div id="loginHead" class="login-head">
@@ -241,7 +243,7 @@
         <h2>Mes addons</h2>
         <div class="toolbar-actions">
           <button id="btnCheckUpdates" class="pill-btn" title="Vérifier les mises à jour" style="color:var(--wait); border-color:rgba(255,184,77,.3);">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.53-12.28l5.67-5.67"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
           </button>
           <div style="width:1px; height:20px; background:var(--line); margin:0 4px;"></div>
           <button id="btnSaveJson" class="pill-btn" title="Sauvegarder la liste (JSON)">
@@ -421,7 +423,6 @@ function loadLocal(){
   try { 
     // Data persistence migration check
     let raw = localStorage.getItem(STORAGE_KEY); 
-    if(!raw) raw = localStorage.getItem('strem-tweaker-v1.2');
     if(!raw) raw = localStorage.getItem('strem-tweaker-v1.1');
     if(!raw) raw = localStorage.getItem('strem-tweaker-v1.0');
     if(!raw) return; 
