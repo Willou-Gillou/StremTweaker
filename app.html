@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker v1.0-20</title>
+  <title>Strem Tweaker v1.0-23</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -32,7 +32,7 @@
     .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{display:grid;gap:6px;margin-top:12px}label{color:var(--muted);font-size:13px}
     input,textarea{width:100%;border:1px solid rgba(255,255,255,.08);background:rgba(8,12,24,.5);color:var(--text);outline:none;border-radius:16px;padding:14px 14px;font:inherit}textarea{min-height:80px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
     input:focus,textarea:focus{border-color:rgba(126,168,255,.8);box-shadow:0 0 0 3px rgba(126,168,255,.15)}
-    .actions,.subactions{display:grid;gap:10px;margin-top:14px}.actions{grid-template-columns:1fr 1fr auto}.subactions{grid-template-columns:1fr 1fr}
+    .actions,.subactions{display:grid;gap:10px;margin-top:14px}.actions{grid-template-columns:1fr}.subactions{grid-template-columns:1fr 1fr}
     button{border:1px solid rgba(255,255,255,.08);background:rgba(17,24,46,.8);color:var(--text);font:inherit;cursor:pointer;border-radius:16px;padding:14px 14px;min-height:50px;transition:transform .15s ease,opacity .15s ease,box-shadow .15s ease,background .15s ease}button:hover{transform:translateY(-1px)}button:active{transform:scale(.98)}button:disabled{opacity:.5;cursor:not-allowed;transform:none}
     .primary{background:linear-gradient(135deg, rgba(75,125,255,.95), rgba(126,168,255,.9));box-shadow:0 8px 20px rgba(75,125,255,.25);border:none} .ghost{background:rgba(17,24,46,.4)}
     .debug-toggle{margin-top:12px;color:#a7d5ff;background:none;border:0;padding:0;min-height:auto;text-align:left;font-size:13px}.hidden{display:none!important}
@@ -90,7 +90,6 @@
     @media (max-width:640px){
       .wrap{padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
       .sticky{margin:-12px -12px 8px;padding-left:12px;padding-right:12px}
-      .row,.actions,.subactions{grid-template-columns:1fr}
       .panel{padding:12px}
       .addon-card, .floating-card{grid-template-columns:26px 1fr 30px 30px 30px 30px 32px;gap:6px;height:50px;padding:5px 6px}
       .rank{width:26px;height:26px;font-size:11px}
@@ -106,7 +105,7 @@
 <body>
   <div class="wrap">
     <div class="sticky"><div class="status glass"><span id="statusDot" class="dot orange"></span><div id="statusText" class="status-text">En attente.</div></div></div>
-    <section class="hero glass"><div class="version">v1.0-20</div><h1>Strem Tweaker</h1><p class="muted">Possibilité de supprimer définitivement un addon de la liste.</p></section>
+    <section class="hero glass"><div class="version">v1.0-23</div><h1>Strem Tweaker</h1><p class="muted">Interface de connexion simplifiée avec un seul bouton unifié.</p></section>
 
     <section id="loginPanel" class="panel glass">
       <div id="loginHead" class="login-head">
@@ -114,13 +113,31 @@
         <div class="login-meta"><div id="loginStatePill" class="pill disconnected">Non connecté</div><div class="chev">⌃</div></div>
       </div>
       <div class="login-body">
+
         <div class="row">
           <div class="field"><label for="email">Email</label><input id="email" type="email" placeholder="email@exemple.com" autocomplete="username"></div>
           <div class="field"><label for="password">Mot de passe</label><input id="password" type="password" placeholder="mot de passe" autocomplete="current-password"></div>
         </div>
-        <div class="actions"><button id="loginBtn" class="primary" type="button">Connexion & Charger</button><button id="loadBtn" class="ghost" type="button">Recharger</button><button id="clearBtn" class="ghost" type="button">Effacer</button></div>
-        <div class="field hidden"><label for="authKey">AuthKey</label><textarea id="authKey" placeholder="La clé apparaît ici après connexion"></textarea></div>
-        <div class="subactions"><button id="copyBtn" class="ghost hidden" type="button">Copier clé</button><button id="saveBtn" class="ghost hidden" type="button">Sauvegarder</button></div>
+
+        <div class="field" style="margin-top:12px;">
+          <label for="authKey">AuthKey Stremio (Optionnel si tu mets l'email)</label>
+          <div style="position:relative; display:flex; align-items:center;">
+            <input id="authKey" type="password" placeholder="Clé récupérée automatiquement, ou à coller..." style="padding-right:44px;">
+            <div id="toggleAuthKey" style="position:absolute; right:12px; display:flex; color:var(--muted); cursor:pointer; transition:color 0.2s;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="loginBtn" class="primary" type="button">Connexion & Charger</button>
+        </div>
+
+        <div class="subactions" style="margin-top:10px">
+          <button id="clearBtn" class="ghost" type="button">Tout Effacer</button>
+          <button id="copyBtn" class="ghost" type="button">Copier AuthKey</button>
+        </div>
+
         <button id="debugToggle" class="debug-toggle" type="button">Afficher debug</button>
         <div id="debugWrap" class="field hidden"><textarea id="debugBox" readonly placeholder="Réponses API"></textarea></div>
       </div>
@@ -158,14 +175,14 @@
   </div>
 
 <script>
-const STORAGE_KEY = 'strem-tweaker-v1.0-20';
+const STORAGE_KEY = 'strem-tweaker-v1.0-23';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
 
 const state = { email:'', password:'', authKey:'', addons:[], syncing:false, debugOpen:false, loginCollapsed:false, dragItem:null, dragClone:null, dragOffsetY:0, dragChanged:false };
 const el = {
-  email: document.getElementById('email'), password: document.getElementById('password'), authKey: document.getElementById('authKey'),
-  loginBtn: document.getElementById('loginBtn'), loadBtn: document.getElementById('loadBtn'), clearBtn: document.getElementById('clearBtn'), copyBtn: document.getElementById('copyBtn'), saveBtn: document.getElementById('saveBtn'),
+  email: document.getElementById('email'), password: document.getElementById('password'), authKey: document.getElementById('authKey'), toggleAuthKey: document.getElementById('toggleAuthKey'),
+  loginBtn: document.getElementById('loginBtn'), clearBtn: document.getElementById('clearBtn'), copyBtn: document.getElementById('copyBtn'),
   statusDot: document.getElementById('statusDot'), statusText: document.getElementById('statusText'), debugToggle: document.getElementById('debugToggle'), debugWrap: document.getElementById('debugWrap'), debugBox: document.getElementById('debugBox'),
   loginPanel: document.getElementById('loginPanel'), loginHead: document.getElementById('loginHead'), loginStatePill: document.getElementById('loginStatePill'), addonsCard: document.getElementById('addonsCard'), addonsList: document.getElementById('addonsList'), emptyState: document.getElementById('emptyState'), countLabel: document.getElementById('countLabel'), fitWrap: document.getElementById('fitWrap'), fitInner: document.getElementById('fitInner'),
   btnSaveJson: document.getElementById('btnSaveJson'), btnRestoreJson: document.getElementById('btnRestoreJson'), fileRestore: document.getElementById('fileRestore')
@@ -188,12 +205,22 @@ function init(){
 
 function bind(){
   el.loginBtn.addEventListener('click', loginAndGetKey);
-  el.loadBtn.addEventListener('click', function(){ state.authKey = el.authKey.value.trim(); if(!state.authKey){ setStatus('red', 'Aucune AuthKey disponible.'); return; } saveLocal(); loadAddons(); });
   el.clearBtn.addEventListener('click', clearAll);
   el.copyBtn.addEventListener('click', copyAuthKey);
-  el.saveBtn.addEventListener('click', function(){ state.email = el.email.value.trim(); state.password = el.password.value; state.authKey = el.authKey.value.trim(); saveLocal(); updateLoginPill(); setStatus(state.authKey ? 'green' : 'orange', state.authKey ? 'Données sauvegardées localement.' : 'Champs sauvegardés sans AuthKey.'); updateLayoutMode(); });
   el.debugToggle.addEventListener('click', function(){ state.debugOpen = !state.debugOpen; renderDebug(); saveLocal(); });
-  el.loginHead.addEventListener('click', function(e){ if(e.target.closest('button') || e.target.tagName==='INPUT') return; state.loginCollapsed = !state.loginCollapsed; renderLoginPanel(); saveLocal(); requestAnimationFrame(fitAddons); });
+  el.loginHead.addEventListener('click', function(e){ if(e.target.closest('button') || e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA') return; state.loginCollapsed = !state.loginCollapsed; renderLoginPanel(); saveLocal(); requestAnimationFrame(fitAddons); });
+
+  el.toggleAuthKey.addEventListener('click', function() {
+    if(el.authKey.type === 'password') {
+      el.authKey.type = 'text';
+      this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+      this.style.color = 'var(--text)';
+    } else {
+      el.authKey.type = 'password';
+      this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+      this.style.color = 'var(--muted)';
+    }
+  });
 
   el.btnSaveJson.addEventListener('click', exportAddons);
   el.btnRestoreJson.addEventListener('click', function(){ el.fileRestore.click(); });
@@ -260,14 +287,26 @@ function updateLoginPill(){
 
 function updateLayoutMode(){ document.body.classList.toggle('addons-mode', !!state.addons.length); }
 
-function clearAll(){ state.email=''; state.password=''; state.authKey=''; state.addons=[]; state.loginCollapsed=false; localStorage.removeItem(STORAGE_KEY); hydrate(); renderList(); renderLoginPanel(); updateLoginPill(); updateLayoutMode(); el.addonsCard.classList.add('hidden'); logDebug('Données effacées.'); setStatus('orange','Données effacées.'); }
+function clearAll(){ state.email=''; state.password=''; state.authKey=''; state.addons=[]; state.loginCollapsed=false; localStorage.removeItem(STORAGE_KEY); hydrate(); el.authKey.type='password'; el.toggleAuthKey.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>'; el.toggleAuthKey.style.color='var(--muted)'; renderList(); renderLoginPanel(); updateLoginPill(); updateLayoutMode(); el.addonsCard.classList.add('hidden'); logDebug('Données effacées.'); setStatus('orange','Données effacées.'); }
 function setStatus(color, text){ el.statusDot.className = 'dot ' + color; el.statusText.textContent = text; }
 function logDebug(value){ el.debugBox.value = typeof value === 'string' ? value : JSON.stringify(value, null, 2); }
-function disableTop(flag){ [el.loginBtn, el.loadBtn, el.clearBtn, el.copyBtn, el.saveBtn, el.btnSaveJson, el.btnRestoreJson].forEach(function(b){ b.disabled = flag; }); }
+function disableTop(flag){ [el.loginBtn, el.clearBtn, el.copyBtn, el.btnSaveJson, el.btnRestoreJson].forEach(function(b){ b.disabled = flag; }); }
 
 async function loginAndGetKey(){ 
+  const authKeyValue = el.authKey.value.trim();
+
+  if (authKeyValue) {
+    state.authKey = authKeyValue;
+    saveLocal();
+    updateLoginPill();
+    setStatus('orange', "Connexion via l'AuthKey fournie...");
+    disableTop(true);
+    await loadAddons();
+    return;
+  }
+
   const email = el.email.value.trim(); const password = el.password.value; 
-  if(!email || !password){ setStatus('red', "Renseigne l'email et le mot de passe."); return; } 
+  if(!email || !password){ setStatus('red', "Renseigne l'email et le mot de passe, ou une AuthKey."); return; } 
   state.email = email; state.password = password; 
   setStatus('orange','Connexion en cours...'); disableTop(true); 
   try{ 
@@ -315,7 +354,7 @@ const svgGrip = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 const svgEye = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
 const svgEyeOff = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
 const svgEdit = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
-const svgGear = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
+const svgGear = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
 const svgCross = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
 
 // Modal logic
