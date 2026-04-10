@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker v1.0-23</title>
+  <title>Strem Tweaker v1.0-26</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -24,6 +24,7 @@
     h1,h2,p{margin:0}h1{font-size:24px;letter-spacing:-.02em}h2{font-size:17px}
     .version{color:#a7d5ff;font-size:12px;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px}.muted{color:var(--muted);font-size:13px;line-height:1.45;margin-top:6px}
     .login-head{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer}.login-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .header-email{font-size:13px; color:var(--blue); font-weight:500; background:rgba(125,168,255,0.1); padding:3px 10px; border-radius:8px; margin-left:10px; border:1px solid rgba(125,168,255,0.2);}
     .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:600}
     .pill.connected{background:rgba(56,211,159,.15);color:var(--ok);border-color:rgba(56,211,159,.3)}
     .pill.disconnected{background:rgba(255,109,134,.15);color:var(--ko);border-color:rgba(255,109,134,.3)}
@@ -49,14 +50,17 @@
     .addons-inner{transform:scale(var(--addons-scale));transform-origin:top center;transition:transform .18s ease;width:100%}
     .list{display:grid;gap:8px;padding:4px}
 
-    .addon-card{display:grid;grid-template-columns:40px 1fr 36px 36px 36px 36px 40px;align-items:center;gap:8px;height:var(--addon-h);padding:6px 8px;border-radius:18px;border:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg, rgba(28,38,68,.7), rgba(18,25,48,.6));box-shadow:0 4px 12px rgba(0,0,0,.15);transition:transform .15s ease, opacity .15s ease, filter .15s ease}
+    .addon-card{display:grid;grid-template-columns:40px 1fr 36px 36px 36px 36px 36px 40px;align-items:center;gap:8px;height:var(--addon-h);padding:6px 8px;border-radius:18px;border:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg, rgba(28,38,68,.7), rgba(18,25,48,.6));box-shadow:0 4px 12px rgba(0,0,0,.15);transition:transform .15s ease, opacity .15s ease, filter .15s ease}
     .addon-card.drag-source{opacity:0.3;filter:grayscale(0.5);transform:scale(0.98)}
     .addon-card.flash{animation:flash .3s ease}
     .addon-card.is-disabled{opacity:0.55;filter:grayscale(0.8);background:rgba(20,25,40,.5)}
     .addon-card.is-disabled .addon-title{text-decoration:line-through;color:var(--muted)}
 
     .rank{width:32px;height:32px;border-radius:12px;display:grid;place-items:center;font-weight:700;font-size:12px;color:#cce0ff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.05)}
-    .addon-title{font-weight:600;font-size:14px;line-height:1.2;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:color .2s}
+    .addon-title-wrap{display:flex;align-items:center;gap:8px;overflow:hidden;}
+    .addon-title{font-weight:600;font-size:14px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .2s}
+    .addon-version{font-size:11px;font-weight:500;color:var(--muted);background:rgba(255,255,255,.08);padding:2px 6px;border-radius:6px;flex-shrink:0;}
+    .addon-update-badge{font-size:10px;color:var(--wait);border:1px solid var(--wait);padding:2px 4px;border-radius:4px;white-space:nowrap;flex-shrink:0;}
 
     .action-btn{width:36px;height:36px;display:grid;place-items:center;color:var(--blue);cursor:pointer;border-radius:10px;transition:background .2s, color .2s}
     .action-btn:active{background:rgba(255,255,255,.1)}
@@ -68,7 +72,7 @@
     .drag-handle:active{cursor:grabbing;color:rgba(255,255,255,.9);background:rgba(255,255,255,.08)}
     .drag-handle svg{width:20px;height:20px}
 
-    .floating-card{position:fixed;z-index:998;background:linear-gradient(180deg, rgba(38,52,94,.95), rgba(24,34,64,.95));border:1px solid rgba(255,255,255,.15);box-shadow:0 30px 60px rgba(0,0,0,.4), 0 0 0 1px rgba(126,168,255,.3);border-radius:18px;pointer-events:none;transform-origin:top left;transform:scale(calc(var(--addons-scale, 1) * 1.03)) rotate(-1deg);transition:none;display:grid;grid-template-columns:40px 1fr 36px 36px 36px 36px 40px;align-items:center;gap:8px;padding:6px 8px;}
+    .floating-card{position:fixed;z-index:998;background:linear-gradient(180deg, rgba(38,52,94,.95), rgba(24,34,64,.95));border:1px solid rgba(255,255,255,.15);box-shadow:0 30px 60px rgba(0,0,0,.4), 0 0 0 1px rgba(126,168,255,.3);border-radius:18px;pointer-events:none;transform-origin:top left;transform:scale(calc(var(--addons-scale, 1) * 1.03)) rotate(-1deg);transition:none;display:grid;grid-template-columns:40px 1fr 36px 36px 36px 36px 36px 40px;align-items:center;gap:8px;padding:6px 8px;}
     .floating-card .drag-handle{color:rgba(255,255,255,.9)}
     .empty{color:var(--muted);margin-top:14px;padding:14px;border:1px dashed var(--line);border-radius:16px;background:rgba(13,19,36,.42)}
 
@@ -83,7 +87,7 @@
 
     body.addons-mode .hero{display:none}
     body.addons-mode #loginPanel{padding:10px 14px}
-    body.addons-mode #loginPanel .muted{display:none}
+    body.addons-mode #loginPanel .desc{display:none}
     body.addons-mode .sticky{margin-bottom:8px}
 
     @keyframes flash{0%{transform:scale(.98)}50%{transform:scale(1.02);background:rgba(126,168,255,.1)}100%{transform:scale(1)}}
@@ -91,25 +95,33 @@
       .wrap{padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
       .sticky{margin:-12px -12px 8px;padding-left:12px;padding-right:12px}
       .panel{padding:12px}
-      .addon-card, .floating-card{grid-template-columns:26px 1fr 30px 30px 30px 30px 32px;gap:6px;height:50px;padding:5px 6px}
+      .addon-card, .floating-card{grid-template-columns:26px 1fr 30px 30px 30px 30px 30px 32px;gap:6px;height:50px;padding:5px 6px}
       .rank{width:26px;height:26px;font-size:11px}
       .addon-title{font-size:13px}
+      .addon-version{font-size:10px;padding:1px 4px;}
       .action-btn{width:30px;height:30px}
       .action-btn svg{width:16px;height:16px}
       .drag-handle{width:32px;height:32px}
       .pill-btn{width:28px;height:28px;}
       .pill-btn svg{width:14px;height:14px;}
+      .header-email{font-size:11px; padding:2px 6px;}
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="sticky"><div class="status glass"><span id="statusDot" class="dot orange"></span><div id="statusText" class="status-text">En attente.</div></div></div>
-    <section class="hero glass"><div class="version">v1.0-23</div><h1>Strem Tweaker</h1><p class="muted">Interface de connexion simplifiée avec un seul bouton unifié.</p></section>
+    <section class="hero glass"><div class="version">v1.0-26</div><h1>Strem Tweaker</h1><p class="muted">Ajout de la version actuelle de chaque addon.</p></section>
 
     <section id="loginPanel" class="panel glass">
       <div id="loginHead" class="login-head">
-        <div><h2>Connexion</h2><p class="muted">Se replie et charge les addons automatiquement.</p></div>
+        <div>
+          <div style="display:flex; align-items:center;">
+            <h2>Connexion</h2>
+            <span id="headerEmail" class="header-email hidden"></span>
+          </div>
+          <p class="muted desc">Se replie et charge les addons automatiquement.</p>
+        </div>
         <div class="login-meta"><div id="loginStatePill" class="pill disconnected">Non connecté</div><div class="chev">⌃</div></div>
       </div>
       <div class="login-body">
@@ -147,6 +159,10 @@
       <div class="toolbar">
         <h2>Mes addons</h2>
         <div class="toolbar-actions">
+          <button id="btnCheckUpdates" class="pill-btn" title="Vérifier les mises à jour" style="color:var(--wait); border-color:rgba(255,184,77,.3);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.53-12.28l5.67-5.67"/></svg>
+          </button>
+          <div style="width:1px; height:20px; background:var(--line); margin:0 4px;"></div>
           <button id="btnSaveJson" class="pill-btn" title="Sauvegarder la liste (JSON)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
           </button>
@@ -175,17 +191,18 @@
   </div>
 
 <script>
-const STORAGE_KEY = 'strem-tweaker-v1.0-23';
+const STORAGE_KEY = 'strem-tweaker-v1.0-26';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
 
 const state = { email:'', password:'', authKey:'', addons:[], syncing:false, debugOpen:false, loginCollapsed:false, dragItem:null, dragClone:null, dragOffsetY:0, dragChanged:false };
 const el = {
-  email: document.getElementById('email'), password: document.getElementById('password'), authKey: document.getElementById('authKey'), toggleAuthKey: document.getElementById('toggleAuthKey'),
+  email: document.getElementById('email'), password: document.getElementById('password'), authKey: document.getElementById('authKey'), toggleAuthKey: document.getElementById('toggleAuthKey'), headerEmail: document.getElementById('headerEmail'),
   loginBtn: document.getElementById('loginBtn'), clearBtn: document.getElementById('clearBtn'), copyBtn: document.getElementById('copyBtn'),
   statusDot: document.getElementById('statusDot'), statusText: document.getElementById('statusText'), debugToggle: document.getElementById('debugToggle'), debugWrap: document.getElementById('debugWrap'), debugBox: document.getElementById('debugBox'),
   loginPanel: document.getElementById('loginPanel'), loginHead: document.getElementById('loginHead'), loginStatePill: document.getElementById('loginStatePill'), addonsCard: document.getElementById('addonsCard'), addonsList: document.getElementById('addonsList'), emptyState: document.getElementById('emptyState'), countLabel: document.getElementById('countLabel'), fitWrap: document.getElementById('fitWrap'), fitInner: document.getElementById('fitInner'),
-  btnSaveJson: document.getElementById('btnSaveJson'), btnRestoreJson: document.getElementById('btnRestoreJson'), fileRestore: document.getElementById('fileRestore')
+  btnSaveJson: document.getElementById('btnSaveJson'), btnRestoreJson: document.getElementById('btnRestoreJson'), fileRestore: document.getElementById('fileRestore'),
+  btnCheckUpdates: document.getElementById('btnCheckUpdates')
 };
 
 let modalCallback = null;
@@ -225,6 +242,7 @@ function bind(){
   el.btnSaveJson.addEventListener('click', exportAddons);
   el.btnRestoreJson.addEventListener('click', function(){ el.fileRestore.click(); });
   el.fileRestore.addEventListener('change', importAddons);
+  el.btnCheckUpdates.addEventListener('click', checkUpdates);
 
   document.getElementById('btnModalCancel').addEventListener('click', function(){ closeModal(false); });
   document.getElementById('btnModalSave').addEventListener('click', function(){ closeModal(true); });
@@ -238,6 +256,52 @@ function bind(){
   window.addEventListener('mousemove', onMove, { passive:false });
   window.addEventListener('mouseup', onEnd, { passive:false });
   window.addEventListener('resize', fitAddons);
+}
+
+function cmpVersions(a, b) {
+  const pa = String(a).split('.'); const pb = String(b).split('.');
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const na = Number(pa[i] || 0); const nb = Number(pb[i] || 0);
+    if (na > nb) return 1; if (nb > na) return -1;
+  }
+  return 0;
+}
+
+async function checkUpdates() {
+  if (!state.addons.length) return;
+  setStatus('orange', 'Vérification des mises à jour sur ' + state.addons.length + ' addon(s)...');
+  el.btnCheckUpdates.disabled = true;
+  let updatesCount = 0;
+
+  const promises = state.addons.map(async function(addon) {
+    if (addon._disabled) return;
+    try {
+      let url = addon.transportUrl;
+      if (!url.endsWith('manifest.json')) {
+        url = url.replace(/\/?$/, '/manifest.json');
+      }
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) return;
+      const newManifest = await res.json();
+
+      if (newManifest && newManifest.version && addon.manifest && addon.manifest.version) {
+        if (cmpVersions(newManifest.version, addon.manifest.version) > 0) {
+          addon._hasUpdate = newManifest;
+          updatesCount++;
+        }
+      }
+    } catch (e) {} // Ignore offline/CORS issues silently
+  });
+
+  await Promise.allSettled(promises);
+  el.btnCheckUpdates.disabled = false;
+
+  if (updatesCount > 0) {
+    setStatus('green', updatesCount + ' mise(s) à jour trouvée(s) !');
+    renderList();
+  } else {
+    setStatus('green', 'Tous tes addons sont à jour.');
+  }
 }
 
 function hydrate(){ el.email.value = state.email || ''; el.password.value = state.password || ''; el.authKey.value = state.authKey || ''; }
@@ -283,6 +347,13 @@ function updateLoginPill(){
   const isAuth = !!state.authKey;
   el.loginStatePill.textContent = isAuth ? 'Connecté' : 'Non connecté'; 
   el.loginStatePill.className = 'pill ' + (isAuth ? 'connected' : 'disconnected');
+
+  if (state.email) {
+    el.headerEmail.textContent = state.email;
+    el.headerEmail.classList.remove('hidden');
+  } else {
+    el.headerEmail.classList.add('hidden');
+  }
 }
 
 function updateLayoutMode(){ document.body.classList.toggle('addons-mode', !!state.addons.length); }
@@ -290,7 +361,28 @@ function updateLayoutMode(){ document.body.classList.toggle('addons-mode', !!sta
 function clearAll(){ state.email=''; state.password=''; state.authKey=''; state.addons=[]; state.loginCollapsed=false; localStorage.removeItem(STORAGE_KEY); hydrate(); el.authKey.type='password'; el.toggleAuthKey.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>'; el.toggleAuthKey.style.color='var(--muted)'; renderList(); renderLoginPanel(); updateLoginPill(); updateLayoutMode(); el.addonsCard.classList.add('hidden'); logDebug('Données effacées.'); setStatus('orange','Données effacées.'); }
 function setStatus(color, text){ el.statusDot.className = 'dot ' + color; el.statusText.textContent = text; }
 function logDebug(value){ el.debugBox.value = typeof value === 'string' ? value : JSON.stringify(value, null, 2); }
-function disableTop(flag){ [el.loginBtn, el.clearBtn, el.copyBtn, el.btnSaveJson, el.btnRestoreJson].forEach(function(b){ b.disabled = flag; }); }
+function disableTop(flag){ [el.loginBtn, el.clearBtn, el.copyBtn, el.btnSaveJson, el.btnRestoreJson, el.btnCheckUpdates].forEach(function(b){ b.disabled = flag; }); }
+
+async function fetchUserEmail() {
+  if(!state.authKey) return;
+  try {
+    const resp = await fetch(API_BASE + 'getUser', { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({ authKey: state.authKey }) 
+    });
+    const data = await resp.json();
+    const email = (data && data.result && data.result.email) || (data && data.email);
+    if(email) {
+      state.email = email;
+      el.email.value = email;
+      saveLocal();
+      updateLoginPill();
+    }
+  } catch(e) {
+    logDebug('Erreur fetchUserEmail: ' + e.message);
+  }
+}
 
 async function loginAndGetKey(){ 
   const authKeyValue = el.authKey.value.trim();
@@ -301,6 +393,7 @@ async function loginAndGetKey(){
     updateLoginPill();
     setStatus('orange', "Connexion via l'AuthKey fournie...");
     disableTop(true);
+    await fetchUserEmail();
     await loadAddons();
     return;
   }
@@ -316,6 +409,7 @@ async function loginAndGetKey(){
     if(!resp.ok || !authKey){ throw new Error("Impossible de récupérer l'AuthKey"); } 
     state.authKey = authKey; el.authKey.value = authKey; 
     saveLocal(); 
+    updateLoginPill();
     setStatus('green','Connecté avec succès. Chargement des addons...');
     await loadAddons();
   } catch(error){ 
@@ -332,6 +426,8 @@ async function loadAddons(){
     const resp = await fetch(API_BASE + 'addonCollectionGet', { method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, body: JSON.stringify({ type:'AddonCollectionGet', authKey:state.authKey, update:true }) }); 
     const data = await resp.json(); 
     if(!resp.ok || data.error || (data.result && data.result.error)){ throw new Error('Impossible de charger les addons'); } 
+
+    if(!state.email) { fetchUserEmail(); }
 
     const fetched = Array.isArray(data.result && data.result.addons) ? data.result.addons : []; 
     fetched.forEach(function(a){
@@ -354,8 +450,9 @@ const svgGrip = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 const svgEye = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
 const svgEyeOff = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
 const svgEdit = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
-const svgGear = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
+const svgGear = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
 const svgCross = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+const svgUpdate = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>';
 
 // Modal logic
 function showModal(title, label, value, callback) {
@@ -384,6 +481,14 @@ function deleteAddon(addon) {
       syncOrder();
     }
   }
+}
+
+function applyUpdate(addon) {
+  if(!addon._hasUpdate) return;
+  addon.manifest = addon._hasUpdate;
+  addon._hasUpdate = null;
+  renderList();
+  syncOrder();
 }
 
 function toggleAddon(addon) {
@@ -417,14 +522,24 @@ function renderList(activeAddon){
   state.addons.forEach(function(addon, index){ 
     const manifest = addon.manifest || {}; 
     const title = manifest.name || manifest.id || 'Addon'; 
+    const version = manifest.version ? 'v' + manifest.version : '';
     const isConfigurable = manifest.behaviorHints && manifest.behaviorHints.configurable === true;
 
     const card = document.createElement('div'); 
     card.className = 'addon-card' + (state.dragItem === addon ? ' drag-source' : '') + (activeAddon === addon ? ' flash' : '') + (addon._disabled ? ' is-disabled' : ''); 
     card.dataset.index = String(index); 
+
+    const updateBadge = addon._hasUpdate ? `<span class="addon-update-badge">v${addon._hasUpdate.version} dispo</span>` : '';
+    const versionBadge = version ? `<span class="addon-version">${version}</span>` : '';
+
     card.innerHTML = `
       <div class="rank">${index + 1}</div>
-      <div class="addon-title">${escapeHtml(title)}</div>
+      <div class="addon-title-wrap">
+        <div class="addon-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
+        ${versionBadge}
+        ${updateBadge}
+      </div>
+      <div class="action-btn btn-update ${addon._hasUpdate ? '' : 'hidden-btn'}" style="color:var(--wait)" title="Mettre à jour">${svgUpdate}</div>
       <div class="action-btn btn-delete" style="color:var(--ko)" title="Supprimer (❌)">${svgCross}</div>
       <div class="action-btn btn-config ${isConfigurable ? '' : 'hidden-btn'}" title="Configuration (⚙️)">${isConfigurable ? svgGear : ''}</div>
       <div class="action-btn btn-edit" title="Modifier URL (✏️)">${svgEdit}</div>
@@ -434,6 +549,11 @@ function renderList(activeAddon){
 
     const handle = card.querySelector('.drag-handle'); 
     ['pointerdown','touchstart','mousedown'].forEach(function(evt){ handle.addEventListener(evt, function(e){ startDrag(e, addon); }, { passive:false }); }); 
+
+    if(addon._hasUpdate) {
+      const btnUpdate = card.querySelector('.btn-update');
+      ['click','touchstart'].forEach(function(evt){ btnUpdate.addEventListener(evt, function(e){ e.preventDefault(); e.stopPropagation(); applyUpdate(addon); }, { passive:false }); });
+    }
 
     const btnDelete = card.querySelector('.btn-delete');
     ['click','touchstart'].forEach(function(evt){ btnDelete.addEventListener(evt, function(e){ e.preventDefault(); e.stopPropagation(); deleteAddon(addon); }, { passive:false }); });
