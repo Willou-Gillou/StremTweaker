@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker v1.0-18</title>
+  <title>Strem Tweaker v1.0-19</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -36,41 +36,42 @@
     button{border:1px solid rgba(255,255,255,.08);background:rgba(17,24,46,.8);color:var(--text);font:inherit;cursor:pointer;border-radius:16px;padding:14px 14px;min-height:50px;transition:transform .15s ease,opacity .15s ease,box-shadow .15s ease,background .15s ease}button:hover{transform:translateY(-1px)}button:active{transform:scale(.98)}button:disabled{opacity:.5;cursor:not-allowed;transform:none}
     .primary{background:linear-gradient(135deg, rgba(75,125,255,.95), rgba(126,168,255,.9));box-shadow:0 8px 20px rgba(75,125,255,.25);border:none} .ghost{background:rgba(17,24,46,.4)}
     .debug-toggle{margin-top:12px;color:#a7d5ff;background:none;border:0;padding:0;min-height:auto;text-align:left;font-size:13px}.hidden{display:none!important}
-    
+
     .addons-panel{display:flex;flex-direction:column;flex:1;min-height:0;margin-bottom:0;}
     .toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;flex-shrink:0}
     .toolbar-actions {display:flex;align-items:center;gap:8px;}
-    
+
     .pill-btn {width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--blue);cursor:pointer;transition:.2s;padding:0;min-height:0;}
     .pill-btn:hover {background:rgba(255,255,255,.1);}
     .pill-btn svg {width:16px;height:16px;}
-    
+
     .addons-fit{flex:1;min-height:0;overflow:hidden;position:relative;margin-top:12px;}
     .addons-inner{transform:scale(var(--addons-scale));transform-origin:top center;transition:transform .18s ease;width:100%}
     .list{display:grid;gap:8px;padding:4px}
-    
+
     .addon-card{display:grid;grid-template-columns:40px 1fr 36px 36px 36px 40px;align-items:center;gap:8px;height:var(--addon-h);padding:6px 8px;border-radius:18px;border:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg, rgba(28,38,68,.7), rgba(18,25,48,.6));box-shadow:0 4px 12px rgba(0,0,0,.15);transition:transform .15s ease, opacity .15s ease, filter .15s ease}
     .addon-card.drag-source{opacity:0.3;filter:grayscale(0.5);transform:scale(0.98)}
     .addon-card.flash{animation:flash .3s ease}
     .addon-card.is-disabled{opacity:0.55;filter:grayscale(0.8);background:rgba(20,25,40,.5)}
     .addon-card.is-disabled .addon-title{text-decoration:line-through;color:var(--muted)}
-    
+
     .rank{width:32px;height:32px;border-radius:12px;display:grid;place-items:center;font-weight:700;font-size:12px;color:#cce0ff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.05)}
     .addon-title{font-weight:600;font-size:14px;line-height:1.2;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:color .2s}
-    
+
     .action-btn{width:36px;height:36px;display:grid;place-items:center;color:var(--blue);cursor:pointer;border-radius:10px;transition:background .2s, color .2s}
     .action-btn:active{background:rgba(255,255,255,.1)}
     .action-btn svg{width:18px;height:18px}
     .is-disabled .action-btn.toggle-btn{color:var(--ko)}
-    
+    .hidden-btn{visibility:hidden;pointer-events:none;} /* Hides the gear if not configurable but keeps spacing */
+
     .drag-handle{width:40px;height:40px;display:grid;place-items:center;color:rgba(255,255,255,.4);cursor:grab;touch-action:none;justify-self:end;border-radius:10px;transition:color .2s, background .2s}
     .drag-handle:active{cursor:grabbing;color:rgba(255,255,255,.9);background:rgba(255,255,255,.08)}
     .drag-handle svg{width:20px;height:20px}
-    
+
     .floating-card{position:fixed;z-index:998;background:linear-gradient(180deg, rgba(38,52,94,.95), rgba(24,34,64,.95));border:1px solid rgba(255,255,255,.15);box-shadow:0 30px 60px rgba(0,0,0,.4), 0 0 0 1px rgba(126,168,255,.3);border-radius:18px;pointer-events:none;transform-origin:top left;transform:scale(calc(var(--addons-scale, 1) * 1.03)) rotate(-1deg);transition:none;display:grid;grid-template-columns:40px 1fr 36px 36px 36px 40px;align-items:center;gap:8px;padding:6px 8px;}
     .floating-card .drag-handle{color:rgba(255,255,255,.9)}
     .empty{color:var(--muted);margin-top:14px;padding:14px;border:1px dashed var(--line);border-radius:16px;background:rgba(13,19,36,.42)}
-    
+
     /* Edit Modal */
     .modal-overlay {position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(5px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;padding:14px;}
     .modal-overlay.active {opacity:1;pointer-events:auto;}
@@ -79,12 +80,12 @@
     .modal-card h3 {margin:0 0 4px 0;font-size:18px;}
     .modal-card p {margin:0 0 12px 0;font-size:12px;color:var(--muted);word-break:break-all;}
     .modal-card textarea {width:100%;font-size:13px;line-height:1.4;}
-    
+
     body.addons-mode .hero{display:none}
     body.addons-mode #loginPanel{padding:10px 14px}
     body.addons-mode #loginPanel .muted{display:none}
     body.addons-mode .sticky{margin-bottom:8px}
-    
+
     @keyframes flash{0%{transform:scale(.98)}50%{transform:scale(1.02);background:rgba(126,168,255,.1)}100%{transform:scale(1)}}
     @media (max-width:640px){
       .wrap{padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
@@ -105,8 +106,8 @@
 <body>
   <div class="wrap">
     <div class="sticky"><div class="status glass"><span id="statusDot" class="dot orange"></span><div id="statusText" class="status-text">En attente.</div></div></div>
-    <section class="hero glass"><div class="version">v1.0-18</div><h1>Strem Tweaker</h1><p class="muted">Éditeur de configuration intégré, Backup/Restore JSON en 1 clic.</p></section>
-    
+    <section class="hero glass"><div class="version">v1.0-19</div><h1>Strem Tweaker</h1><p class="muted">Redirection vers la page de configuration web de l'addon si disponible.</p></section>
+
     <section id="loginPanel" class="panel glass">
       <div id="loginHead" class="login-head">
         <div><h2>Connexion</h2><p class="muted">Se replie et charge les addons automatiquement.</p></div>
@@ -124,7 +125,7 @@
         <div id="debugWrap" class="field hidden"><textarea id="debugBox" readonly placeholder="Réponses API"></textarea></div>
       </div>
     </section>
-    
+
     <section id="addonsCard" class="panel glass addons-panel hidden">
       <div class="toolbar">
         <h2>Mes addons</h2>
@@ -143,7 +144,7 @@
       <div id="emptyState" class="empty hidden">Aucun addon trouvé.</div>
     </section>
   </div>
-  
+
   <div id="modalOverlay" class="modal-overlay">
     <div class="modal-card">
       <h3 id="modalTitle">Titre</h3>
@@ -157,7 +158,7 @@
   </div>
 
 <script>
-const STORAGE_KEY = 'strem-tweaker-v1.0-18';
+const STORAGE_KEY = 'strem-tweaker-v1.0-19';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
 
@@ -193,14 +194,14 @@ function bind(){
   el.saveBtn.addEventListener('click', function(){ state.email = el.email.value.trim(); state.password = el.password.value; state.authKey = el.authKey.value.trim(); saveLocal(); updateLoginPill(); setStatus(state.authKey ? 'green' : 'orange', state.authKey ? 'Données sauvegardées localement.' : 'Champs sauvegardés sans AuthKey.'); updateLayoutMode(); });
   el.debugToggle.addEventListener('click', function(){ state.debugOpen = !state.debugOpen; renderDebug(); saveLocal(); });
   el.loginHead.addEventListener('click', function(e){ if(e.target.closest('button') || e.target.tagName==='INPUT') return; state.loginCollapsed = !state.loginCollapsed; renderLoginPanel(); saveLocal(); requestAnimationFrame(fitAddons); });
-  
+
   el.btnSaveJson.addEventListener('click', exportAddons);
   el.btnRestoreJson.addEventListener('click', function(){ el.fileRestore.click(); });
   el.fileRestore.addEventListener('change', importAddons);
-  
+
   document.getElementById('btnModalCancel').addEventListener('click', function(){ closeModal(false); });
   document.getElementById('btnModalSave').addEventListener('click', function(){ closeModal(true); });
-  
+
   window.addEventListener('pointermove', onMove, { passive:false });
   window.addEventListener('pointerup', onEnd, { passive:false });
   window.addEventListener('pointercancel', onEnd, { passive:false });
@@ -292,7 +293,7 @@ async function loadAddons(){
     const resp = await fetch(API_BASE + 'addonCollectionGet', { method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, body: JSON.stringify({ type:'AddonCollectionGet', authKey:state.authKey, update:true }) }); 
     const data = await resp.json(); 
     if(!resp.ok || data.error || (data.result && data.result.error)){ throw new Error('Impossible de charger les addons'); } 
-    
+
     const fetched = Array.isArray(data.result && data.result.addons) ? data.result.addons : []; 
     fetched.forEach(function(a){
       if(a.transportUrl && a.transportUrl.startsWith(DISABLED_PREFIX)){
@@ -302,7 +303,7 @@ async function loadAddons(){
       }
     });
     state.addons = fetched;
-    
+
     state.loginCollapsed = true; saveLocal(); renderLoginPanel(); updateLoginPill(); updateLayoutMode(); el.addonsCard.classList.remove('hidden'); renderList(); setStatus('green', state.addons.length ? 'Addons synchronisés avec succès.' : 'Aucun addon trouvé.'); 
   } catch(error){ 
     state.addons=[]; renderList(); updateLayoutMode(); el.addonsCard.classList.add('hidden'); setStatus('red','Erreur chargement : ' + (error.message || 'échec inconnu')); 
@@ -359,57 +360,49 @@ function openEditUrl(addon) {
   });
 }
 
-function openEditConfig(addon) {
-  let currentUrl = addon.transportUrl;
-  if(addon._disabled && currentUrl.startsWith(DISABLED_PREFIX)) { currentUrl = decodeURIComponent(currentUrl.substring(DISABLED_PREFIX.length)); }
-  
-  if (currentUrl.endsWith('/manifest.json')) {
-    let basePart = currentUrl.substring(0, currentUrl.length - 14);
-    let lastSlashIdx = basePart.lastIndexOf('/');
-    if (lastSlashIdx > 7) { // >7 ensures we don't split 'https://'
-      let baseUrl = basePart.substring(0, lastSlashIdx);
-      let configStr = basePart.substring(lastSlashIdx + 1);
-      
-      showModal('Éditeur de Configuration', baseUrl + '/ [...]/manifest.json', configStr, function(newConfig) {
-        if(newConfig === null || newConfig === configStr) return;
-        const newUrl = baseUrl + '/' + newConfig + '/manifest.json';
-        addon.transportUrl = addon._disabled ? DISABLED_PREFIX + encodeURIComponent(newUrl) : newUrl;
-        renderList();
-        syncOrder();
-      });
-      return;
-    }
-  }
-  setStatus('orange', "L'URL de cet addon n'a pas de paramètres éditables reconnus.");
-}
-
 function renderList(activeAddon){ 
   el.addonsList.innerHTML=''; const count = state.addons.length; el.countLabel.textContent = count + (count > 1 ? ' addons' : ' addon'); el.emptyState.classList.toggle('hidden', count !== 0); 
   state.addons.forEach(function(addon, index){ 
-    const manifest = addon.manifest || {}; const title = manifest.name || manifest.id || 'Addon'; 
+    const manifest = addon.manifest || {}; 
+    const title = manifest.name || manifest.id || 'Addon'; 
+    const isConfigurable = manifest.behaviorHints && manifest.behaviorHints.configurable === true;
+
     const card = document.createElement('div'); 
     card.className = 'addon-card' + (state.dragItem === addon ? ' drag-source' : '') + (activeAddon === addon ? ' flash' : '') + (addon._disabled ? ' is-disabled' : ''); 
     card.dataset.index = String(index); 
     card.innerHTML = `
       <div class="rank">${index + 1}</div>
       <div class="addon-title">${escapeHtml(title)}</div>
-      <div class="action-btn btn-config" title="Configuration (⚙️)">${svgGear}</div>
+      <div class="action-btn btn-config ${isConfigurable ? '' : 'hidden-btn'}" title="Configuration (⚙️)">${isConfigurable ? svgGear : ''}</div>
       <div class="action-btn btn-edit" title="Modifier URL (✏️)">${svgEdit}</div>
       <div class="action-btn toggle-btn" title="Activer/Désactiver">${addon._disabled ? svgEyeOff : svgEye}</div>
       <div class="drag-handle">${svgGrip}</div>
     `;
-                     
+
     const handle = card.querySelector('.drag-handle'); 
     ['pointerdown','touchstart','mousedown'].forEach(function(evt){ handle.addEventListener(evt, function(e){ startDrag(e, addon); }, { passive:false }); }); 
-    
+
     const btnToggle = card.querySelector('.toggle-btn');
     ['click','touchstart'].forEach(function(evt){ btnToggle.addEventListener(evt, function(e){ e.preventDefault(); e.stopPropagation(); toggleAddon(addon); }, { passive:false }); });
-    
+
     const btnEdit = card.querySelector('.btn-edit');
     ['click','touchstart'].forEach(function(evt){ btnEdit.addEventListener(evt, function(e){ e.preventDefault(); e.stopPropagation(); openEditUrl(addon); }, { passive:false }); });
 
-    const btnConfig = card.querySelector('.btn-config');
-    ['click','touchstart'].forEach(function(evt){ btnConfig.addEventListener(evt, function(e){ e.preventDefault(); e.stopPropagation(); openEditConfig(addon); }, { passive:false }); });
+    if(isConfigurable) {
+      const btnConfig = card.querySelector('.btn-config');
+      ['click','touchstart'].forEach(function(evt){ 
+        btnConfig.addEventListener(evt, function(e){ 
+          e.preventDefault(); e.stopPropagation(); 
+          let currentUrl = addon.transportUrl;
+          if(addon._disabled && currentUrl.startsWith(DISABLED_PREFIX)) { 
+            currentUrl = decodeURIComponent(currentUrl.substring(DISABLED_PREFIX.length)); 
+          }
+          // The standard Stremio way to load config page for an addon is replacing /manifest.json with /configure
+          const configUrl = currentUrl.replace(/\/manifest\.json(?:\?.*)?$/, '/configure');
+          window.open(configUrl, '_blank');
+        }, { passive:false }); 
+      });
+    }
 
     el.addonsList.appendChild(card); 
   }); 
