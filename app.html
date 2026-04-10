@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V1.1</title>
+  <title>Strem Tweaker V1.2</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -30,8 +30,14 @@
     .version{color:#a7d5ff;font-size:12px;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px}.muted{color:var(--muted);font-size:13px;line-height:1.45;margin-top:6px}
     .login-head{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer}.login-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 
-    /* Email on top right */
-    .header-email{font-size:11px; color:#cce0ff; font-weight:600; background:rgba(125,168,255,0.12); padding:4px 8px; border-radius:10px; border:1px solid rgba(125,168,255,0.25); white-space:nowrap; max-width:140px; overflow:hidden; text-overflow:ellipsis;}
+    /* Email on top right & User Menu */
+    .header-user-menu{position:relative;}
+    .header-email{font-size:11px; color:#cce0ff; font-weight:600; background:rgba(125,168,255,0.12); padding:6px 10px; border-radius:10px; border:1px solid rgba(125,168,255,0.25); white-space:nowrap; max-width:140px; overflow:hidden; text-overflow:ellipsis; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:background 0.2s;}
+    .header-email:hover{background:rgba(125,168,255,0.2);}
+    .user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--bg2);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;z-index:100;min-width:160px;transform-origin:top right;animation:dropIn 0.15s ease;}
+    .dropdown-item{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:13px;color:var(--ko);cursor:pointer;border-radius:8px;transition:background 0.2s;}
+    .dropdown-item:hover{background:rgba(255,109,134,0.1);}
+    @keyframes dropIn { from{opacity:0; transform:scale(0.95);} to{opacity:1; transform:scale(1);} }
 
     .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:600}
     .pill.connected{background:rgba(56,211,159,.15);color:var(--ok);border-color:rgba(56,211,159,.3)}
@@ -41,7 +47,7 @@
     .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{display:grid;gap:6px;margin-top:12px}label{color:var(--muted);font-size:13px}
     input,textarea{width:100%;border:1px solid rgba(255,255,255,.08);background:rgba(8,12,24,.5);color:var(--text);outline:none;border-radius:16px;padding:14px 14px;font:inherit}textarea{min-height:80px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
     input:focus,textarea:focus{border-color:rgba(126,168,255,.8);box-shadow:0 0 0 3px rgba(126,168,255,.15)}
-    .actions,.subactions{display:grid;gap:10px;margin-top:14px}.actions{grid-template-columns:1fr}.subactions{grid-template-columns:1fr 1fr}
+    .actions{display:grid;gap:10px;margin-top:14px;grid-template-columns:1fr}
     button{border:1px solid rgba(255,255,255,.08);background:rgba(17,24,46,.8);color:var(--text);font:inherit;cursor:pointer;border-radius:16px;padding:14px 14px;min-height:50px;transition:transform .15s ease,opacity .15s ease,box-shadow .15s ease,background .15s ease}button:hover{transform:translateY(-1px)}button:active{transform:scale(.98)}button:disabled{opacity:.5;cursor:not-allowed;transform:none}
     .primary{background:linear-gradient(135deg, rgba(75,125,255,.95), rgba(126,168,255,.9));box-shadow:0 8px 20px rgba(75,125,255,.25);border:none} .ghost{background:rgba(17,24,46,.4)}
     .debug-toggle{margin-top:12px;color:#a7d5ff;background:none;border:0;padding:0;min-height:auto;text-align:left;font-size:13px}.hidden{display:none!important}
@@ -160,7 +166,7 @@
       .pill-btn{width:28px;height:28px;}
       .pill-btn svg{width:14px;height:14px;}
       .status-text{font-size:11px;}
-      .header-email{font-size:10px; padding:3px 6px; max-width: 100px;}
+      .header-email{font-size:10px; padding:4px 8px; max-width: 120px;}
       .addon-actions{padding:0 6px 10px 34px; gap:6px;}
     }
   </style>
@@ -170,10 +176,23 @@
     <div class="sticky">
       <div class="sticky-inner">
         <div class="status glass"><span id="statusDot" class="dot orange"></span><div id="statusText" class="status-text">En attente.</div></div>
-        <span id="headerEmail" class="header-email hidden"></span>
+
+        <div id="headerUserMenu" class="header-user-menu hidden">
+          <div id="headerEmail" class="header-email">
+            <span id="headerEmailText"></span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-left:2px;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div id="userDropdown" class="user-dropdown hidden">
+            <div class="dropdown-item" id="btnLogout">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              Se déconnecter
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
-    <section class="hero glass"><div class="version">V1.1</div><h1>Strem Tweaker</h1><p class="muted">Connexion rapide, indicateurs +/- et auto-scroll des extensions.</p></section>
+    <section class="hero glass"><div class="version">V1.2</div><h1>Strem Tweaker</h1><p class="muted">Menu de déconnexion et conservation de session multi-versions.</p></section>
 
     <section id="loginPanel" class="panel glass">
       <div id="loginHead" class="login-head">
@@ -195,20 +214,18 @@
         <div class="field" style="margin-top:12px;">
           <label for="authKey">AuthKey Stremio (Optionnel si tu mets l'email)</label>
           <div style="position:relative; display:flex; align-items:center;">
-            <input id="authKey" type="password" placeholder="Clé récupérée automatiquement, ou à coller..." style="padding-right:44px;">
-            <div id="toggleAuthKey" style="position:absolute; right:12px; display:flex; color:var(--muted); cursor:pointer; transition:color 0.2s;">
+            <input id="authKey" type="password" placeholder="Clé récupérée automatiquement, ou à coller..." style="padding-right:76px;">
+            <div id="toggleAuthKey" style="position:absolute; right:40px; display:flex; color:var(--muted); cursor:pointer; transition:color 0.2s;" title="Afficher/Masquer">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+            <div id="copyAuthKeyIcon" style="position:absolute; right:12px; display:flex; color:var(--muted); cursor:pointer; transition:color 0.2s;" title="Copier l'AuthKey">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
             </div>
           </div>
         </div>
 
         <div class="actions">
           <button id="loginBtn" class="primary" type="button">Connexion & Charger</button>
-        </div>
-
-        <div class="subactions" style="margin-top:10px">
-          <button id="clearBtn" class="ghost" type="button">Tout Effacer</button>
-          <button id="copyBtn" class="ghost" type="button">Copier AuthKey</button>
         </div>
 
         <button id="debugToggle" class="debug-toggle" type="button">Afficher debug</button>
@@ -256,7 +273,8 @@
   </div>
 
 <script>
-const STORAGE_KEY = 'strem-tweaker-v1.1';
+// Version-agnostic storage key to keep connection active across updates
+const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
 
@@ -265,8 +283,9 @@ const FALLBACK_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy5
 
 const state = { email:'', password:'', authKey:'', addons:[], syncing:false, debugOpen:false, loginCollapsed:false, dragItem:null, dragClone:null, dragOffsetY:0, dragChanged:false, lastPointerY:0, scrollSpeed:0 };
 const el = {
-  email: document.getElementById('email'), password: document.getElementById('password'), authKey: document.getElementById('authKey'), toggleAuthKey: document.getElementById('toggleAuthKey'), headerEmail: document.getElementById('headerEmail'),
-  loginBtn: document.getElementById('loginBtn'), clearBtn: document.getElementById('clearBtn'), copyBtn: document.getElementById('copyBtn'), chev: document.getElementById('loginChev'),
+  email: document.getElementById('email'), password: document.getElementById('password'), authKey: document.getElementById('authKey'), toggleAuthKey: document.getElementById('toggleAuthKey'), copyAuthKeyIcon: document.getElementById('copyAuthKeyIcon'),
+  headerUserMenu: document.getElementById('headerUserMenu'), headerEmail: document.getElementById('headerEmail'), headerEmailText: document.getElementById('headerEmailText'), userDropdown: document.getElementById('userDropdown'), btnLogout: document.getElementById('btnLogout'),
+  loginBtn: document.getElementById('loginBtn'), chev: document.getElementById('loginChev'),
   statusDot: document.getElementById('statusDot'), statusText: document.getElementById('statusText'), debugToggle: document.getElementById('debugToggle'), debugWrap: document.getElementById('debugWrap'), debugBox: document.getElementById('debugBox'),
   loginPanel: document.getElementById('loginPanel'), loginHead: document.getElementById('loginHead'), loginStatePill: document.getElementById('loginStatePill'), addonsCard: document.getElementById('addonsCard'), addonsList: document.getElementById('addonsList'), emptyState: document.getElementById('emptyState'), countLabel: document.getElementById('countLabel'), fitWrap: document.getElementById('fitWrap'), mainWrap: document.getElementById('mainWrap'),
   btnSaveJson: document.getElementById('btnSaveJson'), btnRestoreJson: document.getElementById('btnRestoreJson'), fileRestore: document.getElementById('fileRestore'),
@@ -301,8 +320,20 @@ function bind(){
     });
   });
 
-  el.clearBtn.addEventListener('click', clearAll);
-  el.copyBtn.addEventListener('click', copyAuthKey);
+  // Header User Menu interactions
+  el.headerEmail.addEventListener('click', function(e) {
+    e.stopPropagation();
+    el.userDropdown.classList.toggle('hidden');
+  });
+  document.addEventListener('click', function(e) {
+    if(!e.target.closest('#headerUserMenu')) {
+      el.userDropdown.classList.add('hidden');
+    }
+  });
+  el.btnLogout.addEventListener('click', clearAll);
+
+  el.copyAuthKeyIcon.addEventListener('click', copyAuthKey);
+
   el.debugToggle.addEventListener('click', function(){ state.debugOpen = !state.debugOpen; renderDebug(); saveLocal(); });
   el.loginHead.addEventListener('click', function(e){ if(e.target.closest('button') || e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA') return; state.loginCollapsed = !state.loginCollapsed; renderLoginPanel(); saveLocal(); });
 
@@ -383,7 +414,22 @@ async function checkUpdates() {
 }
 
 function hydrate(){ el.email.value = state.email || ''; el.password.value = state.password || ''; el.authKey.value = state.authKey || ''; }
-function loadLocal(){ try{ const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return; const s = JSON.parse(raw); state.email = s.email || ''; state.password = s.password || ''; state.authKey = s.authKey || ''; state.debugOpen = !!s.debugOpen; state.loginCollapsed = !!s.loginCollapsed; }catch(_){} }
+function loadLocal(){ 
+  try { 
+    // Data persistence migration check
+    let raw = localStorage.getItem(STORAGE_KEY); 
+    if(!raw) raw = localStorage.getItem('strem-tweaker-v1.1');
+    if(!raw) raw = localStorage.getItem('strem-tweaker-v1.0');
+    if(!raw) return; 
+
+    const s = JSON.parse(raw); 
+    state.email = s.email || ''; 
+    state.password = s.password || ''; 
+    state.authKey = s.authKey || ''; 
+    state.debugOpen = !!s.debugOpen; 
+    state.loginCollapsed = !!s.loginCollapsed; 
+  } catch(_){} 
+}
 function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({ email:state.email, password:state.password, authKey:state.authKey, debugOpen:state.debugOpen, loginCollapsed:state.loginCollapsed })); }
 
 function exportAddons() {
@@ -431,19 +477,35 @@ function updateLoginPill(){
   el.loginStatePill.className = 'pill ' + (isAuth ? 'connected' : 'disconnected');
 
   if (state.email) {
-    el.headerEmail.textContent = state.email.split('@')[0];
-    el.headerEmail.classList.remove('hidden');
+    el.headerEmailText.textContent = state.email.split('@')[0];
+    el.headerUserMenu.classList.remove('hidden');
   } else {
-    el.headerEmail.classList.add('hidden');
+    el.headerUserMenu.classList.add('hidden');
   }
 }
 
 function updateLayoutMode(){ document.body.classList.toggle('addons-mode', !!state.addons.length); }
 
-function clearAll(){ state.email=''; state.password=''; state.authKey=''; state.addons=[]; state.loginCollapsed=false; localStorage.removeItem(STORAGE_KEY); hydrate(); el.authKey.type='password'; el.toggleAuthKey.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>'; el.toggleAuthKey.style.color='var(--muted)'; renderList(); renderLoginPanel(); updateLoginPill(); updateLayoutMode(); el.addonsCard.classList.add('hidden'); logDebug('Données effacées.'); setStatus('orange','Données effacées.'); }
+function clearAll(){ 
+  state.email=''; state.password=''; state.authKey=''; state.addons=[]; state.loginCollapsed=false; 
+  localStorage.removeItem(STORAGE_KEY); 
+  hydrate(); 
+  el.authKey.type='password'; 
+  el.toggleAuthKey.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>'; 
+  el.toggleAuthKey.style.color='var(--muted)'; 
+  el.userDropdown.classList.add('hidden');
+  renderList(); 
+  renderLoginPanel(); 
+  updateLoginPill(); 
+  updateLayoutMode(); 
+  el.addonsCard.classList.add('hidden'); 
+  logDebug('Déconnexion effectuée.'); 
+  setStatus('orange','Déconnecté et données effacées.'); 
+}
+
 function setStatus(color, text){ el.statusDot.className = 'dot ' + color; el.statusText.textContent = text; }
 function logDebug(value){ el.debugBox.value = typeof value === 'string' ? value : JSON.stringify(value, null, 2); }
-function disableTop(flag){ [el.loginBtn, el.clearBtn, el.copyBtn, el.btnSaveJson, el.btnRestoreJson, el.btnCheckUpdates].forEach(function(b){ b.disabled = flag; }); }
+function disableTop(flag){ [el.loginBtn, el.btnSaveJson, el.btnRestoreJson, el.btnCheckUpdates].forEach(function(b){ b.disabled = flag; }); }
 
 async function fetchUserEmail() {
   if(!state.authKey) return;
@@ -702,16 +764,13 @@ function renderList(activeAddon){
             const isExpanded = card.classList.toggle('expanded'); 
 
             if (isExpanded) {
-              // Petit délai pour laisser le layout se mettre à jour avec display: flex
               setTimeout(() => {
                 const wrapRect = el.fitWrap.getBoundingClientRect();
                 const cardRect = card.getBoundingClientRect();
 
-                // Si la carte dépasse en bas de la vue, on scroll juste assez pour la voir
                 if (cardRect.bottom > wrapRect.bottom) {
                   el.fitWrap.scrollBy({ top: cardRect.bottom - wrapRect.bottom + 8, behavior: 'smooth' });
                 } 
-                // Optionnel : si la carte dépasse en haut (peu probable sur un clic, mais au cas où)
                 else if (cardRect.top < wrapRect.top) {
                   el.fitWrap.scrollBy({ top: cardRect.top - wrapRect.top - 8, behavior: 'smooth' });
                 }
