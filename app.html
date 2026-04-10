@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker v1.0-14</title>
+  <title>Strem Tweaker v1.0-15</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -87,7 +87,7 @@
 <body>
   <div class="wrap">
     <div class="sticky"><div class="status glass"><span id="statusDot" class="dot orange"></span><div id="statusText" class="status-text">En attente.</div></div></div>
-    <section class="hero glass"><div class="version">v1.0-14</div><h1>Strem Tweaker</h1><p class="muted">Ajout du bouton d'activation/désactivation (œil) conservé en local.</p></section>
+    <section class="hero glass"><div class="version">v1.0-15</div><h1>Strem Tweaker</h1><p class="muted">Les addons désactivés sont maintenant sauvegardés directement dans le compte Stremio et préservent leur position exacte.</p></section>
 
     <section id="loginPanel" class="panel glass">
       <div id="loginHead" class="login-head">
@@ -114,9 +114,9 @@
     </section>
   </div>
 <script>
-const STORAGE_KEY = 'strem-tweaker-v1.0-14';
+const STORAGE_KEY = 'strem-tweaker-v1.0-15';
 const API_BASE = 'https://api.strem.io/api/';
-const state = { email:'', password:'', authKey:'', addons:[], disabledAddons:[], syncing:false, debugOpen:false, loginCollapsed:false, dragItem:null, dragClone:null, dragOffsetY:0, dragChanged:false };
+const state = { email:'', password:'', authKey:'', addons:[], syncing:false, debugOpen:false, loginCollapsed:false, dragItem:null, dragClone:null, dragOffsetY:0, dragChanged:false };
 const el = {
   email: document.getElementById('email'), password: document.getElementById('password'), authKey: document.getElementById('authKey'),
   loginBtn: document.getElementById('loginBtn'), loadBtn: document.getElementById('loadBtn'), clearBtn: document.getElementById('clearBtn'), copyBtn: document.getElementById('copyBtn'), saveBtn: document.getElementById('saveBtn'),
@@ -158,8 +158,8 @@ function bind(){
 }
 
 function hydrate(){ el.email.value = state.email || ''; el.password.value = state.password || ''; el.authKey.value = state.authKey || ''; }
-function loadLocal(){ try{ const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return; const s = JSON.parse(raw); state.email = s.email || ''; state.password = s.password || ''; state.authKey = s.authKey || ''; state.debugOpen = !!s.debugOpen; state.loginCollapsed = !!s.loginCollapsed; state.disabledAddons = Array.isArray(s.disabledAddons) ? s.disabledAddons : []; }catch(_){} }
-function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({ email:state.email, password:state.password, authKey:state.authKey, debugOpen:state.debugOpen, loginCollapsed:state.loginCollapsed, disabledAddons:state.disabledAddons })); }
+function loadLocal(){ try{ const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return; const s = JSON.parse(raw); state.email = s.email || ''; state.password = s.password || ''; state.authKey = s.authKey || ''; state.debugOpen = !!s.debugOpen; state.loginCollapsed = !!s.loginCollapsed; }catch(_){} }
+function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({ email:state.email, password:state.password, authKey:state.authKey, debugOpen:state.debugOpen, loginCollapsed:state.loginCollapsed })); }
 function renderDebug(){ el.debugWrap.classList.toggle('hidden', !state.debugOpen); el.debugToggle.textContent = state.debugOpen ? 'Masquer debug' : 'Afficher debug'; }
 function renderLoginPanel(){ el.loginPanel.classList.toggle('collapsed', state.loginCollapsed); }
 
@@ -171,7 +171,7 @@ function updateLoginPill(){
 
 function updateLayoutMode(){ document.body.classList.toggle('addons-mode', !!state.addons.length); }
 
-function clearAll(){ state.email=''; state.password=''; state.authKey=''; state.addons=[]; state.disabledAddons=[]; state.loginCollapsed=false; localStorage.removeItem(STORAGE_KEY); hydrate(); renderList(); renderLoginPanel(); updateLoginPill(); updateLayoutMode(); el.addonsCard.classList.add('hidden'); logDebug('Données effacées.'); setStatus('orange','Données effacées.'); }
+function clearAll(){ state.email=''; state.password=''; state.authKey=''; state.addons=[]; state.loginCollapsed=false; localStorage.removeItem(STORAGE_KEY); hydrate(); renderList(); renderLoginPanel(); updateLoginPill(); updateLayoutMode(); el.addonsCard.classList.add('hidden'); logDebug('Données effacées.'); setStatus('orange','Données effacées.'); }
 function setStatus(color, text){ el.statusDot.className = 'dot ' + color; el.statusText.textContent = text; }
 function logDebug(value){ el.debugBox.value = typeof value === 'string' ? value : JSON.stringify(value, null, 2); }
 function disableTop(flag){ [el.loginBtn, el.loadBtn, el.clearBtn, el.copyBtn, el.saveBtn].forEach(function(b){ b.disabled = flag; }); }
@@ -205,17 +205,17 @@ async function loadAddons(){
     const data = await resp.json(); logDebug({ step:'addons:get:response', status:resp.status, ok:resp.ok, data:data }); 
     if(!resp.ok || data.error || (data.result && data.result.error)){ throw new Error((data.error && data.error.message) || data.error || (data.result && data.result.error) || 'Impossible de charger les addons'); } 
 
-    // Merge remote active addons with locally disabled addons
     const fetched = Array.isArray(data.result && data.result.addons) ? data.result.addons : []; 
-    const fetchedUrls = fetched.map(function(a){ return a.transportUrl; });
-    const localDisabled = state.disabledAddons.filter(function(a){ return !fetchedUrls.includes(a.transportUrl); });
 
-    fetched.forEach(function(a){ a._disabled = false; });
-    localDisabled.forEach(function(a){ a._disabled = true; });
+    fetched.forEach(function(a){ 
+      if(a.transportUrl && a.transportUrl.startsWith('disabled-')){
+        a._disabled = true;
+      } else {
+        a._disabled = false;
+      }
+    });
 
-    state.addons = fetched.concat(localDisabled);
-    // Cleanup state.disabledAddons just in case some were re-enabled elsewhere
-    state.disabledAddons = state.addons.filter(function(a){ return a._disabled; });
+    state.addons = fetched;
 
     state.loginCollapsed = true; saveLocal(); renderLoginPanel(); updateLoginPill(); updateLayoutMode(); el.addonsCard.classList.remove('hidden'); renderList(); setStatus('green', state.addons.length ? 'Addons chargés.' : 'Aucun addon trouvé.'); 
   } catch(error){ 
@@ -237,8 +237,15 @@ function getEyeOffSvg() {
 
 function toggleAddon(addon) {
   addon._disabled = !addon._disabled;
-  state.disabledAddons = state.addons.filter(function(a){ return a._disabled; });
-  saveLocal();
+  if(addon._disabled) {
+    if(!addon.transportUrl.startsWith('disabled-')){
+      addon.transportUrl = 'disabled-' + addon.transportUrl;
+    }
+  } else {
+    if(addon.transportUrl.startsWith('disabled-')){
+      addon.transportUrl = addon.transportUrl.replace(/^disabled-/, '');
+    }
+  }
   renderList();
   syncOrder();
 }
@@ -333,8 +340,9 @@ async function syncOrder(){
   if(state.syncing) return; setStatus('orange', "Mise à jour de l'ordre en cours..."); 
   try{ 
     state.syncing = true; document.querySelectorAll('.drag-handle, .toggle-btn').forEach(function(node){ node.style.pointerEvents = 'none'; }); 
-    const activeAddons = state.addons.filter(function(a){ return !a._disabled; });
-    const resp = await fetch(API_BASE + 'addonCollectionSet', { method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, body: JSON.stringify({ type:'AddonCollectionSet', authKey:state.authKey, addons:activeAddons }) }); 
+
+    // Send ALL addons, preserving the order and the 'disabled-' prefix for disabled ones
+    const resp = await fetch(API_BASE + 'addonCollectionSet', { method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, body: JSON.stringify({ type:'AddonCollectionSet', authKey:state.authKey, addons:state.addons }) }); 
     const data = await resp.json(); logDebug({ step:'addons:set:response', status:resp.status, ok:resp.ok, data:data }); 
     if(!resp.ok || !(data.result && data.result.success)){ throw new Error((data.error && data.error.message) || (data.result && data.result.error) || data.error || 'Échec de synchronisation'); } 
     setStatus('green', 'Ordre mis à jour immédiatement.'); 
