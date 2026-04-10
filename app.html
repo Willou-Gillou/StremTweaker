@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker v1.0-31</title>
+  <title>Strem Tweaker v1.0-32</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
       --blue:#7da8ff;--blue2:#4b7dff;--ok:#38d39f;--ko:#ff6d86;--wait:#ffb84d;--shadow:0 18px 42px rgba(0,0,0,.28);--radius:22px;
-      --addon-h:54px;
+      --addon-h:56px;
     }
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html,body{margin:0;padding:0;height:100dvh;overflow:hidden;}
@@ -62,27 +62,60 @@
 
     .list{display:grid;gap:8px;padding-bottom:12px;}
 
-    /* Flexbox setup for cards */
-    .addon-card{display:flex;align-items:center;gap:6px;height:var(--addon-h);padding:6px 8px;border-radius:18px;border:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg, rgba(28,38,68,.7), rgba(18,25,48,.6));box-shadow:0 4px 12px rgba(0,0,0,.15);transition:transform .15s ease, opacity .15s ease, filter .15s ease;width:100%;}
+    /* ADDON CARD 2.0: Flex Column Expandable */
+    .addon-card{
+      display:flex; flex-direction:column; align-items:stretch; gap:0;
+      height:auto; min-height:var(--addon-h); padding:0;
+      border-radius:18px; border:1px solid rgba(255,255,255,.06);
+      background:linear-gradient(180deg, rgba(28,38,68,.7), rgba(18,25,48,.6));
+      box-shadow:0 4px 12px rgba(0,0,0,.15);
+      transition:transform .15s ease, opacity .15s ease, filter .15s ease, background .2s ease;
+      width:100%;
+      overflow:hidden;
+    }
     .addon-card.drag-source{opacity:0.3;filter:grayscale(0.5);transform:scale(0.98)}
     .addon-card.flash{animation:flash .3s ease}
     .addon-card.is-disabled{opacity:0.55;filter:grayscale(0.8);background:rgba(20,25,40,.5)}
     .addon-card.is-disabled .addon-title{text-decoration:line-through;color:var(--muted)}
     .addon-card.is-disabled .addon-icon{filter:grayscale(1) opacity(0.5);}
 
+    .addon-card.expanded {
+      background:linear-gradient(180deg, rgba(38,52,94,.9), rgba(24,34,64,.8));
+      border-color: rgba(126,168,255,.2);
+    }
+
+    /* Row 1: Always visible */
+    .addon-main{
+      display:flex; align-items:center; gap:6px;
+      height:var(--addon-h); width:100%; padding:6px 8px;
+      cursor:pointer;
+    }
+    .addon-main:hover{background:rgba(255,255,255,.02);}
+
     .rank{flex:0 0 32px;width:32px;height:32px;border-radius:12px;display:grid;place-items:center;font-weight:700;font-size:12px;color:#cce0ff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.05);transition:all .2s ease;}
 
-    /* Flexible title wrap */
     .addon-title-wrap{flex:1 1 0%;min-width:0;display:flex;align-items:center;gap:8px;}
     .addon-icon{flex:0 0 28px;width:28px;height:28px;border-radius:6px;object-fit:cover;background:rgba(255,255,255,.05);}
     .addon-title{flex:0 1 auto;font-weight:600;font-size:14px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .2s}
     .addon-version{flex:0 0 auto;font-size:11px;font-weight:500;color:var(--muted);background:rgba(255,255,255,.08);padding:2px 6px;border-radius:6px;}
     .addon-update-badge{flex:0 0 auto;font-size:10px;color:var(--wait);border:1px solid var(--wait);padding:2px 4px;border-radius:4px;white-space:nowrap;}
 
-    /* Fixed size action buttons */
-    .action-btn{flex:0 0 34px;width:34px;height:34px;display:grid;place-items:center;color:var(--blue);cursor:pointer;border-radius:10px;transition:background .2s, color .2s}
+    /* Row 2: Expanded actions */
+    .addon-actions{
+      display:none; align-items:center; gap:8px;
+      padding:2px 8px 12px 46px; /* align under title */
+      flex-wrap:wrap; width:100%;
+    }
+    .addon-card.expanded .addon-actions { display:flex; }
+
+    .action-btn{flex:0 0 36px;width:36px;height:36px;display:grid;place-items:center;color:var(--blue);cursor:pointer;border-radius:10px;transition:background .2s, color .2s}
     .action-btn:active{background:rgba(255,255,255,.1)}
     .action-btn svg{width:18px;height:18px}
+    .action-btn:hover{background:rgba(255,255,255,.06)}
+
+    .addon-actions .action-btn{ background:rgba(125,168,255,0.08); border:1px solid rgba(125,168,255,0.1); }
+    .addon-actions .action-btn:hover{ background:rgba(125,168,255,0.15); }
+
     .is-disabled .action-btn.toggle-btn{color:var(--ko)}
     .hidden-btn{display:none!important;}
 
@@ -90,9 +123,11 @@
     .drag-handle:active{cursor:grabbing;color:rgba(255,255,255,.9);background:rgba(255,255,255,.08)}
     .drag-handle svg{width:20px;height:20px}
 
-    .floating-card{position:fixed;z-index:998;background:linear-gradient(180deg, rgba(38,52,94,.95), rgba(24,34,64,.95));border:1px solid rgba(255,255,255,.15);box-shadow:0 30px 60px rgba(0,0,0,.4), 0 0 0 1px rgba(126,168,255,.3);border-radius:18px;pointer-events:none;transform-origin:top left;transition:none;display:flex;align-items:center;gap:6px;padding:6px 8px;width:100%;max-width:calc(860px - 28px);}
+    /* Floating clone styling */
+    .floating-card{position:fixed;z-index:998;box-shadow:0 30px 60px rgba(0,0,0,.4), 0 0 0 1px rgba(126,168,255,.3);pointer-events:none;transform-origin:top left;transition:none;width:100%;max-width:calc(860px - 28px);}
     .floating-card .drag-handle{color:rgba(255,255,255,.9)}
     .floating-card .rank{background:rgba(126,168,255,.15);border-color:rgba(126,168,255,.3);color:var(--blue);}
+
     .empty{color:var(--muted);margin-top:14px;padding:14px;border:1px dashed var(--line);border-radius:16px;background:rgba(13,19,36,.42)}
 
     /* Edit Modal */
@@ -113,18 +148,19 @@
       .wrap{padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
       .sticky{margin:-12px -12px 8px;padding-left:12px;padding-right:12px}
       .panel{padding:12px}
-      .addon-card, .floating-card{gap:4px;height:52px;padding:5px 6px}
+      .addon-main{gap:4px;height:54px;padding:5px 6px}
       .rank{flex:0 0 24px;width:24px;height:24px;font-size:10px}
       .addon-title-wrap{gap:6px;}
       .addon-icon{flex:0 0 24px;width:24px;height:24px;border-radius:5px;}
       .addon-title{font-size:13px}
       .addon-version{font-size:10px;padding:1px 4px;}
-      .action-btn{flex:0 0 30px;width:30px;height:30px}
+      .action-btn{flex:0 0 32px;width:32px;height:32px}
       .action-btn svg{width:16px;height:16px}
       .drag-handle{flex:0 0 32px;width:32px;height:32px}
       .pill-btn{width:28px;height:28px;}
       .pill-btn svg{width:14px;height:14px;}
       .header-email{font-size:11px; padding:4px 8px; max-width: 120px;}
+      .addon-actions{padding:0 6px 10px 34px; gap:6px;}
     }
   </style>
 </head>
@@ -136,7 +172,7 @@
         <span id="headerEmail" class="header-email hidden"></span>
       </div>
     </div>
-    <section class="hero glass"><div class="version">v1.0-31</div><h1>Strem Tweaker</h1><p class="muted">Ascenseur isolé sur la liste uniquement et scroll tout en haut.</p></section>
+    <section class="hero glass"><div class="version">v1.0-32</div><h1>Strem Tweaker</h1><p class="muted">Refonte de l'interface en 2 lignes pour plus de clarté.</p></section>
 
     <section id="loginPanel" class="panel glass">
       <div id="loginHead" class="login-head">
@@ -219,7 +255,7 @@
   </div>
 
 <script>
-const STORAGE_KEY = 'strem-tweaker-v1.0-31';
+const STORAGE_KEY = 'strem-tweaker-v1.0-32';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
 
@@ -556,7 +592,6 @@ function moveToTop(addon) {
     state.addons.unshift(addon);
     renderList(addon);
     syncOrder();
-    // Scroll completely to the top of the list container
     el.fitWrap.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }
@@ -568,7 +603,6 @@ function moveToBottom(addon) {
     state.addons.push(addon);
     renderList(addon);
     syncOrder();
-    // Scroll completely to the bottom of the list container
     el.fitWrap.scrollTo({ top: el.fitWrap.scrollHeight, behavior: 'smooth' });
   }
 }
@@ -613,23 +647,40 @@ function renderList(activeAddon){
     const updateBadge = addon._hasUpdate ? `<span class="addon-update-badge">v${addon._hasUpdate.version} dispo</span>` : '';
     const versionBadge = version ? `<span class="addon-version">${version}</span>` : '';
 
+    // NEW LAYOUT: Row 1 = addon-main, Row 2 = addon-actions
     card.innerHTML = `
-      <div class="rank">${index + 1}</div>
-      <div class="addon-title-wrap">
-        <img class="addon-icon" src="${escapeHtml(iconUrl)}" alt="" onerror="this.src='${FALLBACK_ICON}'">
-        <div class="addon-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
-        ${versionBadge}
-        ${updateBadge}
+      <div class="addon-main">
+        <div class="rank">${index + 1}</div>
+        <div class="addon-title-wrap">
+          <img class="addon-icon" src="${escapeHtml(iconUrl)}" alt="" onerror="this.src='${FALLBACK_ICON}'">
+          <div class="addon-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
+          ${versionBadge}
+          ${updateBadge}
+        </div>
+        <div class="action-btn toggle-btn" title="Activer/Désactiver">${addon._disabled ? svgEyeOff : svgEye}</div>
+        <div class="drag-handle">${svgGrip}</div>
       </div>
-      <div class="action-btn btn-totop ${isFirst ? 'hidden-btn' : ''}" title="Mettre en 1er (↑)">${svgToTop}</div>
-      <div class="action-btn btn-tobottom ${isLast ? 'hidden-btn' : ''}" title="Mettre en dernier (↓)">${svgToBottom}</div>
-      <div class="action-btn btn-update ${addon._hasUpdate ? '' : 'hidden-btn'}" style="color:var(--wait)" title="Mettre à jour">${svgUpdate}</div>
-      <div class="action-btn btn-delete" style="color:var(--ko)" title="Supprimer (❌)">${svgCross}</div>
-      <div class="action-btn btn-config ${isConfigurable ? '' : 'hidden-btn'}" title="Configuration (⚙️)">${isConfigurable ? svgGear : ''}</div>
-      <div class="action-btn btn-edit" title="Modifier URL (✏️)">${svgEdit}</div>
-      <div class="action-btn toggle-btn" title="Activer/Désactiver">${addon._disabled ? svgEyeOff : svgEye}</div>
-      <div class="drag-handle">${svgGrip}</div>
+
+      <div class="addon-actions">
+        <div class="action-btn btn-totop ${isFirst ? 'hidden-btn' : ''}" title="Monter en 1er">${svgToTop}</div>
+        <div class="action-btn btn-tobottom ${isLast ? 'hidden-btn' : ''}" title="Descendre en dernier">${svgToBottom}</div>
+        <div class="action-btn btn-update ${addon._hasUpdate ? '' : 'hidden-btn'}" style="color:var(--wait); border-color:rgba(255,184,77,0.3); background:rgba(255,184,77,0.1);" title="Mettre à jour">${svgUpdate}</div>
+        <div class="action-btn btn-config ${isConfigurable ? '' : 'hidden-btn'}" title="Configurer">${svgGear}</div>
+        <div class="action-btn btn-edit" title="Changer URL">${svgEdit}</div>
+        <div style="flex:1;"></div>
+        <div class="action-btn btn-delete" style="color:var(--ko); border-color:rgba(255,109,134,0.3); background:rgba(255,109,134,0.1);" title="Fermer (Supprimer)">${svgCross}</div>
+      </div>
     `;
+
+    // Toggle expand
+    const mainRow = card.querySelector('.addon-main');
+    ['click'].forEach(function(evt){ 
+        mainRow.addEventListener(evt, function(e){ 
+            if(e.target.closest('.toggle-btn') || e.target.closest('.drag-handle')) return;
+            e.preventDefault(); 
+            card.classList.toggle('expanded'); 
+        }); 
+    });
 
     const handle = card.querySelector('.drag-handle'); 
     ['pointerdown','touchstart','mousedown'].forEach(function(evt){ handle.addEventListener(evt, function(e){ startDrag(e, addon); }, { passive:false }); }); 
@@ -681,7 +732,10 @@ function getPoint(evt){ if(evt.touches && evt.touches[0]) return { x: evt.touche
 
 function startDrag(evt, addon){ 
   if(state.syncing) return; evt.preventDefault(); evt.stopPropagation(); 
-  const point = getPoint(evt); const card = evt.currentTarget.closest('.addon-card'); const rect = card.getBoundingClientRect(); 
+  const point = getPoint(evt); const card = evt.currentTarget.closest('.addon-card'); 
+  card.classList.remove('expanded'); // Auto-collapse before dragging
+
+  const rect = card.getBoundingClientRect(); 
   state.dragItem = addon; state.dragChanged = false; state.dragOffsetY = point.y - rect.top; 
   createClone(card, rect); 
   card.classList.add('drag-source'); 
