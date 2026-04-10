@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker v1.0-32</title>
+  <title>Strem Tweaker V1.0</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -22,16 +22,16 @@
     .sticky-inner{display:flex;justify-content:space-between;align-items:center;width:100%;gap:10px;}
 
     .glass{background:var(--glass);border:1px solid var(--line);box-shadow:var(--shadow);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:var(--radius)}
-    .status{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:18px;background:rgba(15,20,38,.75);border:1px solid var(--line)}
-    .dot{width:12px;height:12px;border-radius:999px;background:var(--wait);flex:0 0 auto;box-shadow:0 0 16px currentColor}.green{background:var(--ok);color:var(--ok)}.red{background:var(--ko);color:var(--ko)}.orange{background:var(--wait);color:var(--wait)}
-    .status-text{font-size:14px;line-height:1.4}
+    .status{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:14px;background:rgba(15,20,38,.75);border:1px solid var(--line)}
+    .dot{width:10px;height:10px;border-radius:999px;background:var(--wait);flex:0 0 auto;box-shadow:0 0 12px currentColor}.green{background:var(--ok);color:var(--ok)}.red{background:var(--ko);color:var(--ko)}.orange{background:var(--wait);color:var(--wait)}
+    .status-text{font-size:12px;line-height:1.4}
     .hero,.panel{padding:16px;flex-shrink:0}.hero{margin-bottom:14px}
     h1,h2,p{margin:0}h1{font-size:24px;letter-spacing:-.02em}h2{font-size:17px}
     .version{color:#a7d5ff;font-size:12px;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px}.muted{color:var(--muted);font-size:13px;line-height:1.45;margin-top:6px}
     .login-head{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer}.login-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 
     /* Email on top right */
-    .header-email{font-size:12px; color:#cce0ff; font-weight:500; background:rgba(125,168,255,0.12); padding:5px 10px; border-radius:12px; border:1px solid rgba(125,168,255,0.25); white-space:nowrap; max-width:160px; overflow:hidden; text-overflow:ellipsis;}
+    .header-email{font-size:11px; color:#cce0ff; font-weight:600; background:rgba(125,168,255,0.12); padding:4px 8px; border-radius:10px; border:1px solid rgba(125,168,255,0.25); white-space:nowrap; max-width:140px; overflow:hidden; text-overflow:ellipsis;}
 
     .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:600}
     .pill.connected{background:rgba(56,211,159,.15);color:var(--ok);border-color:rgba(56,211,159,.3)}
@@ -55,7 +55,7 @@
     .pill-btn svg {width:16px;height:16px;}
 
     /* Scrollable list container */
-    .addons-fit{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;position:relative;margin-top:12px;padding-right:4px;}
+    .addons-fit{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;position:relative;margin-top:12px;padding-right:4px;scroll-behavior:auto;}
     .addons-fit::-webkit-scrollbar { width: 6px; }
     .addons-fit::-webkit-scrollbar-track { background: transparent; }
     .addons-fit::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
@@ -159,7 +159,8 @@
       .drag-handle{flex:0 0 32px;width:32px;height:32px}
       .pill-btn{width:28px;height:28px;}
       .pill-btn svg{width:14px;height:14px;}
-      .header-email{font-size:11px; padding:4px 8px; max-width: 120px;}
+      .status-text{font-size:11px;}
+      .header-email{font-size:10px; padding:3px 6px; max-width: 100px;}
       .addon-actions{padding:0 6px 10px 34px; gap:6px;}
     }
   </style>
@@ -172,7 +173,7 @@
         <span id="headerEmail" class="header-email hidden"></span>
       </div>
     </div>
-    <section class="hero glass"><div class="version">v1.0-32</div><h1>Strem Tweaker</h1><p class="muted">Refonte de l'interface en 2 lignes pour plus de clarté.</p></section>
+    <section class="hero glass"><div class="version">V1.0</div><h1>Strem Tweaker</h1><p class="muted">Version finale : Interface compacte et autoscroll intelligent.</p></section>
 
     <section id="loginPanel" class="panel glass">
       <div id="loginHead" class="login-head">
@@ -255,14 +256,14 @@
   </div>
 
 <script>
-const STORAGE_KEY = 'strem-tweaker-v1.0-32';
+const STORAGE_KEY = 'strem-tweaker-v1.0';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
 
 // Base64 generic puzzle icon for fallback
 const FALLBACK_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMykiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTkuNDM5IDE4LjUzMkExMCAxMCAwIDAgMSAzLjQ2NSAxNCIvPjxwYXRoIGQ9Ik0xOS40MzkgNS40NjhBMTAgMTAgMCAwIDEgMjAuNTM1IDEwIi8+PHBhdGggZD0iTTQuNTYxIDUuNDY4QTEwIDEwIDAgMCAxIDEyIDIiLz48cGF0aCBkPSJNMTIgMjJhMTAgMTAgMCAwIDEtNy40MzktNC41NjgiLz48cGF0aCBkPSJNMTEgMTJoMiIvPjxwYXRoIGQ9Ik0xMiAxMXYyIi8+PC9zdmc+';
 
-const state = { email:'', password:'', authKey:'', addons:[], syncing:false, debugOpen:false, loginCollapsed:false, dragItem:null, dragClone:null, dragOffsetY:0, dragChanged:false };
+const state = { email:'', password:'', authKey:'', addons:[], syncing:false, debugOpen:false, loginCollapsed:false, dragItem:null, dragClone:null, dragOffsetY:0, dragChanged:false, lastPointerY:0, scrollSpeed:0 };
 const el = {
   email: document.getElementById('email'), password: document.getElementById('password'), authKey: document.getElementById('authKey'), toggleAuthKey: document.getElementById('toggleAuthKey'), headerEmail: document.getElementById('headerEmail'),
   loginBtn: document.getElementById('loginBtn'), clearBtn: document.getElementById('clearBtn'), copyBtn: document.getElementById('copyBtn'),
@@ -273,6 +274,7 @@ const el = {
 };
 
 let modalCallback = null;
+let scrollRAF = null;
 
 init();
 
@@ -415,7 +417,7 @@ function updateLoginPill(){
   el.loginStatePill.className = 'pill ' + (isAuth ? 'connected' : 'disconnected');
 
   if (state.email) {
-    el.headerEmail.textContent = state.email;
+    el.headerEmail.textContent = state.email.split('@')[0];
     el.headerEmail.classList.remove('hidden');
   } else {
     el.headerEmail.classList.add('hidden');
@@ -608,7 +610,12 @@ function moveToBottom(addon) {
 }
 
 function renderList(activeAddon){ 
-  el.addonsList.innerHTML=''; const count = state.addons.length; el.countLabel.textContent = count + (count > 1 ? ' addons' : ' addon'); el.emptyState.classList.toggle('hidden', count !== 0); 
+  // Prevent scroll jumping during re-render
+  const st = el.fitWrap.scrollTop;
+  el.addonsList.style.minHeight = el.addonsList.scrollHeight + 'px';
+  el.addonsList.innerHTML=''; 
+
+  const count = state.addons.length; el.countLabel.textContent = count + (count > 1 ? ' addons' : ' addon'); el.emptyState.classList.toggle('hidden', count !== 0); 
   state.addons.forEach(function(addon, index){ 
     const manifest = addon.manifest || {}; 
     const title = manifest.name || manifest.id || 'Addon'; 
@@ -726,9 +733,24 @@ function renderList(activeAddon){
 
     el.addonsList.appendChild(card); 
   }); 
+
+  el.addonsList.style.minHeight = '';
+  el.fitWrap.scrollTop = st;
 }
 
 function getPoint(evt){ if(evt.touches && evt.touches[0]) return { x: evt.touches[0].clientX, y: evt.touches[0].clientY }; if(evt.changedTouches && evt.changedTouches[0]) return { x: evt.changedTouches[0].clientX, y: evt.changedTouches[0].clientY }; return { x: evt.clientX, y: evt.clientY }; }
+
+function scrollLoop() {
+  if (!state.dragItem) {
+    scrollRAF = null;
+    return;
+  }
+  if (state.scrollSpeed !== 0) {
+    el.fitWrap.scrollTop += state.scrollSpeed;
+    checkDragSwap(state.lastPointerY);
+  }
+  scrollRAF = requestAnimationFrame(scrollLoop);
+}
 
 function startDrag(evt, addon){ 
   if(state.syncing) return; evt.preventDefault(); evt.stopPropagation(); 
@@ -737,10 +759,15 @@ function startDrag(evt, addon){
 
   const rect = card.getBoundingClientRect(); 
   state.dragItem = addon; state.dragChanged = false; state.dragOffsetY = point.y - rect.top; 
+  state.lastPointerY = point.y;
+  state.scrollSpeed = 0;
+
   createClone(card, rect); 
   card.classList.add('drag-source'); 
   updateClonePosition(point.y); 
   document.body.classList.add('dragging'); setStatus('orange', "Glisse pour réorganiser..."); 
+
+  if(!scrollRAF) scrollRAF = requestAnimationFrame(scrollLoop);
 }
 
 function createClone(card, rect){ 
@@ -763,26 +790,45 @@ function updateClonePosition(clientY){
 
 function onMove(evt){ 
   if(!state.dragItem) return; evt.preventDefault(); 
-  const point = getPoint(evt); updateClonePosition(point.y); 
-  const nextIndex = indexFromPointerY(point.y); 
-  const currentIndex = state.addons.indexOf(state.dragItem); 
+  const point = getPoint(evt); 
+  state.lastPointerY = point.y;
+  updateClonePosition(point.y); 
 
-  if(nextIndex !== -1) {
+  const wrapRect = el.fitWrap.getBoundingClientRect();
+  const threshold = 60; // Pixels from border to trigger scroll
+
+  if (point.y < wrapRect.top + threshold) {
+      state.scrollSpeed = Math.max(-20, point.y - (wrapRect.top + threshold));
+  } else if (point.y > wrapRect.bottom - threshold) {
+      state.scrollSpeed = Math.min(20, point.y - (wrapRect.bottom - threshold));
+  } else {
+      state.scrollSpeed = 0;
+  }
+
+  checkDragSwap(point.y);
+}
+
+function checkDragSwap(clientY) {
+  const nextIndex = indexFromPointerY(clientY);
+  const currentIndex = state.addons.indexOf(state.dragItem);
+
+  if(nextIndex !== -1 && nextIndex !== currentIndex) {
     if(state.dragClone) {
       const rankEl = state.dragClone.querySelector('.rank');
       if(rankEl) rankEl.textContent = nextIndex + 1;
     }
-    if(nextIndex !== currentIndex){ 
-      state.addons.splice(currentIndex, 1); 
-      state.addons.splice(nextIndex, 0, state.dragItem); 
-      state.dragChanged = true; 
-      renderList(state.dragItem); 
-    } 
+    state.addons.splice(currentIndex, 1); 
+    state.addons.splice(nextIndex, 0, state.dragItem); 
+    state.dragChanged = true; 
+    renderList(state.dragItem); 
   }
 }
 
 function onEnd(evt){ 
   if(!state.dragItem) return; if(evt) evt.preventDefault(); const movedAddon = state.dragItem; 
+  state.scrollSpeed = 0;
+  if(scrollRAF) { cancelAnimationFrame(scrollRAF); scrollRAF = null; }
+
   removeClone(); state.dragItem = null; document.body.classList.remove('dragging'); renderList(movedAddon); 
   if(state.dragChanged){ 
     syncOrder(); 
