@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker v1.0-26</title>
+  <title>Strem Tweaker v1.0-29</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -55,9 +55,11 @@
     .addon-card.flash{animation:flash .3s ease}
     .addon-card.is-disabled{opacity:0.55;filter:grayscale(0.8);background:rgba(20,25,40,.5)}
     .addon-card.is-disabled .addon-title{text-decoration:line-through;color:var(--muted)}
+    .addon-card.is-disabled .addon-icon{filter:grayscale(1) opacity(0.5);}
 
-    .rank{width:32px;height:32px;border-radius:12px;display:grid;place-items:center;font-weight:700;font-size:12px;color:#cce0ff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.05)}
-    .addon-title-wrap{display:flex;align-items:center;gap:8px;overflow:hidden;}
+    .rank{width:32px;height:32px;border-radius:12px;display:grid;place-items:center;font-weight:700;font-size:12px;color:#cce0ff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.05);transition:all .2s ease;}
+    .addon-title-wrap{display:flex;align-items:center;gap:10px;overflow:hidden;}
+    .addon-icon{width:28px;height:28px;border-radius:6px;object-fit:cover;background:rgba(255,255,255,.05);flex-shrink:0;}
     .addon-title{font-weight:600;font-size:14px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .2s}
     .addon-version{font-size:11px;font-weight:500;color:var(--muted);background:rgba(255,255,255,.08);padding:2px 6px;border-radius:6px;flex-shrink:0;}
     .addon-update-badge{font-size:10px;color:var(--wait);border:1px solid var(--wait);padding:2px 4px;border-radius:4px;white-space:nowrap;flex-shrink:0;}
@@ -74,6 +76,7 @@
 
     .floating-card{position:fixed;z-index:998;background:linear-gradient(180deg, rgba(38,52,94,.95), rgba(24,34,64,.95));border:1px solid rgba(255,255,255,.15);box-shadow:0 30px 60px rgba(0,0,0,.4), 0 0 0 1px rgba(126,168,255,.3);border-radius:18px;pointer-events:none;transform-origin:top left;transform:scale(calc(var(--addons-scale, 1) * 1.03)) rotate(-1deg);transition:none;display:grid;grid-template-columns:40px 1fr 36px 36px 36px 36px 36px 40px;align-items:center;gap:8px;padding:6px 8px;}
     .floating-card .drag-handle{color:rgba(255,255,255,.9)}
+    .floating-card .rank{background:rgba(126,168,255,.15);border-color:rgba(126,168,255,.3);color:var(--blue);}
     .empty{color:var(--muted);margin-top:14px;padding:14px;border:1px dashed var(--line);border-radius:16px;background:rgba(13,19,36,.42)}
 
     /* Edit Modal */
@@ -97,6 +100,8 @@
       .panel{padding:12px}
       .addon-card, .floating-card{grid-template-columns:26px 1fr 30px 30px 30px 30px 30px 32px;gap:6px;height:50px;padding:5px 6px}
       .rank{width:26px;height:26px;font-size:11px}
+      .addon-title-wrap{gap:6px;}
+      .addon-icon{width:20px;height:20px;border-radius:4px;}
       .addon-title{font-size:13px}
       .addon-version{font-size:10px;padding:1px 4px;}
       .action-btn{width:30px;height:30px}
@@ -111,7 +116,7 @@
 <body>
   <div class="wrap">
     <div class="sticky"><div class="status glass"><span id="statusDot" class="dot orange"></span><div id="statusText" class="status-text">En attente.</div></div></div>
-    <section class="hero glass"><div class="version">v1.0-26</div><h1>Strem Tweaker</h1><p class="muted">Ajout de la version actuelle de chaque addon.</p></section>
+    <section class="hero glass"><div class="version">v1.0-29</div><h1>Strem Tweaker</h1><p class="muted">Correction icônes et compteur drag & drop en direct.</p></section>
 
     <section id="loginPanel" class="panel glass">
       <div id="loginHead" class="login-head">
@@ -191,9 +196,12 @@
   </div>
 
 <script>
-const STORAGE_KEY = 'strem-tweaker-v1.0-26';
+const STORAGE_KEY = 'strem-tweaker-v1.0-29';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
+
+// Base64 generic puzzle icon for fallback
+const FALLBACK_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMykiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTkuNDM5IDE4LjUzMkExMCAxMCAwIDAgMSAzLjQ2NSAxNCIvPjxwYXRoIGQ9Ik0xOS40MzkgNS40NjhBMTAgMTAgMCAwIDEgMjAuNTM1IDEwIi8+PHBhdGggZD0iTTQuNTYxIDUuNDY4QTEwIDEwIDAgMCAxIDEyIDIiLz48cGF0aCBkPSJNMTIgMjJhMTAgMTAgMCAwIDEtNy40MzktNC41NjgiLz48cGF0aCBkPSJNMTEgMTJoMiIvPjxwYXRoIGQ9Ik0xMiAxMXYyIi8+PC9zdmc+';
 
 const state = { email:'', password:'', authKey:'', addons:[], syncing:false, debugOpen:false, loginCollapsed:false, dragItem:null, dragClone:null, dragOffsetY:0, dragChanged:false };
 const el = {
@@ -525,6 +533,29 @@ function renderList(activeAddon){
     const version = manifest.version ? 'v' + manifest.version : '';
     const isConfigurable = manifest.behaviorHints && manifest.behaviorHints.configurable === true;
 
+    let rawIcon = manifest.icon || manifest.logo || addon.icon || addon.logo;
+    let iconUrl = FALLBACK_ICON;
+    if (rawIcon) {
+      if (rawIcon.startsWith('//')) {
+        iconUrl = 'https:' + rawIcon;
+      } else if (rawIcon.startsWith('http') || rawIcon.startsWith('data:')) {
+        iconUrl = rawIcon;
+      } else {
+        try {
+          let base = addon.transportUrl;
+          if (addon._disabled && base.startsWith(DISABLED_PREFIX)) {
+            base = decodeURIComponent(base.substring(DISABLED_PREFIX.length));
+          }
+          iconUrl = new URL(rawIcon, base).href;
+        } catch(e) {
+          iconUrl = FALLBACK_ICON;
+        }
+      }
+      if (iconUrl.startsWith('http://') && window.location.protocol === 'https:') {
+        iconUrl = iconUrl.replace('http://', 'https://');
+      }
+    }
+
     const card = document.createElement('div'); 
     card.className = 'addon-card' + (state.dragItem === addon ? ' drag-source' : '') + (activeAddon === addon ? ' flash' : '') + (addon._disabled ? ' is-disabled' : ''); 
     card.dataset.index = String(index); 
@@ -535,6 +566,7 @@ function renderList(activeAddon){
     card.innerHTML = `
       <div class="rank">${index + 1}</div>
       <div class="addon-title-wrap">
+        <img class="addon-icon" src="${escapeHtml(iconUrl)}" alt="" onerror="this.src='${FALLBACK_ICON}'">
         <div class="addon-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
         ${versionBadge}
         ${updateBadge}
@@ -630,10 +662,21 @@ function updateClonePosition(clientY){
 function onMove(evt){ 
   if(!state.dragItem) return; evt.preventDefault(); 
   const point = getPoint(evt); updateClonePosition(point.y); 
-  const nextIndex = indexFromPointerY(point.y); const currentIndex = state.addons.indexOf(state.dragItem); 
-  if(nextIndex !== -1 && nextIndex !== currentIndex){ 
-    state.addons.splice(currentIndex, 1); state.addons.splice(nextIndex, 0, state.dragItem); state.dragChanged = true; renderList(state.dragItem); 
-  } 
+  const nextIndex = indexFromPointerY(point.y); 
+  const currentIndex = state.addons.indexOf(state.dragItem); 
+
+  if(nextIndex !== -1) {
+    if(state.dragClone) {
+      const rankEl = state.dragClone.querySelector('.rank');
+      if(rankEl) rankEl.textContent = nextIndex + 1;
+    }
+    if(nextIndex !== currentIndex){ 
+      state.addons.splice(currentIndex, 1); 
+      state.addons.splice(nextIndex, 0, state.dragItem); 
+      state.dragChanged = true; 
+      renderList(state.dragItem); 
+    } 
+  }
 }
 
 function onEnd(evt){ 
