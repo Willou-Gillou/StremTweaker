@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Strem Tweaker V1.6b</title>
+  <style>
+    :root{
+      --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
+      --blue:#7da8ff;--blue2:#4b7dff;--ok:#38d39f;--ko:#ff6d86;--wait:#ffb84d;--shadow:0 18px 42px rgba(0,0,0,.28);--radius:22px;
+      --addon-h:56px;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;padding:0;height:100dvh;overflow:hidden;}
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);background:radial-gradient(circle at 15% 0%, rgba(125,168,255,.12), transparent 28%),radial-gradient(circle at 100% 10%, rgba(56,211,159,.06), transparent 20%),linear-gradient(180deg,var(--bg1),var(--bg2));}
+    body.dragging{overflow:hidden}
+
+    .wrap{max-width:860px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;padding:14px 14px calc(14px + env(safe-area-inset-bottom));overflow:hidden;}
+
+    /* ─── STICKY HEADER ─── */
+    .sticky{flex-shrink:0;padding-top:max(8px, env(safe-area-inset-top));margin:-14px -14px 12px;padding-left:14px;padding-right:14px}
+    .sticky-inner{display:flex;justify-content:space-between;align-items:center;width:100%;gap:10px;}
+    .glass{background:var(--glass);border:1px solid var(--line);box-shadow:var(--shadow);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:var(--radius)}
+    .status{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:14px;background:rgba(15,20,38,.75);border:1px solid var(--line)}
+    .dot{width:10px;height:10px;border-radius:999px;background:var(--wait);flex:0 0 auto;box-shadow:0 0 12px currentColor}.green{background:var(--ok);color:var(--ok)}.red{background:var(--ko);color:var(--ko)}.orange{background:var(--wait);color:var(--wait)}
+    .status-text{font-size:12px;line-height:1.4}
+
+    /* ─── HERO TITLE (always visible) ─── */
+    .hero{padding:16px;flex-shrink:0;margin-bottom:12px;text-align:center;}
+    .hero h1{font-size:28px;margin:0;font-weight:700;letter-spacing:-0.02em;}
+    .version-badge{font-size:12px;padding:4px 10px;}
+    .hero h1{font-size:22px;letter-spacing:-.02em;margin:0;}
+    .hero-sub{display:flex;align-items:center;gap:8px;margin-top:4px;}
+    .version-badge{color:#7da8ff;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;background:rgba(125,168,255,.1);border:1px solid rgba(125,168,255,.25);padding:2px 8px;border-radius:6px;}
+
+    /* ─── USER MENU ─── */
+    .header-user-menu{position:relative;}
+    .header-email{font-size:11px;color:#cce0ff;font-weight:600;background:rgba(125,168,255,0.12);padding:6px 10px;border-radius:10px;border:1px solid rgba(125,168,255,0.25);white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:background 0.2s;}
+    .header-email:hover{background:rgba(125,168,255,0.2);}
+    .user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--bg2);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;z-index:100;min-width:180px;transform-origin:top right;animation:dropIn 0.15s ease;}
+    .dropdown-item{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:13px;cursor:pointer;border-radius:8px;transition:background 0.2s;color:var(--text);}
+    .dropdown-item:hover{background:rgba(255,255,255,0.06);}
+    .dropdown-item.danger{color:var(--ko);}
+    .dropdown-item.danger:hover{background:rgba(255,109,134,0.1);}
+    .dropdown-divider{height:1px;background:var(--line);margin:4px 0;}
+    @keyframes dropIn{from{opacity:0;transform:scale(0.95);}to{opacity:1;transform:scale(1);}}
+
+    /* ─── PANELS ─── */
+    .panel{padding:16px;flex-shrink:0;}
+    h2{margin:0;font-size:17px;}p{margin:0;}
+    .muted{color:var(--muted);font-size:13px;line-height:1.45;margin-top:6px;}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:600}
+    .pill.connected{background:rgba(56,211,159,.15);color:var(--ok);border-color:rgba(56,211,159,.3)}
+    .pill.disconnected{background:rgba(255,109,134,.15);color:var(--ko);border-color:rgba(255,109,134,.3)}
+    .login-head{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer}
+    .login-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .chev{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;border:1px solid var(--line);background:rgba(17,23,42,.55);font-size:18px;font-weight:bold;}
+    .panel.collapsed .login-body{display:none}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{display:grid;gap:6px;margin-top:12px}label{color:var(--muted);font-size:13px}
+    input,textarea{width:100%;border:1px solid rgba(255,255,255,.08);background:rgba(8,12,24,.5);color:var(--text);outline:none;border-radius:16px;padding:14px;font:inherit}
+    textarea{min-height:80px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+    input:focus,textarea:focus{border-color:rgba(126,168,255,.8);box-shadow:0 0 0 3px rgba(126,168,255,.15)}
+    .actions{display:grid;gap:10px;margin-top:14px;grid-template-columns:1fr}
+    button{border:1px solid rgba(255,255,255,.08);background:rgba(17,24,46,.8);color:var(--text);font:inherit;cursor:pointer;border-radius:16px;padding:14px;min-height:50px;transition:transform .15s,opacity .15s,background .15s;}
+    button:hover{transform:translateY(-1px)}button:active{transform:scale(.98)}button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .primary{background:linear-gradient(135deg,rgba(75,125,255,.95),rgba(126,168,255,.9));box-shadow:0 8px 20px rgba(75,125,255,.25);border:none}
+    .debug-toggle{margin-top:12px;color:#a7d5ff;background:none;border:0;padding:0;min-height:auto;text-align:left;font-size:13px}
+    .hidden{display:none!important}
+
+    /* ─── ADDONS ─── */
+    .addons-panel{display:flex;flex-direction:column;flex:1;min-height:0;}
+    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;flex-shrink:0}
+    .toolbar-actions{display:flex;align-items:center;gap:8px;}
+    .pill-btn{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--blue);cursor:pointer;transition:.2s;padding:0;min-height:0;}
+    .pill-btn:hover{background:rgba(255,255,255,.1);}
+    .pill-btn svg{width:16px;height:16px;}
+    .addons-fit{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;margin-top:12px;padding-right:4px;scroll-behavior:auto;}
+    .addons-fit::-webkit-scrollbar{width:6px;}
+    .addons-fit::-webkit-scrollbar-track{background:transparent;}
+    .addons-fit::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:10px;}
+    .list{display:grid;gap:8px;padding-bottom:12px;}
+
+    /* ─── ADDON CARD ─── */
+    .addon-card{display:flex;flex-direction:column;align-items:stretch;height:auto;min-height:var(--addon-h);padding:0;border-radius:18px;border:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg,rgba(28,38,68,.7),rgba(18,25,48,.6));box-shadow:0 4px 12px rgba(0,0,0,.15);transition:transform .15s,opacity .15s,filter .15s,background .2s;width:100%;overflow:hidden;}
+    .addon-card.drag-source{opacity:0.3;filter:grayscale(0.5);transform:scale(0.98)}
+    .addon-card.flash{animation:flash .3s ease}
+    .addon-card.is-disabled{opacity:0.55;filter:grayscale(0.8);background:rgba(20,25,40,.5)}
+    .addon-card.is-disabled .addon-title{text-decoration:line-through;color:var(--muted)}
+    .addon-card.is-disabled .addon-icon{filter:grayscale(1) opacity(0.5);}
+    .addon-card.expanded{background:linear-gradient(180deg,rgba(38,52,94,.9),rgba(24,34,64,.8));border-color:rgba(126,168,255,.2);}
+    .addon-main{display:flex;align-items:center;gap:6px;height:var(--addon-h);width:100%;padding:6px 8px;cursor:pointer;}
+    .addon-main:hover{background:rgba(255,255,255,.02);}
+    .rank{flex:0 0 32px;width:32px;height:32px;border-radius:12px;display:grid;place-items:center;font-weight:700;font-size:12px;color:#cce0ff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.05);}
+    .addon-title-wrap{flex:1 1 0%;min-width:0;display:flex;align-items:center;gap:8px;}
+    .addon-icon{flex:0 0 28px;width:28px;height:28px;border-radius:6px;object-fit:cover;background:rgba(255,255,255,.05);}
+    .addon-title{flex:0 1 auto;font-weight:600;font-size:14px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .addon-version{flex:0 0 auto;font-size:11px;font-weight:500;color:var(--muted);background:rgba(255,255,255,.08);padding:2px 6px;border-radius:6px;}
+    .addon-update-badge{flex:0 0 auto;font-size:10px;color:var(--wait);border:1px solid var(--wait);padding:2px 4px;border-radius:4px;white-space:nowrap;}
+    .addon-actions{display:none;align-items:center;gap:8px;padding:2px 8px 12px 46px;flex-wrap:wrap;width:100%;}
+    .addon-card.expanded .addon-actions{display:flex;}
+    .action-btn{flex:0 0 36px;width:36px;height:36px;display:grid;place-items:center;color:var(--blue);cursor:pointer;border-radius:10px;transition:background .2s,color .2s;background:rgba(125,168,255,0.08);border:1px solid rgba(125,168,255,0.1);}
+    .action-btn:active{background:rgba(255,255,255,.1)}
+    .action-btn svg{width:18px;height:18px}
+    .action-btn:hover{background:rgba(125,168,255,0.15);}
+    .is-disabled .action-btn.toggle-btn{color:var(--ko)}
+    .hidden-btn{display:none!important;}
+    .drag-handle{flex:0 0 40px;width:40px;height:40px;display:grid;place-items:center;color:rgba(255,255,255,.4);cursor:grab;touch-action:none;border-radius:10px;transition:color .2s,background .2s}
+    .drag-handle:active{cursor:grabbing;color:rgba(255,255,255,.9);background:rgba(255,255,255,.08)}
+    .drag-handle svg{width:20px;height:20px}
+    .floating-card{position:fixed;z-index:998;box-shadow:0 30px 60px rgba(0,0,0,.4),0 0 0 1px rgba(126,168,255,.3);pointer-events:none;transform-origin:top left;transition:none;width:100%;max-width:calc(860px - 28px);}
+    .floating-card .drag-handle{color:rgba(255,255,255,.9)}
+    .floating-card .rank{background:rgba(126,168,255,.15);border-color:rgba(126,168,255,.3);color:var(--blue);}
+    .empty{color:var(--muted);margin-top:14px;padding:14px;border:1px dashed var(--line);border-radius:16px;background:rgba(13,19,36,.42)}
+
+    /* ─── MODALS ─── */
+    .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(5px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;padding:14px;}
+    .modal-overlay.active{opacity:1;pointer-events:auto;}
+    .modal-card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);width:100%;max-width:460px;padding:20px;box-shadow:var(--shadow);transform:translateY(20px);transition:transform 0.2s;max-height:90dvh;overflow-y:auto;}
+    .modal-overlay.active .modal-card{transform:translateY(0);}
+    .modal-card h3{margin:0 0 4px;font-size:18px;}
+    .modal-card p.sub{margin:0 0 12px;font-size:12px;color:var(--muted);word-break:break-all;}
+    .modal-card textarea{width:100%;font-size:13px;line-height:1.4;}
+
+    /* login panel inside modal */
+    .login-modal-body .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+    @keyframes flash{0%{transform:scale(.98)}50%{transform:scale(1.02);background:rgba(126,168,255,.1)}100%{transform:scale(1)}}
+    @media(max-width:640px){
+      .wrap{padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
+      .sticky{margin:-12px -12px 8px;padding-left:12px;padding-right:12px}
+      .panel{padding:12px}
+      .addon-main{gap:4px;height:54px;padding:5px 6px}
+      .rank{flex:0 0 24px;width:24px;height:24px;font-size:10px}
+      .addon-title-wrap{gap:6px;}
+      .addon-icon{flex:0 0 24px;width:24px;height:24px;border-radius:5px;}
+      .addon-title{font-size:13px}
+      .addon-version{font-size:10px;padding:1px 4px;}
+      .action-btn{flex:0 0 32px;width:32px;height:32px}
+      .action-btn svg{width:16px;height:16px}
+      .drag-handle{flex:0 0 32px;width:32px;height:32px}
+      .pill-btn{width:28px;height:28px;}
+      .pill-btn svg{width:14px;height:14px;}
+      .status-text{font-size:11px;}
+      .header-email{font-size:10px;padding:4px 8px;max-width:120px;}
+      .addon-actions{padding:0 6px 10px 34px;gap:6px;}
+      .login-modal-body .row{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="mainWrap">
+
+    <!-- ── STICKY HEADER ── -->
+    <div class="sticky">
+      <div class="sticky-inner">
+        <div class="status glass"><span id="statusDot" class="dot orange"></span><div id="statusText" class="status-text">En attente.</div></div>
+        <div id="headerUserMenu" class="header-user-menu hidden">
+          <div id="headerEmail" class="header-email">
+            <span id="headerEmailText"></span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-left:2px;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div id="userDropdown" class="user-dropdown hidden">
+            <div class="dropdown-item" id="btnOpenLoginModal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              Paramètres
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item danger" id="btnLogout">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              Se déconnecter
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── HERO TITLE (toujours visible) ── -->
+    <section class="hero glass">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <h1>Strem Tweaker</h1>
+        <span class="version-badge">V1.6b</span>
+      </div>
+      <p class="muted" id="heroSub"></p>
+    </section>
+
+    <!-- ── LOGIN PANEL (caché une fois logé) ── -->
+    <section id="loginPanel" class="panel glass" style="margin-bottom:12px;">
+      <div id="loginHead" class="login-head">
+        <div>
+          <h2>Connexion</h2>
+          <p class="muted" id="loginDesc">Se replie et charge les addons automatiquement.</p>
+        </div>
+        <div class="login-meta">
+          <div id="loginStatePill" class="pill disconnected">Non connecté</div>
+          <div id="loginChev" class="chev">-</div>
+        </div>
+      </div>
+      <div class="login-body" id="loginBody">
+        <div class="row">
+          <div class="field"><label for="email">Email</label><input id="email" type="email" placeholder="email@exemple.com" autocomplete="username"></div>
+          <div class="field"><label for="password">Mot de passe</label><input id="password" type="password" placeholder="mot de passe" autocomplete="current-password"></div>
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label for="authKey">AuthKey Stremio (optionnel)</label>
+          <div style="position:relative;display:flex;align-items:center;">
+            <input id="authKey" type="password" placeholder="Clé récupérée automatiquement, ou à coller..." style="padding-right:76px;">
+            <div id="toggleAuthKey" style="position:absolute;right:40px;display:flex;color:var(--muted);cursor:pointer;transition:color 0.2s;" title="Afficher/Masquer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+            <div id="copyAuthKeyIcon" style="position:absolute;right:12px;display:flex;color:var(--muted);cursor:pointer;transition:color 0.2s;" title="Copier l'AuthKey">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </div>
+          </div>
+        </div>
+        <div class="actions"><button id="loginBtn" class="primary" type="button">Connexion &amp; Charger</button></div>
+        <button id="debugToggle" class="debug-toggle" type="button">Afficher debug</button>
+        <div id="debugWrap" class="field hidden"><textarea id="debugBox" readonly placeholder="Réponses API"></textarea></div>
+      </div>
+    </section>
+
+    <!-- ── ADDONS ── -->
+    <section id="addonsCard" class="panel glass addons-panel hidden">
+      <div class="toolbar">
+        <h2>Mes addons</h2>
+        <div class="toolbar-actions">
+          <button id="btnCheckUpdates" class="pill-btn" title="Vérifier les mises à jour" style="color:var(--wait);border-color:rgba(255,184,77,.3);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+          </button>
+          <div style="width:1px;height:20px;background:var(--line);margin:0 4px;"></div>
+          <button id="btnSaveJson" class="pill-btn" title="Sauvegarder (JSON)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          </button>
+          <button id="btnRestoreJson" class="pill-btn" title="Restaurer (JSON)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+          </button>
+          <input type="file" id="fileRestore" accept=".json" class="hidden">
+          <div class="pill"><span id="countLabel">0 addon</span></div>
+        </div>
+      </div>
+      <div id="fitWrap" class="addons-fit">
+        <div id="addonsList" class="list"></div>
+      </div>
+      <div id="emptyState" class="empty hidden">Aucun addon trouvé.</div>
+    </section>
+  </div>
+
+  <!-- ── MODAL EDIT URL ── -->
+  <div id="modalEdit" class="modal-overlay">
+    <div class="modal-card">
+      <h3 id="modalEditTitle">Modifier l'URL</h3>
+      <p class="sub" id="modalEditLabel"></p>
+      <textarea id="modalEditInput" rows="6"></textarea>
+      <div class="actions" style="margin-top:16px;">
+        <button type="button" class="ghost" id="btnEditCancel">Annuler</button>
+        <button type="button" class="primary" id="btnEditSave">Sauvegarder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL CONNEXION (depuis le menu) ── -->
+  <div id="modalLogin" class="modal-overlay">
+    <div class="modal-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <h3>Paramètres</h3>
+        <button type="button" id="btnCloseLoginModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
+      </div>
+      <p class="sub">Reconnexion ou changement de compte Stremio.</p>
+      <div class="login-modal-body">
+        <div class="row">
+          <div class="field"><label for="m_email">Email</label><input id="m_email" type="email" placeholder="email@exemple.com" autocomplete="username"></div>
+          <div class="field"><label for="m_password">Mot de passe</label><input id="m_password" type="password" placeholder="mot de passe" autocomplete="current-password"></div>
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label for="m_authKey">AuthKey Stremio (optionnel)</label>
+          <div style="position:relative;display:flex;align-items:center;">
+            <input id="m_authKey" type="password" placeholder="Clé à coller..." style="padding-right:76px;">
+            <div id="m_toggleAuthKey" style="position:absolute;right:40px;display:flex;color:var(--muted);cursor:pointer;" title="Afficher/Masquer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+            <div id="m_copyAuthKey" style="position:absolute;right:12px;display:flex;color:var(--muted);cursor:pointer;" title="Copier l'AuthKey">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </div>
+          </div>
+        </div>
+        <div class="actions"><button id="m_loginBtn" class="primary" type="button">Connexion &amp; Charger</button></div>
+        <button id="m_debugToggle" class="debug-toggle" type="button">Afficher debug</button>
+        <div id="m_debugWrap" class="field hidden"><textarea id="m_debugBox" readonly placeholder="Réponses API"></textarea></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const STORAGE_KEY = 'strem-tweaker-data';
+const API_BASE = 'https://api.strem.io/api/';
+const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
+const FALLBACK_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMykiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTkuNDM5IDE4LjUzMkExMCAxMCAwIDAgMSAzLjQ2NSAxNCIvPjxwYXRoIGQ9Ik0xOS40MzkgNS40NjhBMTAgMTAgMCAwIDEgMjAuNTM1IDEwIi8+PHBhdGggZD0iTTQuNTYxIDUuNDY4QTEwIDEwIDAgMCAxIDEyIDIiLz48cGF0aCBkPSJNMTIgMjJhMTAgMTAgMCAwIDEtNy40MzktNC41NjgiLz48cGF0aCBkPSJNMTEgMTJoMiIvPjxwYXRoIGQ9Ik0xMiAxMXYyIi8+PC9zdmc+';
+
+const state = { email:'', password:'', authKey:'', addons:[], syncing:false, debugOpen:false, dragItem:null, dragClone:null, dragOffsetY:0, dragChanged:false, lastPointerY:0, scrollSpeed:0 };
+
+const $ = id => document.getElementById(id);
+const el = {
+  email: $('email'), password: $('password'), authKey: $('authKey'),
+  toggleAuthKey: $('toggleAuthKey'), copyAuthKeyIcon: $('copyAuthKeyIcon'),
+  loginBtn: $('loginBtn'), loginChev: $('loginChev'),
+  loginPanel: $('loginPanel'), loginBody: $('loginBody'), loginDesc: $('loginDesc'),
+  loginStatePill: $('loginStatePill'),
+  statusDot: $('statusDot'), statusText: $('statusText'),
+  debugToggle: $('debugToggle'), debugWrap: $('debugWrap'), debugBox: $('debugBox'),
+  addonsCard: $('addonsCard'), addonsList: $('addonsList'), emptyState: $('emptyState'),
+  countLabel: $('countLabel'), fitWrap: $('fitWrap'),
+  headerUserMenu: $('headerUserMenu'), headerEmail: $('headerEmail'), headerEmailText: $('headerEmailText'), userDropdown: $('userDropdown'),
+  btnLogout: $('btnLogout'), btnOpenLoginModal: $('btnOpenLoginModal'),
+  btnSaveJson: $('btnSaveJson'), btnRestoreJson: $('btnRestoreJson'), fileRestore: $('fileRestore'), btnCheckUpdates: $('btnCheckUpdates'),
+  // Modal connexion fields
+  m_email: $('m_email'), m_password: $('m_password'), m_authKey: $('m_authKey'),
+  m_toggleAuthKey: $('m_toggleAuthKey'), m_copyAuthKey: $('m_copyAuthKey'),
+  m_loginBtn: $('m_loginBtn'), m_debugToggle: $('m_debugToggle'), m_debugWrap: $('m_debugWrap'), m_debugBox: $('m_debugBox'),
+  modalLogin: $('modalLogin'), btnCloseLoginModal: $('btnCloseLoginModal'),
+  // Modal edit
+  modalEdit: $('modalEdit'), modalEditTitle: $('modalEditTitle'), modalEditLabel: $('modalEditLabel'), modalEditInput: $('modalEditInput'),
+  btnEditCancel: $('btnEditCancel'), btnEditSave: $('btnEditSave'),
+};
+
+let editCallback = null;
+let scrollRAF = null;
+
+init();
+
+function init(){
+  loadLocal();
+  bind();
+  hydrateForms();
+  updateLoginPill();
+  renderLoginState();
+  if(state.authKey){
+    setStatus('orange','AuthKey locale trouvée, chargement...');
+    loadAddons();
+  }
+}
+
+function bind(){
+  // Main login form
+  el.loginBtn.addEventListener('click', () => loginAndGetKey(el.email.value, el.password.value, el.authKey.value));
+  [el.email, el.password, el.authKey].forEach(i => i.addEventListener('keydown', e => { if(e.key==='Enter'){e.preventDefault(); loginAndGetKey(el.email.value, el.password.value, el.authKey.value);} }));
+  el.toggleAuthKey.addEventListener('click', () => togglePassVisibility(el.authKey, el.toggleAuthKey));
+  el.copyAuthKeyIcon.addEventListener('click', () => copyValue(el.authKey.value));
+  el.debugToggle.addEventListener('click', () => { state.debugOpen=!state.debugOpen; renderDebug(state.debugOpen, el.debugWrap, el.debugToggle); saveLocal(); });
+  $('loginHead').addEventListener('click', e => {
+    if(e.target.closest('button')||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+    state.loginCollapsed=!state.loginCollapsed;
+    renderLoginCollapsed();
+    saveLocal();
+  });
+
+  // Modal connexion form
+  el.m_loginBtn.addEventListener('click', () => { loginAndGetKey(el.m_email.value, el.m_password.value, el.m_authKey.value); closeLoginModal(); });
+  [el.m_email, el.m_password, el.m_authKey].forEach(i => i.addEventListener('keydown', e => { if(e.key==='Enter'){e.preventDefault(); loginAndGetKey(el.m_email.value, el.m_password.value, el.m_authKey.value); closeLoginModal();} }));
+  el.m_toggleAuthKey.addEventListener('click', () => togglePassVisibility(el.m_authKey, el.m_toggleAuthKey));
+  el.m_copyAuthKey.addEventListener('click', () => copyValue(el.m_authKey.value));
+  el.m_debugToggle.addEventListener('click', () => { const open = el.m_debugWrap.classList.toggle('hidden'); el.m_debugToggle.textContent = open ? 'Masquer debug' : 'Afficher debug'; });
+  el.btnCloseLoginModal.addEventListener('click', closeLoginModal);
+  el.modalLogin.addEventListener('click', e => { if(e.target===el.modalLogin) closeLoginModal(); });
+
+  // User menu
+  el.headerEmail.addEventListener('click', e => { e.stopPropagation(); el.userDropdown.classList.toggle('hidden'); });
+  document.addEventListener('click', e => { if(!e.target.closest('#headerUserMenu')) el.userDropdown.classList.add('hidden'); });
+  el.btnLogout.addEventListener('click', clearAll);
+  el.btnOpenLoginModal.addEventListener('click', openLoginModal);
+
+  // Toolbar
+  el.btnSaveJson.addEventListener('click', exportAddons);
+  el.btnRestoreJson.addEventListener('click', () => el.fileRestore.click());
+  el.fileRestore.addEventListener('change', importAddons);
+  el.btnCheckUpdates.addEventListener('click', checkUpdates);
+
+  // Modal edit
+  el.btnEditCancel.addEventListener('click', () => closeEditModal(false));
+  el.btnEditSave.addEventListener('click', () => closeEditModal(true));
+  el.modalEdit.addEventListener('click', e => { if(e.target===el.modalEdit) closeEditModal(false); });
+
+  // D&D
+  window.addEventListener('pointermove', onMove, {passive:false});
+  window.addEventListener('pointerup', onEnd, {passive:false});
+  window.addEventListener('pointercancel', onEnd, {passive:false});
+  window.addEventListener('touchmove', onMove, {passive:false});
+  window.addEventListener('touchend', onEnd, {passive:false});
+  window.addEventListener('touchcancel', onEnd, {passive:false});
+  window.addEventListener('mousemove', onMove, {passive:false});
+  window.addEventListener('mouseup', onEnd, {passive:false});
+}
+
+function openLoginModal(){
+  el.userDropdown.classList.add('hidden');
+  hydrateForms(true);
+  el.modalLogin.classList.add('active');
+}
+function closeLoginModal(){ el.modalLogin.classList.remove('active'); }
+
+function togglePassVisibility(input, icon){
+  if(input.type==='password'){
+    input.type='text';
+    icon.style.color='var(--text)';
+    icon.querySelector('svg').innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+  } else {
+    input.type='password';
+    icon.style.color='var(--muted)';
+    icon.querySelector('svg').innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+  }
+}
+
+function hydrateForms(modal=false){
+  if(!modal){
+    el.email.value = state.email||'';
+    el.password.value = state.password||'';
+    el.authKey.value = state.authKey||'';
+  } else {
+    el.m_email.value = state.email||'';
+    el.m_password.value = '';
+    el.m_authKey.value = state.authKey||'';
+  }
+}
+
+function loadLocal(){
+  try{
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) raw = localStorage.getItem('strem-tweaker-v1.1');
+    if(!raw) raw = localStorage.getItem('strem-tweaker-v1.0');
+    if(!raw) return;
+    const s = JSON.parse(raw);
+    state.email = s.email||'';
+    state.password = s.password||'';
+    state.authKey = s.authKey||'';
+    state.debugOpen = !!s.debugOpen;
+    state.loginCollapsed = !!s.loginCollapsed;
+  } catch(_){}
+}
+function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({email:state.email,password:state.password,authKey:state.authKey,debugOpen:state.debugOpen,loginCollapsed:state.loginCollapsed})); }
+
+function renderDebug(open, wrap, toggle){ wrap.classList.toggle('hidden',!open); toggle.textContent=open?'Masquer debug':'Afficher debug'; }
+function renderLoginCollapsed(){
+  el.loginPanel.classList.toggle('collapsed', !!state.loginCollapsed);
+  el.loginChev.textContent = state.loginCollapsed ? '+' : '-';
+}
+
+function renderLoginState(){
+  const isAuth = !!state.authKey;
+  // When logged: hide the login panel, show only addons
+  el.loginPanel.classList.toggle('hidden', isAuth);
+  if(!isAuth) renderLoginCollapsed();
+}
+
+function updateLoginPill(){
+  const isAuth = !!state.authKey;
+  el.loginStatePill.textContent = isAuth?'Connecté':'Non connecté';
+  el.loginStatePill.className = 'pill '+(isAuth?'connected':'disconnected');
+  if(state.email){
+    el.headerEmailText.textContent = state.email.split('@')[0];
+    el.headerUserMenu.classList.remove('hidden');
+  } else {
+    el.headerUserMenu.classList.add('hidden');
+  }
+}
+
+function setStatus(color,text){ el.statusDot.className='dot '+color; el.statusText.textContent=text; }
+function logDebug(v){ const s=typeof v==='string'?v:JSON.stringify(v,null,2); el.debugBox.value=s; el.m_debugBox.value=s; }
+function disableTop(flag){ [el.loginBtn,el.m_loginBtn,el.btnSaveJson,el.btnRestoreJson,el.btnCheckUpdates].forEach(b=>b.disabled=flag); }
+
+async function copyValue(value){
+  try{
+    if(!value) throw new Error('Rien à copier.');
+    if(navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(value);
+    else { const t=document.createElement('textarea'); t.value=value; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+    setStatus('green','AuthKey copiée.');
+  } catch(e){ setStatus('red','Erreur copie : '+(e.message||'échec')); }
+}
+
+async function fetchUserEmail(){
+  if(!state.authKey) return;
+  try{
+    const resp = await fetch(API_BASE+'getUser',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({authKey:state.authKey})});
+    const data = await resp.json();
+    const email = (data&&data.result&&data.result.email)||(data&&data.email);
+    if(email){ state.email=email; hydrateForms(); saveLocal(); updateLoginPill(); }
+  } catch(e){ logDebug('Erreur fetchUserEmail: '+e.message); }
+}
+
+async function loginAndGetKey(email, password, authKeyValue){
+  authKeyValue = (authKeyValue||'').trim();
+  if(authKeyValue){
+    state.authKey=authKeyValue; saveLocal(); updateLoginPill(); renderLoginState();
+    setStatus('orange',"Connexion via l'AuthKey...");
+    disableTop(true);
+    await fetchUserEmail();
+    await loadAddons();
+    return;
+  }
+  email=(email||'').trim(); password=password||'';
+  if(!email||!password){ setStatus('red',"Renseigne l'email et le mot de passe, ou une AuthKey."); return; }
+  state.email=email; state.password=password;
+  setStatus('orange','Connexion en cours...'); disableTop(true);
+  try{
+    const resp=await fetch(API_BASE+'login',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({type:'Login',email,password,facebook:false})});
+    const data=await resp.json();
+    const authKey=(data&&data.result&&data.result.authKey)||data.authKey||'';
+    if(!resp.ok||!authKey) throw new Error("Impossible de récupérer l'AuthKey");
+    state.authKey=authKey; hydrateForms(); saveLocal(); updateLoginPill(); renderLoginState();
+    setStatus('green','Connecté. Chargement des addons...');
+    await loadAddons();
+  } catch(err){
+    state.authKey=''; saveLocal(); updateLoginPill(); renderLoginState();
+    setStatus('red','Erreur : '+(err.message||'échec'));
+    disableTop(false);
+  }
+}
+
+function clearAll(){
+  state.email=''; state.password=''; state.authKey=''; state.addons=[]; state.loginCollapsed=false;
+  localStorage.removeItem(STORAGE_KEY);
+  hydrateForms();
+  el.userDropdown.classList.add('hidden');
+  renderList(); renderLoginState(); updateLoginPill();
+  el.addonsCard.classList.add('hidden');
+  logDebug('Déconnexion effectuée.');
+  setStatus('orange','Déconnecté.');
+}
+
+async function loadAddons(){
+  if(!state.authKey){ setStatus('red','AuthKey manquante.'); el.addonsCard.classList.add('hidden'); return; }
+  setStatus('orange','Chargement des addons...'); disableTop(true);
+  try{
+    const resp=await fetch(API_BASE+'addonCollectionGet',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({type:'AddonCollectionGet',authKey:state.authKey,update:true})});
+    const data=await resp.json();
+    if(!resp.ok||data.error||(data.result&&data.result.error)) throw new Error('Impossible de charger les addons');
+    if(!state.email) fetchUserEmail();
+    const fetched=Array.isArray(data.result&&data.result.addons)?data.result.addons:[];
+    fetched.forEach(a=>{ a._disabled=a.transportUrl&&a.transportUrl.startsWith(DISABLED_PREFIX); });
+    state.addons=fetched;
+    saveLocal(); updateLoginPill(); renderLoginState();
+    el.addonsCard.classList.remove('hidden');
+    renderList();
+    setStatus('green',state.addons.length?'Addons synchronisés.':'Aucun addon trouvé.');
+  } catch(err){
+    state.addons=[]; renderList(); el.addonsCard.classList.add('hidden');
+    setStatus('red','Erreur : '+(err.message||'échec'));
+  } finally{ disableTop(false); }
+}
+
+function exportAddons(){
+  if(!state.addons||!state.addons.length) return setStatus('orange','Rien à sauvegarder.');
+  const a=document.createElement('a');
+  a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(state.addons,null,2));
+  a.download="stremio-addons-backup.json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setStatus('green','Backup JSON téléchargé.');
+}
+
+function importAddons(evt){
+  const file=evt.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const imported=JSON.parse(e.target.result);
+      if(Array.isArray(imported)){ state.addons=imported; renderList(); syncOrder(); }
+      else throw new Error('Format invalide');
+    } catch(err){ setStatus('red','Erreur restauration JSON.'); }
+    evt.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+function cmpVersions(a,b){
+  const pa=String(a).split('.'); const pb=String(b).split('.');
+  for(let i=0;i<Math.max(pa.length,pb.length);i++){
+    const na=Number(pa[i]||0); const nb=Number(pb[i]||0);
+    if(na>nb) return 1; if(nb>na) return -1;
+  }
+  return 0;
+}
+
+async function checkUpdates(){
+  if(!state.addons.length) return;
+  setStatus('orange','Vérification de '+state.addons.length+' addon(s)...');
+  el.btnCheckUpdates.disabled=true;
+  let count=0;
+  await Promise.allSettled(state.addons.map(async addon=>{
+    if(addon._disabled) return;
+    try{
+      let url=addon.transportUrl;
+      if(!url.endsWith('manifest.json')) url=url.replace(/\/?$/,'/manifest.json');
+      const res=await fetch(url,{cache:'no-store'});
+      if(!res.ok) return;
+      const m=await res.json();
+      if(m&&m.version&&addon.manifest&&addon.manifest.version&&cmpVersions(m.version,addon.manifest.version)>0){ addon._hasUpdate=m; count++; }
+    } catch(e){}
+  }));
+  el.btnCheckUpdates.disabled=false;
+  if(count>0){ setStatus('green',count+' mise(s) à jour !'); renderList(); }
+  else setStatus('green','Tous les addons sont à jour.');
+}
+
+// SVGs
+const svgGrip='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line></svg>';
+const svgEye='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+const svgEyeOff='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+const svgEdit='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
+const svgGear='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 12 9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
+const svgCross='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+const svgUpdate='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>';
+const svgToTop='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 12 6 7 11"></polyline><line x1="12" y1="18" x2="12" y2="6"></line><line x1="4" y1="3" x2="20" y2="3"></line></svg>';
+const svgToBottom='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 13 12 18 17 13"></polyline><line x1="12" y1="6" x2="12" y2="18"></line><line x1="4" y1="21" x2="20" y2="21"></line></svg>';
+
+// Edit modal
+function showEditModal(title, label, value, cb){
+  editCallback=cb;
+  el.modalEditTitle.textContent=title;
+  el.modalEditLabel.textContent=label;
+  el.modalEditInput.value=value;
+  el.modalEdit.classList.add('active');
+}
+function closeEditModal(save){
+  el.modalEdit.classList.remove('active');
+  if(editCallback){
+    if(save) editCallback(el.modalEditInput.value.trim());
+    editCallback=null;
+  }
+}
+
+// Addon actions
+function deleteAddon(addon){
+  const t=(addon.manifest&&addon.manifest.name)||'cet addon';
+  if(confirm('Supprimer définitivement "'+t+'" ?')){
+    const i=state.addons.indexOf(addon); if(i>-1){ state.addons.splice(i,1); renderList(); syncOrder(); }
+  }
+}
+function applyUpdate(addon){ if(!addon._hasUpdate) return; addon.manifest=addon._hasUpdate; addon._hasUpdate=null; renderList(); syncOrder(); }
+function toggleAddon(addon){
+  addon._disabled=!addon._disabled;
+  if(addon._disabled){ if(!addon.transportUrl.startsWith(DISABLED_PREFIX)) addon.transportUrl=DISABLED_PREFIX+encodeURIComponent(addon.transportUrl); }
+  else { if(addon.transportUrl.startsWith(DISABLED_PREFIX)) addon.transportUrl=decodeURIComponent(addon.transportUrl.substring(DISABLED_PREFIX.length)); }
+  renderList(); syncOrder();
+}
+function openEditUrl(addon){
+  let url=addon.transportUrl;
+  if(addon._disabled&&url.startsWith(DISABLED_PREFIX)) url=decodeURIComponent(url.substring(DISABLED_PREFIX.length));
+  showEditModal("Modifier l'URL",'URL de l\'addon :',url,newUrl=>{
+    if(!newUrl||newUrl===url) return;
+    addon.transportUrl=addon._disabled?DISABLED_PREFIX+encodeURIComponent(newUrl):newUrl;
+    renderList(); syncOrder();
+  });
+}
+function moveToTop(addon){
+  const i=state.addons.indexOf(addon); if(i>0){ state.addons.splice(i,1); state.addons.unshift(addon); renderList(addon); syncOrder(); el.fitWrap.scrollTo({top:0,behavior:'smooth'}); }
+}
+function moveToBottom(addon){
+  const i=state.addons.indexOf(addon);
+  if(i!==-1&&i<state.addons.length-1){ state.addons.splice(i,1); state.addons.push(addon); renderList(addon); syncOrder(); el.fitWrap.scrollTo({top:el.fitWrap.scrollHeight,behavior:'smooth'}); }
+}
+
+function renderList(activeAddon){
+  const st=el.fitWrap.scrollTop;
+  el.addonsList.style.minHeight=el.addonsList.scrollHeight+'px';
+  el.addonsList.innerHTML='';
+  const count=state.addons.length;
+  el.countLabel.textContent=count+(count>1?' addons':' addon');
+  el.emptyState.classList.toggle('hidden',count!==0);
+  state.addons.forEach((addon,index)=>{
+    const manifest=addon.manifest||{};
+    const title=manifest.name||manifest.id||'Addon';
+    const version=manifest.version?'v'+manifest.version:'';
+    const isConfigurable=manifest.behaviorHints&&manifest.behaviorHints.configurable===true;
+    const isFirst=index===0; const isLast=index===count-1;
+    let rawIcon=manifest.icon||manifest.logo||addon.icon||addon.logo;
+    let iconUrl=FALLBACK_ICON;
+    if(rawIcon){
+      if(rawIcon.startsWith('//')) iconUrl='https:'+rawIcon;
+      else if(rawIcon.startsWith('http')||rawIcon.startsWith('data:')) iconUrl=rawIcon;
+      else {
+        try{
+          let base=addon.transportUrl;
+          if(addon._disabled&&base.startsWith(DISABLED_PREFIX)) base=decodeURIComponent(base.substring(DISABLED_PREFIX.length));
+          iconUrl=new URL(rawIcon,base).href;
+        } catch(e){ iconUrl=FALLBACK_ICON; }
+      }
+      if(iconUrl.startsWith('http://')&&window.location.protocol==='https:') iconUrl=iconUrl.replace('http://','https://');
+    }
+    const card=document.createElement('div');
+    card.className='addon-card'+(state.dragItem===addon?' drag-source':'')+(activeAddon===addon?' flash':'')+(addon._disabled?' is-disabled':'');
+    card.dataset.index=String(index);
+    const updateBadge=addon._hasUpdate?`<span class="addon-update-badge">v${addon._hasUpdate.version} dispo</span>`:'';
+    const versionBadge=version?`<span class="addon-version">${version}</span>`:'';
+    card.innerHTML=`
+      <div class="addon-main">
+        <div class="rank">${index+1}</div>
+        <div class="addon-title-wrap">
+          <img class="addon-icon" src="${esc(iconUrl)}" alt="" onerror="this.src='${FALLBACK_ICON}'">
+          <div class="addon-title" title="${esc(title)}">${esc(title)}</div>
+          ${versionBadge}${updateBadge}
+        </div>
+        <div class="action-btn toggle-btn" title="Activer/Désactiver">${addon._disabled?svgEyeOff:svgEye}</div>
+        <div class="drag-handle">${svgGrip}</div>
+      </div>
+      <div class="addon-actions">
+        <div class="action-btn btn-totop ${isFirst?'hidden-btn':''}" title="Monter en 1er">${svgToTop}</div>
+        <div class="action-btn btn-tobottom ${isLast?'hidden-btn':''}" title="Descendre en dernier">${svgToBottom}</div>
+        <div class="action-btn btn-update ${addon._hasUpdate?'':'hidden-btn'}" style="color:var(--wait);border-color:rgba(255,184,77,0.3);background:rgba(255,184,77,0.1);" title="Mettre à jour">${svgUpdate}</div>
+        <div class="action-btn btn-config ${isConfigurable?'':'hidden-btn'}" title="Configurer">${svgGear}</div>
+        <div class="action-btn btn-edit" title="Changer URL">${svgEdit}</div>
+        <div style="flex:1;"></div>
+        <div class="action-btn btn-delete" style="color:var(--ko);border-color:rgba(255,109,134,0.3);background:rgba(255,109,134,0.1);" title="Supprimer">${svgCross}</div>
+      </div>`;
+
+    card.querySelector('.addon-main').addEventListener('click',e=>{
+      if(e.target.closest('.toggle-btn')||e.target.closest('.drag-handle')) return;
+      e.preventDefault();
+      const expanded=card.classList.toggle('expanded');
+      if(expanded) setTimeout(()=>{
+        const wr=el.fitWrap.getBoundingClientRect(); const cr=card.getBoundingClientRect();
+        if(cr.bottom>wr.bottom) el.fitWrap.scrollBy({top:cr.bottom-wr.bottom+8,behavior:'smooth'});
+        else if(cr.top<wr.top) el.fitWrap.scrollBy({top:cr.top-wr.top-8,behavior:'smooth'});
+      },10);
+    });
+
+    ['pointerdown','touchstart','mousedown'].forEach(e=>card.querySelector('.drag-handle').addEventListener(e,ev=>startDrag(ev,addon),{passive:false}));
+    const on=(sel,fn)=>{ const b=card.querySelector(sel); if(b) ['click','touchstart'].forEach(e=>b.addEventListener(e,ev=>{ev.preventDefault();ev.stopPropagation();fn();},{passive:false})); };
+    if(!isFirst) on('.btn-totop',()=>moveToTop(addon));
+    if(!isLast)  on('.btn-tobottom',()=>moveToBottom(addon));
+    if(addon._hasUpdate) on('.btn-update',()=>applyUpdate(addon));
+    on('.btn-delete',()=>deleteAddon(addon));
+    on('.toggle-btn',()=>toggleAddon(addon));
+    on('.btn-edit',()=>openEditUrl(addon));
+    if(isConfigurable) on('.btn-config',()=>{
+      let url=addon.transportUrl;
+      if(addon._disabled&&url.startsWith(DISABLED_PREFIX)) url=decodeURIComponent(url.substring(DISABLED_PREFIX.length));
+      window.open(url.replace(/\/manifest\.json(?:\?.*)?$/,'/configure'),'_blank');
+    });
+    el.addonsList.appendChild(card);
+  });
+  el.addonsList.style.minHeight='';
+  el.fitWrap.scrollTop=st;
+}
+
+function esc(t){ return String(t).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;'); }
+function getPoint(e){ if(e.touches&&e.touches[0]) return {x:e.touches[0].clientX,y:e.touches[0].clientY}; if(e.changedTouches&&e.changedTouches[0]) return {x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY}; return {x:e.clientX,y:e.clientY}; }
+
+function scrollLoop(){
+  if(!state.dragItem){ scrollRAF=null; return; }
+  if(state.scrollSpeed!==0){ el.fitWrap.scrollTop+=state.scrollSpeed; checkDragSwap(state.lastPointerY); }
+  scrollRAF=requestAnimationFrame(scrollLoop);
+}
+
+function startDrag(evt,addon){
+  if(state.syncing) return; evt.preventDefault(); evt.stopPropagation();
+  const pt=getPoint(evt); const card=evt.currentTarget.closest('.addon-card');
+  card.classList.remove('expanded');
+  const rect=card.getBoundingClientRect();
+  state.dragItem=addon; state.dragChanged=false; state.dragOffsetY=pt.y-rect.top;
+  state.lastPointerY=pt.y; state.scrollSpeed=0;
+  createClone(card,rect); card.classList.add('drag-source'); updateCloneY(pt.y);
+  document.body.classList.add('dragging'); setStatus('orange','Glisse pour réorganiser...');
+  if(!scrollRAF) scrollRAF=requestAnimationFrame(scrollLoop);
+}
+function createClone(card,rect){
+  removeClone(); state.dragClone=card.cloneNode(true); state.dragClone.classList.add('floating-card');
+  state.dragClone.style.cssText=`width:${rect.width}px;height:${rect.height}px;left:${rect.left}px;top:${rect.top}px;`;
+  document.body.appendChild(state.dragClone);
+}
+function removeClone(){ if(state.dragClone&&state.dragClone.parentNode) state.dragClone.parentNode.removeChild(state.dragClone); state.dragClone=null; }
+function updateCloneY(y){ if(state.dragClone) state.dragClone.style.top=(y-state.dragOffsetY)+'px'; }
+
+function onMove(evt){
+  if(!state.dragItem) return; evt.preventDefault();
+  const pt=getPoint(evt); state.lastPointerY=pt.y; updateCloneY(pt.y);
+  const wr=el.fitWrap.getBoundingClientRect(); const thr=60;
+  if(pt.y<wr.top+thr) state.scrollSpeed=Math.max(-20,pt.y-(wr.top+thr));
+  else if(pt.y>wr.bottom-thr) state.scrollSpeed=Math.min(20,pt.y-(wr.bottom-thr));
+  else state.scrollSpeed=0;
+  checkDragSwap(pt.y);
+}
+function checkDragSwap(clientY){
+  const ni=indexFromY(clientY); const ci=state.addons.indexOf(state.dragItem);
+  if(ni!==-1&&ni!==ci){
+    const r=state.dragClone&&state.dragClone.querySelector('.rank'); if(r) r.textContent=ni+1;
+    state.addons.splice(ci,1); state.addons.splice(ni,0,state.dragItem);
+    state.dragChanged=true; renderList(state.dragItem);
+  }
+}
+function onEnd(evt){
+  if(!state.dragItem) return; if(evt) evt.preventDefault();
+  const moved=state.dragItem; state.scrollSpeed=0;
+  if(scrollRAF){ cancelAnimationFrame(scrollRAF); scrollRAF=null; }
+  removeClone(); state.dragItem=null; document.body.classList.remove('dragging'); renderList(moved);
+  if(state.dragChanged) syncOrder(); else setStatus('green',"Aucun changement d'ordre.");
+}
+function indexFromY(y){
+  const cards=Array.from(el.addonsList.querySelectorAll('.addon-card')); if(!cards.length) return -1;
+  for(let i=0;i<cards.length;i++){ const r=cards[i].getBoundingClientRect(); if(y<r.top+r.height/2) return i; }
+  return cards.length-1;
+}
+
+async function syncOrder(){
+  if(state.syncing) return; setStatus('orange','Mise à jour cloud Stremio...');
+  try{
+    state.syncing=true; document.querySelectorAll('.drag-handle, .action-btn').forEach(n=>n.style.pointerEvents='none');
+    const resp=await fetch(API_BASE+'addonCollectionSet',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({type:'AddonCollectionSet',authKey:state.authKey,addons:state.addons})});
+    const data=await resp.json();
+    if(!resp.ok||!(data.result&&data.result.success)) throw new Error('Échec sync');
+    setStatus('green','Profil mis à jour.');
+  } catch(err){ setStatus('red','Erreur sync : '+(err.message||'échec')); await loadAddons(); }
+  finally{ state.syncing=false; state.dragChanged=false; document.querySelectorAll('.drag-handle, .action-btn').forEach(n=>n.style.pointerEvents='auto'); }
+}
+</script>
+</body>
+</html>
