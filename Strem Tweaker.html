@@ -2,8 +2,20 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'none';
+    script-src 'unsafe-inline';
+    style-src 'unsafe-inline';
+    img-src https: http: data: blob:;
+    connect-src https://api.strem.io https:;
+    font-src 'self' data:;
+    form-action 'none';
+    base-uri 'none';
+    object-src 'none';
+    frame-src 'none';
+  ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V1.6b</title>
+  <title>Strem Tweaker V1.8</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -120,6 +132,11 @@
     .modal-card h3{margin:0 0 4px;font-size:18px;}
     .modal-card p.sub{margin:0 0 12px;font-size:12px;color:var(--muted);word-break:break-all;}
     .modal-card textarea{width:100%;font-size:13px;line-height:1.4;}
+    .history-list{display:grid;gap:10px;margin-top:12px;max-height:60dvh;overflow-y:auto;padding-right:4px;}
+    .history-item{border:1px solid var(--line);border-radius:16px;padding:12px;background:rgba(255,255,255,.04);}
+    .history-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
+    .history-ver{font-size:12px;font-weight:700;color:#cce0ff;background:rgba(125,168,255,.12);border:1px solid rgba(125,168,255,.22);padding:4px 8px;border-radius:999px;}
+    .history-note{font-size:13px;color:var(--text);line-height:1.45;}
 
     /* login panel inside modal */
     .login-modal-body .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
@@ -164,6 +181,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
               Paramètres
             </div>
+            <div class="dropdown-item" id="btnOpenHistoryModal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="9"></circle></svg>
+              Historique versions
+            </div>
             <div class="dropdown-divider"></div>
             <div class="dropdown-item danger" id="btnLogout">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
@@ -178,7 +199,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V1.6b</span>
+        <span class="version-badge">V1.8</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -257,6 +278,25 @@
     </div>
   </div>
 
+  <!-- ── MODAL HISTORIQUE VERSIONS ── -->
+  <div id="modalHistory" class="modal-overlay">
+    <div class="modal-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:10px;">
+        <div>
+          <h3>Historique versions</h3>
+          <p class="sub">Résumé très court des changements depuis la v1.6b.</p>
+        </div>
+        <button type="button" id="btnCloseHistoryModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
+      </div>
+      <div class="history-list">
+        <div class="history-item"><div class="history-head"><span class="history-ver">V1.6b</span></div><div class="history-note">Hero simplifié : titre + version centrés, sans texte secondaire.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V1.7</span></div><div class="history-note">Ajout d'une CSP compatible fichier unique pour limiter les connexions et ressources non prévues.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V1.7a</span></div><div class="history-note">Ajout de la constante <code>APP_VERSION</code> pour exposer la version courante.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V1.8</span></div><div class="history-note">Ajout d'un popup scrollable “Historique versions” dans le menu utilisateur.</div></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── MODAL CONNEXION (depuis le menu) ── -->
   <div id="modalLogin" class="modal-overlay">
     <div class="modal-card">
@@ -290,6 +330,7 @@
   </div>
 
 <script>
+const APP_VERSION = 'V1.8';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -316,6 +357,7 @@ const el = {
   m_toggleAuthKey: $('m_toggleAuthKey'), m_copyAuthKey: $('m_copyAuthKey'),
   m_loginBtn: $('m_loginBtn'), m_debugToggle: $('m_debugToggle'), m_debugWrap: $('m_debugWrap'), m_debugBox: $('m_debugBox'),
   modalLogin: $('modalLogin'), btnCloseLoginModal: $('btnCloseLoginModal'),
+  btnOpenHistoryModal: $('btnOpenHistoryModal'), modalHistory: $('modalHistory'), btnCloseHistoryModal: $('btnCloseHistoryModal'),
   // Modal edit
   modalEdit: $('modalEdit'), modalEditTitle: $('modalEditTitle'), modalEditLabel: $('modalEditLabel'), modalEditInput: $('modalEditInput'),
   btnEditCancel: $('btnEditCancel'), btnEditSave: $('btnEditSave'),
@@ -360,6 +402,9 @@ function bind(){
   el.m_debugToggle.addEventListener('click', () => { const open = el.m_debugWrap.classList.toggle('hidden'); el.m_debugToggle.textContent = open ? 'Masquer debug' : 'Afficher debug'; });
   el.btnCloseLoginModal.addEventListener('click', closeLoginModal);
   el.modalLogin.addEventListener('click', e => { if(e.target===el.modalLogin) closeLoginModal(); });
+  el.btnOpenHistoryModal.addEventListener('click', openHistoryModal);
+  el.btnCloseHistoryModal.addEventListener('click', closeHistoryModal);
+  el.modalHistory.addEventListener('click', e => { if(e.target===el.modalHistory) closeHistoryModal(); });
 
   // User menu
   el.headerEmail.addEventListener('click', e => { e.stopPropagation(); el.userDropdown.classList.toggle('hidden'); });
@@ -395,6 +440,8 @@ function openLoginModal(){
   el.modalLogin.classList.add('active');
 }
 function closeLoginModal(){ el.modalLogin.classList.remove('active'); }
+function openHistoryModal(){ el.userDropdown.classList.add('hidden'); el.modalHistory.classList.add('active'); }
+function closeHistoryModal(){ el.modalHistory.classList.remove('active'); }
 
 function togglePassVisibility(input, icon){
   if(input.type==='password'){
