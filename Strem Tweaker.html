@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V1.8</title>
+  <title>Strem Tweaker V2.6</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -132,6 +132,9 @@
     .modal-card h3{margin:0 0 4px;font-size:18px;}
     .modal-card p.sub{margin:0 0 12px;font-size:12px;color:var(--muted);word-break:break-all;}
     .modal-card textarea{width:100%;font-size:13px;line-height:1.4;}
+  .deleted-wrap{margin-top:14px;}
+  .deleted-card{opacity:.72;border-style:dashed;}
+  .deleted-card .addon-title{text-decoration:line-through;color:var(--muted);}
     .history-list{display:grid;gap:10px;margin-top:12px;max-height:60dvh;overflow-y:auto;padding-right:4px;}
     .history-item{border:1px solid var(--line);border-radius:16px;padding:12px;background:rgba(255,255,255,.04);}
     .history-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
@@ -199,7 +202,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V1.8</span>
+        <span class="version-badge">V2.6</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -248,6 +251,9 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
           </button>
           <div style="width:1px;height:20px;background:var(--line);margin:0 4px;"></div>
+          <button id="btnInstall" class="pill-btn" title="Installer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><polyline points="8 11 12 15 16 11"></polyline><path d="M5 21h14"></path></svg>
+          </button>
           <button id="btnSaveJson" class="pill-btn" title="Sauvegarder (JSON)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
           </button>
@@ -260,6 +266,10 @@
       </div>
       <div id="fitWrap" class="addons-fit">
         <div id="addonsList" class="list"></div>
+        <div id="deletedWrap" class="deleted-wrap hidden">
+          <h2 style="margin:0 0 8px;font-size:16px;">Supprimés</h2>
+          <div id="deletedList" class="list"></div>
+        </div>
       </div>
       <div id="emptyState" class="empty hidden">Aucun addon trouvé.</div>
     </section>
@@ -292,7 +302,7 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V1.6b</span></div><div class="history-note">Hero simplifié : titre + version centrés, sans texte secondaire.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V1.7</span></div><div class="history-note">Ajout d'une CSP compatible fichier unique pour limiter les connexions et ressources non prévues.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V1.7a</span></div><div class="history-note">Ajout de la constante <code>APP_VERSION</code> pour exposer la version courante.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V1.8</span></div><div class="history-note">Ajout d'un popup scrollable “Historique versions” dans le menu utilisateur.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V2.6</span></div><div class="history-note">Ajout d'un popup scrollable “Historique versions” dans le menu utilisateur.</div></div>
       </div>
     </div>
   </div>
@@ -330,7 +340,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V1.8';
+const APP_VERSION = 'V2.6';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -351,7 +361,7 @@ const el = {
   countLabel: $('countLabel'), fitWrap: $('fitWrap'),
   headerUserMenu: $('headerUserMenu'), headerEmail: $('headerEmail'), headerEmailText: $('headerEmailText'), userDropdown: $('userDropdown'),
   btnLogout: $('btnLogout'), btnOpenLoginModal: $('btnOpenLoginModal'),
-  btnSaveJson: $('btnSaveJson'), btnRestoreJson: $('btnRestoreJson'), fileRestore: $('fileRestore'), btnCheckUpdates: $('btnCheckUpdates'),
+  btnInstall: $('btnInstall'), btnSaveJson: $('btnSaveJson'), btnRestoreJson: $('btnRestoreJson'), fileRestore: $('fileRestore'), btnCheckUpdates: $('btnCheckUpdates'),
   // Modal connexion fields
   m_email: $('m_email'), m_password: $('m_password'), m_authKey: $('m_authKey'),
   m_toggleAuthKey: $('m_toggleAuthKey'), m_copyAuthKey: $('m_copyAuthKey'),
@@ -365,6 +375,7 @@ const el = {
 
 let editCallback = null;
 let scrollRAF = null;
+let deletedAddons = [];
 
 init();
 
@@ -413,6 +424,28 @@ function bind(){
   el.btnOpenLoginModal.addEventListener('click', openLoginModal);
 
   // Toolbar
+  el.btnInstall.addEventListener('click', async () => {
+    let url = prompt('URL du manifest à installer (ex: https://.../manifest.json) :', '');
+    if(!url || !url.trim()) return;
+    url = url.trim();
+    if(url.startsWith('stremio://')) url = 'https://' + url.substring(10);
+    if(!url.endsWith('manifest.json')) url = url.replace(/\/?$/, '/manifest.json');
+    setStatus('orange', 'Installation en cours...');
+    try {
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('Manifest inaccessible');
+      const manifest = await res.json();
+      if(!manifest || !manifest.id) throw new Error('Manifest invalide');
+      if(state.addons.find(a => a.transportUrl === url)) throw new Error('Addon déjà installé');
+      state.addons.push({ transportUrl: url, transportName: 'http', manifest: manifest });
+      renderList();
+      saveLocal();
+      await syncOrder();
+      setStatus('green', manifest.name + ' installé !');
+    } catch(e) {
+      setStatus('red', 'Erreur install: ' + e.message);
+    }
+  });
   el.btnSaveJson.addEventListener('click', exportAddons);
   el.btnRestoreJson.addEventListener('click', () => el.fileRestore.click());
   el.fileRestore.addEventListener('change', importAddons);
@@ -479,9 +512,10 @@ function loadLocal(){
     state.authKey = s.authKey||'';
     state.debugOpen = !!s.debugOpen;
     state.loginCollapsed = !!s.loginCollapsed;
+    deletedAddons = Array.isArray(s.deletedAddons) ? s.deletedAddons : [];
   } catch(_){}
 }
-function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({email:state.email,password:state.password,authKey:state.authKey,debugOpen:state.debugOpen,loginCollapsed:state.loginCollapsed})); }
+function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({email:state.email,password:state.password,authKey:state.authKey,debugOpen:state.debugOpen,loginCollapsed:state.loginCollapsed,deletedAddons})); }
 
 function renderDebug(open, wrap, toggle){ wrap.classList.toggle('hidden',!open); toggle.textContent=open?'Masquer debug':'Afficher debug'; }
 function renderLoginCollapsed(){
@@ -561,7 +595,7 @@ async function loginAndGetKey(email, password, authKeyValue){
 }
 
 function clearAll(){
-  state.email=''; state.password=''; state.authKey=''; state.addons=[]; state.loginCollapsed=false;
+  state.email=''; state.password=''; state.authKey=''; state.addons=[]; state.loginCollapsed=false; deletedAddons=[];
   localStorage.removeItem(STORAGE_KEY);
   hydrateForms();
   el.userDropdown.classList.add('hidden');
@@ -703,6 +737,84 @@ function moveToBottom(addon){
   if(i!==-1&&i<state.addons.length-1){ state.addons.splice(i,1); state.addons.push(addon); renderList(addon); syncOrder(); el.fitWrap.scrollTo({top:el.fitWrap.scrollHeight,behavior:'smooth'}); }
 }
 
+function renderDeletedList(){
+  el.deletedList.innerHTML='';
+  el.deletedWrap.classList.toggle('hidden', deletedAddons.length===0);
+  deletedAddons.forEach(addon=>{
+    const manifest=addon.manifest||{};
+    const title=manifest.name||manifest.id||'Addon';
+    const version=manifest.version?'v'+manifest.version:'';
+    const url = addon.transportUrl || '';
+    const id = manifest.id || '';
+    const card=document.createElement('div');
+    card.className='addon-card deleted-card';
+    card.innerHTML=`
+      <div class="addon-main">
+        <div class="rank">✕</div>
+        <div class="addon-title-wrap">
+          <div class="addon-title" title="${esc(title)}">${esc(title)}</div>
+          ${version?`<span class="addon-version">${version}</span>`:''}
+        </div>
+      </div>
+      <div class="muted" style="padding:0 14px 8px;word-break:break-all;">
+        ID: ${esc(id)}<br>
+        Manifest: ${esc(url)}
+      </div>
+      <div class="addon-actions" style="display:flex;flex-wrap:wrap;gap:8px;">
+        <div class="action-btn btn-restore" title="Restaurer">↺</div>
+        <div class="action-btn btn-copy-url" title="Copier l'URL">⧉</div>
+        <div class="action-btn btn-copy-id" title="Copier l'ID">ID</div>
+        <div style="flex:1;"></div>
+        <div class="action-btn btn-forget" style="color:var(--ko);border-color:rgba(255,109,134,0.3);background:rgba(255,109,134,0.1);" title="Supprimer définitivement">✕</div>
+      </div>`;
+    card.querySelector('.btn-restore').addEventListener('click', ()=>restoreDeleted(addon));
+    card.querySelector('.btn-copy-url').addEventListener('click', ()=>navigator.clipboard.writeText(url));
+    card.querySelector('.btn-copy-id').addEventListener('click', ()=>navigator.clipboard.writeText(id));
+    card.querySelector('.btn-forget').addEventListener('click', ()=>forgetDeleted(addon));
+    el.deletedList.appendChild(card);
+  });
+}
+
+function hideAddon(addon){
+  const t=(addon.manifest&&addon.manifest.name)||'cet addon';
+  if(!confirm('Rendre invisible "'+t+'" ?')) return;
+  const i=state.addons.indexOf(addon);
+  if(i>-1){
+    const backup = JSON.parse(JSON.stringify(addon));
+    backup._originalIndex = i;
+    if(!deletedAddons.find(a => (a.manifest&&a.manifest.id)===(addon.manifest&&addon.manifest.id))){
+      deletedAddons.push(backup);
+    }
+    state.addons.splice(i,1);
+    renderList();
+    renderDeletedList();
+    saveLocal();
+    syncOrder();
+  }
+}
+
+function restoreDeleted(addon){
+  const idx = deletedAddons.indexOf(addon);
+  if(idx < 0) return;
+  const visibleClone = JSON.parse(JSON.stringify(addon));
+  deletedAddons.splice(idx,1);
+  const insertAt = Math.min(addon._originalIndex ?? state.addons.length, state.addons.length);
+  state.addons.splice(insertAt,0,visibleClone);
+  renderList();
+  renderDeletedList();
+  saveLocal();
+  syncOrder();
+}
+
+function forgetDeleted(addon){
+  if(!confirm('Supprimer définitivement cet addon ?')) return;
+  const idx = deletedAddons.indexOf(addon);
+  if(idx < 0) return;
+  deletedAddons.splice(idx,1);
+  renderDeletedList();
+  saveLocal();
+}
+
 function renderList(activeAddon){
   const st=el.fitWrap.scrollTop;
   el.addonsList.style.minHeight=el.addonsList.scrollHeight+'px';
@@ -714,6 +826,8 @@ function renderList(activeAddon){
     const manifest=addon.manifest||{};
     const title=manifest.name||manifest.id||'Addon';
     const version=manifest.version?'v'+manifest.version:'';
+    const url = addon.transportUrl || '';
+    const id = manifest.id || '';
     const isConfigurable=manifest.behaviorHints&&manifest.behaviorHints.configurable===true;
     const isFirst=index===0; const isLast=index===count-1;
     let rawIcon=manifest.icon||manifest.logo||addon.icon||addon.logo;
@@ -743,7 +857,7 @@ function renderList(activeAddon){
           <div class="addon-title" title="${esc(title)}">${esc(title)}</div>
           ${versionBadge}${updateBadge}
         </div>
-        <div class="action-btn toggle-btn" title="Activer/Désactiver">${addon._disabled?svgEyeOff:svgEye}</div>
+        <div class="action-btn toggle-btn" title="Afficher/Masquer">${addon._disabled?svgEyeOff:svgEye}</div>
         <div class="drag-handle">${svgGrip}</div>
       </div>
       <div class="addon-actions">
