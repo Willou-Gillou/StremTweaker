@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V1.9</title>
+  <title>Strem Tweaker V1.8</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -199,7 +199,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V1.9</span>
+        <span class="version-badge">V1.8</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -260,10 +260,6 @@
       </div>
       <div id="fitWrap" class="addons-fit">
         <div id="addonsList" class="list"></div>
-        <div id="deletedWrap" class="hidden" style="margin-top:14px;">
-          <h2 style="margin:0 0 8px;font-size:16px;">Supprimés</h2>
-          <div id="deletedList" class="list"></div>
-        </div>
       </div>
       <div id="emptyState" class="empty hidden">Aucun addon trouvé.</div>
     </section>
@@ -296,7 +292,7 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V1.6b</span></div><div class="history-note">Hero simplifié : titre + version centrés, sans texte secondaire.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V1.7</span></div><div class="history-note">Ajout d'une CSP compatible fichier unique pour limiter les connexions et ressources non prévues.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V1.7a</span></div><div class="history-note">Ajout de la constante <code>APP_VERSION</code> pour exposer la version courante.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V1.9</span></div><div class="history-note">Ajout d'un popup scrollable “Historique versions” dans le menu utilisateur.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V1.8</span></div><div class="history-note">Ajout d'un popup scrollable “Historique versions” dans le menu utilisateur.</div></div>
       </div>
     </div>
   </div>
@@ -334,7 +330,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V1.9';
+const APP_VERSION = 'V1.8';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -369,7 +365,6 @@ const el = {
 
 let editCallback = null;
 let scrollRAF = null;
-let deletedAddons = [];
 
 init();
 
@@ -484,10 +479,9 @@ function loadLocal(){
     state.authKey = s.authKey||'';
     state.debugOpen = !!s.debugOpen;
     state.loginCollapsed = !!s.loginCollapsed;
-    deletedAddons = Array.isArray(s.deletedAddons) ? s.deletedAddons : [];
   } catch(_){}
 }
-function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({email:state.email,password:state.password,authKey:state.authKey,debugOpen:state.debugOpen,loginCollapsed:state.loginCollapsed,deletedAddons})); }
+function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({email:state.email,password:state.password,authKey:state.authKey,debugOpen:state.debugOpen,loginCollapsed:state.loginCollapsed})); }
 
 function renderDebug(open, wrap, toggle){ wrap.classList.toggle('hidden',!open); toggle.textContent=open?'Masquer debug':'Afficher debug'; }
 function renderLoginCollapsed(){
@@ -567,7 +561,7 @@ async function loginAndGetKey(email, password, authKeyValue){
 }
 
 function clearAll(){
-  state.email=''; state.password=''; state.authKey=''; state.addons=[]; state.loginCollapsed=false; deletedAddons=[];
+  state.email=''; state.password=''; state.authKey=''; state.addons=[]; state.loginCollapsed=false;
   localStorage.removeItem(STORAGE_KEY);
   hydrateForms();
   el.userDropdown.classList.add('hidden');
@@ -681,32 +675,8 @@ function closeEditModal(save){
 // Addon actions
 function deleteAddon(addon){
   const t=(addon.manifest&&addon.manifest.name)||'cet addon';
-  if(confirm('Masquer (hide) "'+t+'" ?')){
-    const i=state.addons.indexOf(addon);
-    if(i>-1){
-      deletedAddons.push({...addon, _originalIndex:i});
-      state.addons.splice(i,1);
-      renderList();
-      renderDeletedList();
-      syncOrder();
-    }
-  }
-}
-function restoreDeleted(addon){
-  const idx = deletedAddons.indexOf(addon);
-  if(idx>-1){
-    const original = addon._originalIndex ?? state.addons.length;
-    deletedAddons.splice(idx,1);
-    state.addons.splice(Math.min(original, state.addons.length), 0, addon);
-    renderList();
-    renderDeletedList();
-    syncOrder();
-  }
-}
-function forgetDeleted(addon){
-  if(confirm('Supprimer définitivement cet addon de Strem Tweaker ?')){
-    const idx = deletedAddons.indexOf(addon);
-    if(idx>-1){ deletedAddons.splice(idx,1); renderDeletedList(); saveLocal(); }
+  if(confirm('Supprimer définitivement "'+t+'" ?')){
+    const i=state.addons.indexOf(addon); if(i>-1){ state.addons.splice(i,1); renderList(); syncOrder(); }
   }
 }
 function applyUpdate(addon){ if(!addon._hasUpdate) return; addon.manifest=addon._hasUpdate; addon._hasUpdate=null; renderList(); syncOrder(); }
@@ -714,7 +684,7 @@ function toggleAddon(addon){
   addon._disabled=!addon._disabled;
   if(addon._disabled){ if(!addon.transportUrl.startsWith(DISABLED_PREFIX)) addon.transportUrl=DISABLED_PREFIX+encodeURIComponent(addon.transportUrl); }
   else { if(addon.transportUrl.startsWith(DISABLED_PREFIX)) addon.transportUrl=decodeURIComponent(addon.transportUrl.substring(DISABLED_PREFIX.length)); }
-  renderList(); saveLocal(); syncOrder();
+  renderList(); syncOrder();
 }
 function openEditUrl(addon){
   let url=addon.transportUrl;
@@ -731,35 +701,6 @@ function moveToTop(addon){
 function moveToBottom(addon){
   const i=state.addons.indexOf(addon);
   if(i!==-1&&i<state.addons.length-1){ state.addons.splice(i,1); state.addons.push(addon); renderList(addon); syncOrder(); el.fitWrap.scrollTo({top:el.fitWrap.scrollHeight,behavior:'smooth'}); }
-}
-
-function renderDeletedList(){
-  el.deletedList.innerHTML='';
-  el.deletedWrap.classList.toggle('hidden', deletedAddons.length===0);
-  deletedAddons.forEach((addon,index)=>{
-    const manifest=addon.manifest||{};
-    const title=manifest.name||manifest.id||'Addon';
-    const version=manifest.version?'v'+manifest.version:'';
-    const card=document.createElement('div');
-    card.className='addon-card deleted-card';
-    card.innerHTML=`
-      <div class="addon-main">
-        <div class="rank">✕</div>
-        <div class="addon-title-wrap">
-          <div class="addon-title" title="${esc(title)}">${esc(title)}</div>
-          ${version?`<span class="addon-version">${version}</span>`:''}
-        </div>
-        <div class="drag-handle" style="cursor:pointer;">↺</div>
-      </div>
-      <div class="addon-actions" style="display:flex;">
-        <div class="action-btn btn-restore" title="Restaurer">↺</div>
-        <div style="flex:1;"></div>
-        <div class="action-btn btn-forget" style="color:var(--ko);border-color:rgba(255,109,134,0.3);background:rgba(255,109,134,0.1);" title="Supprimer définitivement">${svgCross}</div>
-      </div>`;
-    card.querySelector('.btn-restore').addEventListener('click', ()=>restoreDeleted(addon));
-    card.querySelector('.btn-forget').addEventListener('click', ()=>forgetDeleted(addon));
-    el.deletedList.appendChild(card);
-  });
 }
 
 function renderList(activeAddon){
@@ -842,8 +783,6 @@ function renderList(activeAddon){
     el.addonsList.appendChild(card);
   });
   el.addonsList.style.minHeight='';
-  renderDeletedList();
-  saveLocal();
   el.fitWrap.scrollTop=st;
 }
 
