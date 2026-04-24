@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V3.1</title>
+  <title>Strem Tweaker V3.3</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -239,7 +239,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V3.1</span>
+        <span class="version-badge">V3.3</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -370,7 +370,9 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V1.7a</span></div><div class="history-note">Ajout de la constante <code>APP_VERSION</code> pour exposer la version courante.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.6</span></div><div class="history-note">Ajout d'un popup scrollable “Historique versions” dans le menu utilisateur.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V3.0b</span></div><div class="history-note">Correctif suppression d'historique : ajout de <code>persistWatchDeletion()</code> qui était appelé mais non défini (ReferenceError empêchait l'appel serveur). Payload <code>datastorePut</code> aligné sur <code>libraryDelete.js</code> avec vérification post-suppression par re-lecture. Déduplication de <code>attachWatchDeleteHandlers</code>. La liste des visionnages reste inchangée (base V2.9-1).</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V3.1</span></div><div class="history-note">Nouveautés Historique visionnage : bouton <b>RAZ</b> (suppression totale de la bibliothèque du compte avec double confirmation, envois par lots de 200 via <code>datastorePut</code>) et bouton <b>Importer</b> (restauration d'une sauvegarde JSON exportée depuis cette même app — reconstruction des <code>libraryItem</code> avec <code>removed:false</code>, états de visionnage préservés, lots de 200).</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V3.1</span></div><div class="history-note">Nouveautés Historique visionnage : bouton <b>RAZ</b> (suppression totale de la bibliothèque du compte avec double confirmation) et bouton <b>Importer</b> (restauration d'une sauvegarde JSON exportée depuis cette même app).</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V3.2</span></div><div class="history-note">Double correctif filtres : (1) le handler <code>.watch-filter-btn</code> s'appliquait à tous les boutons y compris Importer/Exporter/RAZ qui n'ont pas de <code>data-filter</code> — cliquer sur Importer mettait <code>wState.filter = undefined</code> et masquait toute la liste. Restreint aux boutons <code>[data-filter]</code> uniquement. (2) Après un import, le filtre actif est maintenant forcé sur "Tout" et la recherche vidée, pour que les entrées importées soient visibles immédiatement sans action manuelle.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V3.3</span></div><div class="history-note">Correctif RAZ librairie : deux causes. (1) <code>fetchWatchHistory</code> n'excluait pas les items <code>removed:true</code> — après RAZ, Stremio les renvoyait quand même sans <code>lastWatched</code>, affichés à la date du 01/01/1970. Filtre ajouté sur <code>removed:true</code> et <code>watchRemovedIds</code>. (2) <code>resetWatchHistory</code> envoyait un payload minimal <code>{_id, name, type, removed, _mtime}</code> que Stremio ignore sans persister la suppression. Corrigé en copiant l'objet complet de l'item avant d'écraser <code>removed:true</code> et <code>_mtime</code> — identique à <code>deleteWatchEntryOnServer</code> qui fonctionne. Lots réduits à 50 items.</div></div>
       </div>
     </div>
   </div>
@@ -408,7 +410,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V3.1';
+const APP_VERSION = 'V3.3';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -490,7 +492,7 @@ function bind(){
   if($('btnImportWatch')) $('btnImportWatch').addEventListener('click', function(){ var f = $('watchImportFile'); if(f){ f.value = ''; f.click(); } });
   if($('watchImportFile')) $('watchImportFile').addEventListener('change', function(e){ var file = e.target.files && e.target.files[0]; if(file) importWatchJson(file); });
   if($('watchList')) $('watchList').addEventListener('click', function(e){ var b=e.target.closest('.wc-del'); if(!b) return; e.preventDefault(); e.stopPropagation(); deleteWatchEntry(b.getAttribute('data-watch-id')); });
-  document.querySelectorAll('.watch-filter-btn').forEach(function(btn){ btn.addEventListener('click', function(){ document.querySelectorAll('.watch-filter-btn').forEach(function(b){ b.classList.remove('active'); }); btn.classList.add('active'); wState.filter = btn.dataset.filter; renderWatchList(); }); });
+  document.querySelectorAll('.watch-filter-btn[data-filter]').forEach(function(btn){ btn.addEventListener('click', function(){ document.querySelectorAll('.watch-filter-btn[data-filter]').forEach(function(b){ b.classList.remove('active'); }); btn.classList.add('active'); wState.filter = btn.dataset.filter; renderWatchList(); }); });
   el.btnOpenHistoryModal.addEventListener('click', openHistoryModal);
   el.btnCloseHistoryModal.addEventListener('click', closeHistoryModal);
   el.modalHistory.addEventListener('click', e => { if(e.target===el.modalHistory) closeHistoryModal(); });
@@ -562,7 +564,7 @@ function closeWatchModal(){ el.modalWatch.classList.remove('active'); }
 function safeText(s){ return String(s || '').replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); }); }
 function watchExtract(data){ if(!data) return []; if(Array.isArray(data)) return data; var r = data.result; if(!r) return []; if(Array.isArray(r)) return r; if(Array.isArray(r.items)) return r.items; if(Array.isArray(r.libraryItems)) return r.libraryItems; if(typeof r === 'object'){ var vals = Object.values(r).filter(function(x){ return x && typeof x === 'object' && (x._id || x.id); }); if(vals.length) return vals; } return []; }
 async function watchTry(endpoint, body){ try{ var resp = await fetch(API_BASE + endpoint, { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify(body) }); if(!resp.ok) return null; return await resp.json(); }catch(e){ return null; } }
-async function fetchWatchHistory(){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Chargement…</div>'; var items = [], rawData = null; rawData = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[], all:true }); if(rawData) items = watchExtract(rawData); if(!items.length){ rawData = await watchTry('libraryGet', { type:'LibraryGet', authKey:state.authKey, collection:'libraryItem' }); if(rawData) items = watchExtract(rawData); } if(!items.length){ rawData = await watchTry('addonCollectionGet', { type:'AddonCollectionGet', authKey:state.authKey, update:true }); if(rawData){ var lib = (rawData.result && rawData.result.library) || rawData.library; items = Array.isArray(lib) ? lib : watchExtract(rawData); } } if($('watchDebugBox')) { try{ $('watchDebugBox').textContent = JSON.stringify(rawData, null, 2).substring(0, 4000); }catch(e){} } if(!items.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Bibliothèque vide ou inaccessible.</div>'; return; } var watched = items.filter(function(i){ var s = i._state || i.state || {}; return s.timesWatched > 0 || s.lastWatched || s.flaggedWatched; }); watchItems = watched.length ? watched : items; watchItems.sort(function(a,b){ var sa=a._state||a.state||{}, sb=b._state||b.state||{}; return new Date(sb.lastWatched || 0) - new Date(sa.lastWatched || 0); }); renderWatchList(); }
+async function fetchWatchHistory(){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Chargement…</div>'; var items = [], rawData = null; rawData = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[], all:true }); if(rawData) items = watchExtract(rawData); if(!items.length){ rawData = await watchTry('libraryGet', { type:'LibraryGet', authKey:state.authKey, collection:'libraryItem' }); if(rawData) items = watchExtract(rawData); } if(!items.length){ rawData = await watchTry('addonCollectionGet', { type:'AddonCollectionGet', authKey:state.authKey, update:true }); if(rawData){ var lib = (rawData.result && rawData.result.library) || rawData.library; items = Array.isArray(lib) ? lib : watchExtract(rawData); } } if($('watchDebugBox')) { try{ $('watchDebugBox').textContent = JSON.stringify(rawData, null, 2).substring(0, 4000); }catch(e){} } if(!items.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Bibliothèque vide ou inaccessible.</div>'; return; } /* V3.3 — Exclure les items supprimés (removed:true) et ceux supprimés localement */ items = items.filter(function(i){ if(i && i.removed === true) return false; var id = (i && (i._id || i.id)) || ''; return watchRemovedIds.indexOf(id) === -1; }); var watched = items.filter(function(i){ var s = i._state || i.state || {}; return s.timesWatched > 0 || s.lastWatched || s.flaggedWatched; }); watchItems = watched.length ? watched : items; watchItems.sort(function(a,b){ var sa=a._state||a.state||{}, sb=b._state||b.state||{}; return new Date(sb.lastWatched || 0) - new Date(sa.lastWatched || 0); }); renderWatchList(); }
 function watchMatches(item){ var meta = item._manifestItem || item.meta || item; var s = item._state || item.state || {}; var id = item._id || item.id || ''; var type = item.type || id.split(':')[0] || ''; if(wState.filter !== 'all' && type !== wState.filter) return false; if(!wState.query) return true; var text = [meta.name || item.name || '', meta.year || '', id, String(s.timesWatched || '')].join(' ').toLowerCase(); return text.indexOf(wState.query) !== -1; }
 function watchPoster(item){ var meta = item._manifestItem || item.meta || item; if(meta.poster) return meta.poster; var id = item._id || item.id || ''; var m = id.match(/tt\d+/); if(m) return 'https://images.metahub.space/poster/medium/' + m[0] + '/img'; return ''; }
 function formatWatchDate(d){ try{ return new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' }); }catch(e){ return ''; } }
@@ -758,19 +760,22 @@ async function resetWatchHistory(){
     if(!alive.length){ showWatchToast('Bibliothèque déjà vide.', 'toast-ok'); watchItems = []; renderWatchList(); return; }
     console.log(logPrefix, 'Items à supprimer:', alive.length);
 
+    // V3.3 — Payload complet (tous les champs de l'item original) + removed:true + _mtime,
+    // même logique que deleteWatchEntryOnServer qui fonctionne.
+    // Stremio ignore les payloads minimaux et remet les items à la date 1970 sinon.
     var nowIso = new Date().toISOString();
     var changes = alive.map(function(it){
-      return {
-        _id: it._id || it.id,
-        name: it.name || 'Unknown',
-        type: it.type || 'unknown',
-        removed: true,
-        _mtime: nowIso
-      };
+      var full = {};
+      // Copier tous les champs existants de l'item
+      Object.keys(it).forEach(function(k){ full[k] = it[k]; });
+      // Écraser les champs de suppression
+      full._id = it._id || it.id;
+      full.removed = true;
+      full._mtime = nowIso;
+      return full;
     });
 
-    // Envoi par lots de 200 pour éviter de saturer l'API
-    var BATCH = 200;
+    var BATCH = 50;
     var totalSent = 0, failed = 0;
     for(var i=0; i<changes.length; i+=BATCH){
       var slice = changes.slice(i, i+BATCH);
@@ -780,8 +785,8 @@ async function resetWatchHistory(){
         collection: 'libraryItem',
         changes: slice
       });
-      if(resp){ totalSent += slice.length; console.log(logPrefix, 'Lot', (i/BATCH)+1, '→', slice.length, 'items OK'); }
-      else { failed += slice.length; console.warn(logPrefix, 'Lot', (i/BATCH)+1, '→ ÉCHEC'); }
+      if(resp){ totalSent += slice.length; console.log(logPrefix, 'Lot', Math.floor(i/BATCH)+1, '→', slice.length, 'OK'); }
+      else { failed += slice.length; console.warn(logPrefix, 'Lot', Math.floor(i/BATCH)+1, '→ ÉCHEC'); }
     }
 
     // Mémoriser localement
@@ -862,7 +867,14 @@ async function importWatchJson(file){
     } else {
       showWatchToast('Import partiel : ' + totalSent + ' OK / ' + failed + ' échecs.', 'toast-err');
     }
-    // Rafraîchir la liste depuis le serveur
+    // V3.2 — Forcer filtre sur "Tout" et vider la recherche pour que les entrées
+    // importées soient visibles immédiatement sans action manuelle.
+    wState.filter = 'all';
+    wState.query = '';
+    if($('watchSearch')) $('watchSearch').value = '';
+    document.querySelectorAll('.watch-filter-btn[data-filter]').forEach(function(b){
+      b.classList.toggle('active', b.dataset.filter === 'all');
+    });
     await fetchWatchHistory();
   }catch(e){
     console.error(logPrefix, e && e.message ? e.message : e);
