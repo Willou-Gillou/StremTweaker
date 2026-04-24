@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V3.0b</title>
+  <title>Strem Tweaker V3.1</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -239,7 +239,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V3.0b</span>
+        <span class="version-badge">V3.1</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -337,13 +337,16 @@
       </div>
       <div style="display:grid;gap:8px;margin-bottom:12px;">
         <input id="watchSearch" type="text" placeholder="Rechercher…" autocomplete="off" style="width:100%;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);outline:none;border-radius:14px;padding:11px 14px;font:inherit;">
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:nowrap;overflow-x:hidden;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:nowrap;overflow-x:auto;">
           <button class="watch-filter-btn active" data-filter="all">Tout</button>
           <button class="watch-filter-btn" data-filter="movie">Films</button>
           <button class="watch-filter-btn" data-filter="series">Séries</button>
-          <div style="flex:1"></div>
+          <div style="flex:1;min-width:4px;"></div>
+          <button type="button" id="btnImportWatch" class="watch-filter-btn" style="color:var(--accent,#8ab4ff);border-color:rgba(138,180,255,.35);" title="Importer une sauvegarde JSON">Importer</button>
           <button type="button" id="btnExportWatch" class="watch-filter-btn" style="color:var(--ok);border-color:rgba(56,211,159,.3);">Exporter</button>
+          <button type="button" id="btnResetWatch" class="watch-filter-btn" style="color:#ff6b6b;border-color:rgba(255,107,107,.35);" title="Supprimer TOUT l'historique du compte">RAZ</button>
         </div>
+        <input type="file" id="watchImportFile" accept="application/json,.json" style="display:none;">
       </div>
       <div id="watchList" style="max-height:62dvh;overflow-y:auto;overflow-x:hidden;padding-right:2px;">
         <div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Chargement…</div>
@@ -367,6 +370,7 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V1.7a</span></div><div class="history-note">Ajout de la constante <code>APP_VERSION</code> pour exposer la version courante.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.6</span></div><div class="history-note">Ajout d'un popup scrollable “Historique versions” dans le menu utilisateur.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V3.0b</span></div><div class="history-note">Correctif suppression d'historique : ajout de <code>persistWatchDeletion()</code> qui était appelé mais non défini (ReferenceError empêchait l'appel serveur). Payload <code>datastorePut</code> aligné sur <code>libraryDelete.js</code> avec vérification post-suppression par re-lecture. Déduplication de <code>attachWatchDeleteHandlers</code>. La liste des visionnages reste inchangée (base V2.9-1).</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V3.1</span></div><div class="history-note">Nouveautés Historique visionnage : bouton <b>RAZ</b> (suppression totale de la bibliothèque du compte avec double confirmation, envois par lots de 200 via <code>datastorePut</code>) et bouton <b>Importer</b> (restauration d'une sauvegarde JSON exportée depuis cette même app — reconstruction des <code>libraryItem</code> avec <code>removed:false</code>, états de visionnage préservés, lots de 200).</div></div>
       </div>
     </div>
   </div>
@@ -404,7 +408,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V3.0b';
+const APP_VERSION = 'V3.1';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -482,6 +486,9 @@ function bind(){
   el.modalWatch.addEventListener('click', function(e){ if(e.target===el.modalWatch) closeWatchModal(); });
   if($('watchSearch')) $('watchSearch').addEventListener('input', function(e){ wState.query = e.target.value.trim().toLowerCase(); renderWatchList(); });
   if($('btnExportWatch')) $('btnExportWatch').addEventListener('click', exportWatchJson);
+  if($('btnResetWatch')) $('btnResetWatch').addEventListener('click', resetWatchHistory);
+  if($('btnImportWatch')) $('btnImportWatch').addEventListener('click', function(){ var f = $('watchImportFile'); if(f){ f.value = ''; f.click(); } });
+  if($('watchImportFile')) $('watchImportFile').addEventListener('change', function(e){ var file = e.target.files && e.target.files[0]; if(file) importWatchJson(file); });
   if($('watchList')) $('watchList').addEventListener('click', function(e){ var b=e.target.closest('.wc-del'); if(!b) return; e.preventDefault(); e.stopPropagation(); deleteWatchEntry(b.getAttribute('data-watch-id')); });
   document.querySelectorAll('.watch-filter-btn').forEach(function(btn){ btn.addEventListener('click', function(){ document.querySelectorAll('.watch-filter-btn').forEach(function(b){ b.classList.remove('active'); }); btn.classList.add('active'); wState.filter = btn.dataset.filter; renderWatchList(); }); });
   el.btnOpenHistoryModal.addEventListener('click', openHistoryModal);
@@ -725,6 +732,143 @@ function attachWatchDeleteHandlers(){
   });
 }
 function exportWatchJson(){ var payload = watchItems.map(function(item){ var meta=item._manifestItem || item.meta || item; return { id:item._id || item.id || '', type:item.type || '', title:meta.name || item.name || '', state:item._state || item.state || {} }; }); var blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' }); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'stremio-watch-history.json'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000); }
+
+// V3.1 — RAZ de toute la bibliothèque du compte.
+// Récupère tous les libraryItem, construit un batch de changes avec removed:true,
+// envoie un seul datastorePut (batch) aligné sur la même logique que deleteWatchEntryOnServer.
+async function resetWatchHistory(){
+  var logPrefix = '[watchReset]';
+  if(!state.authKey){ showWatchToast('Non connecté : RAZ impossible.', 'toast-err'); return; }
+  if(!confirm('⚠️ RAZ TOTALE de la bibliothèque du compte.\n\nTous les films, séries et historiques de visionnage seront marqués comme supprimés côté serveur Stremio.\n\nCette action est IRRÉVERSIBLE. Exporter une sauvegarde avant est fortement recommandé.\n\nContinuer ?')) return;
+  if(!confirm('Dernière confirmation : supprimer TOUTE la bibliothèque ?')) return;
+  showWatchToast('RAZ en cours…', 'toast-ok');
+  try{
+    var rawLib = await watchTry('datastoreGet', {
+      type: 'DatastoreGet',
+      authKey: state.authKey,
+      collection: 'libraryItem',
+      ids: [], all: true
+    });
+    if(!rawLib){ showWatchToast('Lecture serveur impossible.', 'toast-err'); return; }
+    var allItems = watchExtract(rawLib);
+    if(!allItems.length && rawLib && typeof rawLib === 'object'){
+      allItems = Object.values(rawLib).filter(function(x){ return x && typeof x === 'object' && (x._id || x.id); });
+    }
+    var alive = allItems.filter(function(i){ return !(i && i.removed === true); });
+    if(!alive.length){ showWatchToast('Bibliothèque déjà vide.', 'toast-ok'); watchItems = []; renderWatchList(); return; }
+    console.log(logPrefix, 'Items à supprimer:', alive.length);
+
+    var nowIso = new Date().toISOString();
+    var changes = alive.map(function(it){
+      return {
+        _id: it._id || it.id,
+        name: it.name || 'Unknown',
+        type: it.type || 'unknown',
+        removed: true,
+        _mtime: nowIso
+      };
+    });
+
+    // Envoi par lots de 200 pour éviter de saturer l'API
+    var BATCH = 200;
+    var totalSent = 0, failed = 0;
+    for(var i=0; i<changes.length; i+=BATCH){
+      var slice = changes.slice(i, i+BATCH);
+      var resp = await watchTry('datastorePut', {
+        type: 'DatastorePut',
+        authKey: state.authKey,
+        collection: 'libraryItem',
+        changes: slice
+      });
+      if(resp){ totalSent += slice.length; console.log(logPrefix, 'Lot', (i/BATCH)+1, '→', slice.length, 'items OK'); }
+      else { failed += slice.length; console.warn(logPrefix, 'Lot', (i/BATCH)+1, '→ ÉCHEC'); }
+    }
+
+    // Mémoriser localement
+    alive.forEach(function(it){ var id = it._id || it.id; if(id && watchRemovedIds.indexOf(id) === -1) watchRemovedIds.push(id); });
+    watchItems = [];
+    renderWatchList();
+
+    if(failed === 0){
+      showWatchToast('✓ RAZ réussie (' + totalSent + ' entrées).', 'toast-ok');
+    } else {
+      showWatchToast('RAZ partielle : ' + totalSent + ' OK / ' + failed + ' échecs.', 'toast-err');
+    }
+  }catch(e){
+    console.error(logPrefix, e && e.message ? e.message : e);
+    showWatchToast('Erreur pendant la RAZ.', 'toast-err');
+  }
+}
+
+// V3.1 — Import d'une sauvegarde JSON (format produit par exportWatchJson :
+// [{ id, type, title, state }, ...]).
+// Chaque entrée est restaurée via datastorePut avec removed:false, en conservant
+// l'état de visionnage (timeWatched, lastWatched, etc.) et le titre.
+async function importWatchJson(file){
+  var logPrefix = '[watchImport]';
+  if(!state.authKey){ showWatchToast('Non connecté : import impossible.', 'toast-err'); return; }
+  if(!file){ return; }
+  try{
+    var text = await file.text();
+    var data;
+    try{ data = JSON.parse(text); }
+    catch(e){ showWatchToast('Fichier JSON invalide.', 'toast-err'); return; }
+    if(!Array.isArray(data)){ showWatchToast('Format inattendu : un tableau est attendu.', 'toast-err'); return; }
+
+    var valid = data.filter(function(entry){
+      return entry && typeof entry === 'object' && (entry.id || entry._id);
+    });
+    if(!valid.length){ showWatchToast('Aucune entrée valide trouvée.', 'toast-err'); return; }
+
+    if(!confirm('Importer ' + valid.length + ' entrée(s) dans la bibliothèque du compte ?\n\nLes entrées déjà présentes seront mises à jour avec les états du fichier.')) return;
+    showWatchToast('Import en cours…', 'toast-ok');
+
+    var nowIso = new Date().toISOString();
+    var changes = valid.map(function(entry){
+      var id = entry._id || entry.id;
+      var state = entry.state || entry._state || {};
+      return {
+        _id: id,
+        name: entry.title || entry.name || 'Unknown',
+        type: entry.type || (String(id).split(':')[0]) || 'unknown',
+        removed: false,
+        _mtime: nowIso,
+        _ctime: entry._ctime || nowIso,
+        state: state
+      };
+    });
+
+    // Envoi par lots de 200
+    var BATCH = 200;
+    var totalSent = 0, failed = 0;
+    for(var i=0; i<changes.length; i+=BATCH){
+      var slice = changes.slice(i, i+BATCH);
+      var resp = await watchTry('datastorePut', {
+        type: 'DatastorePut',
+        authKey: state.authKey,
+        collection: 'libraryItem',
+        changes: slice
+      });
+      if(resp){ totalSent += slice.length; console.log(logPrefix, 'Lot', (i/BATCH)+1, '→', slice.length, 'items OK'); }
+      else { failed += slice.length; console.warn(logPrefix, 'Lot', (i/BATCH)+1, '→ ÉCHEC'); }
+    }
+
+    // Retirer les IDs importés de watchRemovedIds (ils sont re-vivants)
+    var importedIds = changes.map(function(c){ return c._id; });
+    watchRemovedIds = watchRemovedIds.filter(function(id){ return importedIds.indexOf(id) === -1; });
+
+    if(failed === 0){
+      showWatchToast('✓ Import réussi (' + totalSent + ' entrées).', 'toast-ok');
+    } else {
+      showWatchToast('Import partiel : ' + totalSent + ' OK / ' + failed + ' échecs.', 'toast-err');
+    }
+    // Rafraîchir la liste depuis le serveur
+    await fetchWatchHistory();
+  }catch(e){
+    console.error(logPrefix, e && e.message ? e.message : e);
+    showWatchToast('Erreur pendant l\'import.', 'toast-err');
+  }
+}
 function openHistoryModal(){ el.userDropdown.classList.add('hidden'); el.modalHistory.classList.add('active'); }
 function closeHistoryModal(){ el.modalHistory.classList.remove('active'); }
 window.addEventListener('keydown', function(e){ if(e.key!=='Escape') return; if(el.modalWatch && el.modalWatch.classList.contains('active')) closeWatchModal(); if(el.modalLogin.classList.contains('active')) closeLoginModal(); if(el.modalHistory.classList.contains('active')) closeHistoryModal(); if(el.modalEdit.classList.contains('active')) closeEditModal(false); });
