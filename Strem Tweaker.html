@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V3.3</title>
+  <title>Strem Tweaker V3.6</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -112,7 +112,7 @@
     .addon-card.expanded .addon-actions{display:flex;}
     .action-btn{flex:0 0 36px;width:36px;height:36px;display:grid;place-items:center;color:var(--blue);cursor:pointer;border-radius:10px;transition:background .2s,color .2s;background:rgba(125,168,255,0.08);border:1px solid rgba(125,168,255,0.1);}
     .action-btn:active{background:rgba(255,255,255,.1)}
-    .action-btn svg{width:18px;height:18px}
+    .action-btn svg{width:18px;height:18px;overflow:visible}
     .action-btn:hover{background:rgba(125,168,255,0.15);}
     .is-disabled .action-btn.toggle-btn{color:var(--ko)}
     .hidden-btn{display:none!important;}
@@ -239,7 +239,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V3.3</span>
+        <span class="version-badge">V3.6</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -289,13 +289,16 @@
           </button>
           <div style="width:1px;height:20px;background:var(--line);margin:0 4px;"></div>
           <button id="btnInstall" class="pill-btn" title="Installer">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><polyline points="8 11 12 15 16 11"></polyline><path d="M5 21h14"></path></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           </button>
           <button id="btnSaveJson" class="pill-btn" title="Sauvegarder (JSON)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
           </button>
           <button id="btnRestoreJson" class="pill-btn" title="Restaurer (JSON)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          </button>
+          <button id="btnClearAddons" class="pill-btn" title="Supprimer tous les addons (sauvegarde auto)" style="color:#ff6b6b;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
           </button>
           <input type="file" id="fileRestore" accept=".json" class="hidden">
           <div class="pill"><span id="countLabel">0 addon</span></div>
@@ -365,14 +368,17 @@
         <button type="button" id="btnCloseHistoryModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
       </div>
       <div class="history-list">
-        <div class="history-item"><div class="history-head"><span class="history-ver">V1.6b</span></div><div class="history-note">Hero simplifié : titre + version centrés, sans texte secondaire.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V1.7</span></div><div class="history-note">Ajout d'une CSP compatible fichier unique pour limiter les connexions et ressources non prévues.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V1.7a</span></div><div class="history-note">Ajout de la constante <code>APP_VERSION</code> pour exposer la version courante.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V2.6</span></div><div class="history-note">Ajout d'un popup scrollable “Historique versions” dans le menu utilisateur.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V3.0b</span></div><div class="history-note">Correctif suppression d'historique : ajout de <code>persistWatchDeletion()</code> qui était appelé mais non défini (ReferenceError empêchait l'appel serveur). Payload <code>datastorePut</code> aligné sur <code>libraryDelete.js</code> avec vérification post-suppression par re-lecture. Déduplication de <code>attachWatchDeleteHandlers</code>. La liste des visionnages reste inchangée (base V2.9-1).</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V3.1</span></div><div class="history-note">Nouveautés Historique visionnage : bouton <b>RAZ</b> (suppression totale de la bibliothèque du compte avec double confirmation) et bouton <b>Importer</b> (restauration d'une sauvegarde JSON exportée depuis cette même app).</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V3.2</span></div><div class="history-note">Double correctif filtres : (1) le handler <code>.watch-filter-btn</code> s'appliquait à tous les boutons y compris Importer/Exporter/RAZ qui n'ont pas de <code>data-filter</code> — cliquer sur Importer mettait <code>wState.filter = undefined</code> et masquait toute la liste. Restreint aux boutons <code>[data-filter]</code> uniquement. (2) Après un import, le filtre actif est maintenant forcé sur "Tout" et la recherche vidée, pour que les entrées importées soient visibles immédiatement sans action manuelle.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V3.3</span></div><div class="history-note">Correctif RAZ librairie : deux causes. (1) <code>fetchWatchHistory</code> n'excluait pas les items <code>removed:true</code> — après RAZ, Stremio les renvoyait quand même sans <code>lastWatched</code>, affichés à la date du 01/01/1970. Filtre ajouté sur <code>removed:true</code> et <code>watchRemovedIds</code>. (2) <code>resetWatchHistory</code> envoyait un payload minimal <code>{_id, name, type, removed, _mtime}</code> que Stremio ignore sans persister la suppression. Corrigé en copiant l'objet complet de l'item avant d'écraser <code>removed:true</code> et <code>_mtime</code> — identique à <code>deleteWatchEntryOnServer</code> qui fonctionne. Lots réduits à 50 items.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V1.6b</span></div><div class="history-note">Hero simplifié.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V1.7</span></div><div class="history-note">CSP compatible fichier unique.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V1.7a</span></div><div class="history-note">Constante <code>APP_VERSION</code>.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V2.6</span></div><div class="history-note">Popup Historique versions.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V3.0b</span></div><div class="history-note">Correctif suppression entrée historique : <code>persistWatchDeletion()</code> non défini empêchait l'appel serveur.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V3.1</span></div><div class="history-note">Historique visionnage : boutons <b>RAZ</b> et <b>Importer</b>.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V3.2</span></div><div class="history-note">Correctif filtres : handler restreint aux boutons <code>[data-filter]</code> ; filtre forcé sur "Tout" après import.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V3.3</span></div><div class="history-note">Correctif RAZ : filtre <code>removed:true</code> dans <code>fetchWatchHistory</code> ; payload complet dans <code>resetWatchHistory</code>.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V3.4</span></div><div class="history-note">Mes addons : icône poubelle — supprime tous les addons avec sauvegarde automatique préalable.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V3.5</span></div><div class="history-note">Icône Restaurer → dossier simple. Icône Configurer tronquée : <code>viewBox="-1 -1 26 26"</code> + <code>overflow:visible</code>.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V3.6</span></div><div class="history-note">Icône Installer remplacée par un <b>+</b>. Historique versions raccourci.</div></div>
       </div>
     </div>
   </div>
@@ -410,7 +416,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V3.3';
+const APP_VERSION = 'V3.6';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -431,7 +437,7 @@ const el = {
   countLabel: $('countLabel'), fitWrap: $('fitWrap'),
   headerUserMenu: $('headerUserMenu'), headerEmail: $('headerEmail'), headerEmailText: $('headerEmailText'), userDropdown: $('userDropdown'),
   btnLogout: $('btnLogout'), btnOpenLoginModal: $('btnOpenLoginModal'),
-  btnInstall: $('btnInstall'), btnSaveJson: $('btnSaveJson'), btnRestoreJson: $('btnRestoreJson'), fileRestore: $('fileRestore'), btnCheckUpdates: $('btnCheckUpdates'),
+  btnInstall: $('btnInstall'), btnSaveJson: $('btnSaveJson'), btnRestoreJson: $('btnRestoreJson'), btnClearAddons: $('btnClearAddons'), fileRestore: $('fileRestore'), btnCheckUpdates: $('btnCheckUpdates'),
   // Modal connexion fields
   m_email: $('m_email'), m_password: $('m_password'), m_authKey: $('m_authKey'),
   m_toggleAuthKey: $('m_toggleAuthKey'), m_copyAuthKey: $('m_copyAuthKey'),
@@ -528,6 +534,7 @@ function bind(){
   });
   el.btnSaveJson.addEventListener('click', exportAddons);
   el.btnRestoreJson.addEventListener('click', () => el.fileRestore.click());
+  if(el.btnClearAddons) el.btnClearAddons.addEventListener('click', clearAllAddons);
   el.fileRestore.addEventListener('change', importAddons);
   el.btnCheckUpdates.addEventListener('click', checkUpdates);
 
@@ -953,7 +960,7 @@ function updateLoginPill(){
 
 function setStatus(color,text){ el.statusDot.className='dot '+color; el.statusText.textContent=text; }
 function logDebug(v){ const s=typeof v==='string'?v:JSON.stringify(v,null,2); el.debugBox.value=s; el.m_debugBox.value=s; }
-function disableTop(flag){ [el.loginBtn,el.m_loginBtn,el.btnSaveJson,el.btnRestoreJson,el.btnCheckUpdates].forEach(b=>b.disabled=flag); }
+function disableTop(flag){ [el.loginBtn,el.m_loginBtn,el.btnSaveJson,el.btnRestoreJson,el.btnClearAddons,el.btnCheckUpdates].forEach(b=>b.disabled=flag); }
 
 async function copyValue(value){
   try{
@@ -1058,6 +1065,32 @@ function importAddons(evt){
   reader.readAsText(file);
 }
 
+// V3.4 — Supprime tous les addons du compte avec sauvegarde automatique préalable.
+async function clearAllAddons(){
+  if(!state.authKey){ setStatus('orange','Connecte-toi d\'abord.'); return; }
+  if(!state.addons || !state.addons.length){ setStatus('orange','Aucun addon à supprimer.'); return; }
+  if(!confirm('⚠️ Supprimer TOUS les addons du compte ?\n\nUne sauvegarde JSON sera téléchargée automatiquement avant la suppression.\n\nContinuer ?')) return;
+
+  // 1) Sauvegarde automatique avant toute suppression
+  try{
+    const a = document.createElement('a');
+    const ts = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
+    a.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(state.addons, null, 2));
+    a.download = 'stremio-addons-backup-' + ts + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setStatus('orange', 'Sauvegarde téléchargée. Suppression en cours…');
+  }catch(e){
+    setStatus('red', 'Échec de la sauvegarde, suppression annulée.');
+    return;
+  }
+
+  // 2) Vider et synchroniser
+  state.addons = [];
+  renderList();
+  await syncOrder();
+  setStatus('green', '✓ Tous les addons supprimés. Restaure via l\'icône JSON si besoin.');
+}
+
 function cmpVersions(a,b){
   const pa=String(a).split('.'); const pb=String(b).split('.');
   for(let i=0;i<Math.max(pa.length,pb.length);i++){
@@ -1093,7 +1126,7 @@ const svgGrip='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 const svgEye='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
 const svgEyeOff='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
 const svgEdit='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
-const svgGear='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 12 9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
+const svgGear='<svg viewBox="-1 -1 26 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
 const svgCross='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
 const svgUpdate='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>';
 const svgToTop='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 12 6 7 11"></polyline><line x1="12" y1="18" x2="12" y2="6"></line><line x1="4" y1="3" x2="20" y2="3"></line></svg>';
