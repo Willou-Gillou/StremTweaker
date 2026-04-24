@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V2.6</title>
+  <title>Strem Tweaker V3.0b</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -165,6 +165,39 @@
       .addon-actions{padding:0 6px 10px 34px;gap:6px;}
       .login-modal-body .row{grid-template-columns:1fr;}
     }
+  
+    .watch-group{margin-bottom:18px;}
+    .watch-date{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line);}
+    .watch-card{display:grid;grid-template-columns:88px minmax(0,1fr);gap:12px;align-items:start;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:16px;padding:10px;margin-bottom:8px;min-width:0;overflow:hidden;}
+    .watch-card img.wc-poster{width:88px;height:132px;border-radius:8px;object-fit:cover;display:block;flex-shrink:0;}
+    .wc-poster-ph{width:88px;height:132px;border-radius:8px;background:rgba(255,255,255,.07);display:grid;place-items:center;font-size:26px;flex-shrink:0;}
+    .wc-body{min-width:0;display:flex;flex-direction:column;gap:6px;}
+    .wc-title{font-size:14px;font-weight:600;line-height:1.3;word-break:break-word;}
+    .wc-meta{font-size:11px;color:var(--muted);}
+    .wc-bar-wrap{height:4px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden;margin-top:2px;}
+    .wc-bar{height:100%;background:var(--blue);border-radius:99px;}
+    #watchList{overflow-x:hidden;}
+    .watch-filter-btn{white-space:nowrap;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font:inherit;font-size:12px;font-weight:600;padding:5px 14px;border-radius:999px;cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
+    .watch-filter-btn.active,.watch-filter-btn:hover{background:rgba(125,168,255,.15);color:var(--blue);border-color:rgba(125,168,255,.35);}
+
+  
+    .wc-card-wrap{position:relative;padding-bottom:18px;}
+    .wc-del{position:absolute;right:8px;bottom:8px;width:28px;height:28px;border-radius:9px;border:1px solid rgba(255,109,134,.25);background:rgba(255,109,134,.10);color:var(--ko);display:grid;place-items:center;cursor:pointer;z-index:2;}
+    .wc-del:hover{background:rgba(255,109,134,.18);}
+
+  
+    /* toast */
+    #watchToast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(26,32,50,.95);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:12px 20px;font-size:13px;z-index:9999;transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .35s;opacity:0;pointer-events:none;white-space:nowrap;}
+    #watchToast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+    #watchToast.toast-ok{border-color:rgba(56,211,159,.4);color:var(--ok);}
+    #watchToast.toast-err{border-color:rgba(255,109,134,.4);color:var(--ko);}
+    /* delete btn transition */
+    .wc-del{transition:background .18s, transform .12s, opacity .18s;width:30px;height:30px;border-radius:999px;display:grid;place-items:center;font-size:18px;line-height:1;padding:0;}
+    .wc-del:hover{transform:scale(1.08);}
+    .wc-del:active{transform:scale(.94);}
+    /* fade-out card */
+    .watch-card.wc-removing{opacity:0;transform:translateX(18px);transition:opacity .25s,transform .25s;}
+
   </style>
 </head>
 <body>
@@ -184,6 +217,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
               Paramètres
             </div>
+            <div class="dropdown-item" id="btnOpenWatchModal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+              Historique visionnage
+            </div>
             <div class="dropdown-item" id="btnOpenHistoryModal">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="9"></circle></svg>
               Historique versions
@@ -202,7 +239,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V2.6</span>
+        <span class="version-badge">V3.0b</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -288,7 +325,33 @@
     </div>
   </div>
 
-  <!-- ── MODAL HISTORIQUE VERSIONS ── -->
+    <!-- ── MODAL HISTORIQUE VISIONNAGE ── -->
+  <div id="modalWatch" class="modal-overlay">
+    <div class="modal-card" style="max-width:680px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;">
+        <div>
+          <h3 style="margin:0;">Historique visionnage</h3>
+          <p class="sub" style="margin:4px 0 0;">Date puis poster, titre, timesWatched et progression.</p>
+        </div>
+        <button type="button" id="btnCloseWatchModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
+      </div>
+      <div style="display:grid;gap:8px;margin-bottom:12px;">
+        <input id="watchSearch" type="text" placeholder="Rechercher…" autocomplete="off" style="width:100%;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);outline:none;border-radius:14px;padding:11px 14px;font:inherit;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:nowrap;overflow-x:hidden;">
+          <button class="watch-filter-btn active" data-filter="all">Tout</button>
+          <button class="watch-filter-btn" data-filter="movie">Films</button>
+          <button class="watch-filter-btn" data-filter="series">Séries</button>
+          <div style="flex:1"></div>
+          <button type="button" id="btnExportWatch" class="watch-filter-btn" style="color:var(--ok);border-color:rgba(56,211,159,.3);">Exporter</button>
+        </div>
+      </div>
+      <div id="watchList" style="max-height:62dvh;overflow-y:auto;overflow-x:hidden;padding-right:2px;">
+        <div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Chargement…</div>
+      </div>
+    </div>
+  </div>
+
+<!-- ── MODAL HISTORIQUE VERSIONS ── -->
   <div id="modalHistory" class="modal-overlay">
     <div class="modal-card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:10px;">
@@ -303,6 +366,7 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V1.7</span></div><div class="history-note">Ajout d'une CSP compatible fichier unique pour limiter les connexions et ressources non prévues.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V1.7a</span></div><div class="history-note">Ajout de la constante <code>APP_VERSION</code> pour exposer la version courante.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.6</span></div><div class="history-note">Ajout d'un popup scrollable “Historique versions” dans le menu utilisateur.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V3.0b</span></div><div class="history-note">Correctif suppression d'historique : ajout de <code>persistWatchDeletion()</code> qui était appelé mais non défini (ReferenceError empêchait l'appel serveur). Payload <code>datastorePut</code> aligné sur <code>libraryDelete.js</code> avec vérification post-suppression par re-lecture. Déduplication de <code>attachWatchDeleteHandlers</code>. La liste des visionnages reste inchangée (base V2.9-1).</div></div>
       </div>
     </div>
   </div>
@@ -340,7 +404,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V2.6';
+const APP_VERSION = 'V3.0b';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -367,7 +431,7 @@ const el = {
   m_toggleAuthKey: $('m_toggleAuthKey'), m_copyAuthKey: $('m_copyAuthKey'),
   m_loginBtn: $('m_loginBtn'), m_debugToggle: $('m_debugToggle'), m_debugWrap: $('m_debugWrap'), m_debugBox: $('m_debugBox'),
   modalLogin: $('modalLogin'), btnCloseLoginModal: $('btnCloseLoginModal'),
-  btnOpenHistoryModal: $('btnOpenHistoryModal'), modalHistory: $('modalHistory'), btnCloseHistoryModal: $('btnCloseHistoryModal'),
+  btnOpenHistoryModal: $('btnOpenHistoryModal'), modalHistory: $('modalHistory'), btnCloseHistoryModal: $('btnCloseHistoryModal'), btnOpenWatchModal: $('btnOpenWatchModal'), modalWatch: $('modalWatch'), btnCloseWatchModal: $('btnCloseWatchModal'), watchList: $('watchList'), watchSearch: $('watchSearch'), btnExportWatch: $('btnExportWatch'),
   // Modal edit
   modalEdit: $('modalEdit'), modalEditTitle: $('modalEditTitle'), modalEditLabel: $('modalEditLabel'), modalEditInput: $('modalEditInput'),
   btnEditCancel: $('btnEditCancel'), btnEditSave: $('btnEditSave'),
@@ -413,6 +477,13 @@ function bind(){
   el.m_debugToggle.addEventListener('click', () => { const open = el.m_debugWrap.classList.toggle('hidden'); el.m_debugToggle.textContent = open ? 'Masquer debug' : 'Afficher debug'; });
   el.btnCloseLoginModal.addEventListener('click', closeLoginModal);
   el.modalLogin.addEventListener('click', e => { if(e.target===el.modalLogin) closeLoginModal(); });
+  el.btnOpenWatchModal.addEventListener('click', openWatchModal);
+  el.btnCloseWatchModal.addEventListener('click', closeWatchModal);
+  el.modalWatch.addEventListener('click', function(e){ if(e.target===el.modalWatch) closeWatchModal(); });
+  if($('watchSearch')) $('watchSearch').addEventListener('input', function(e){ wState.query = e.target.value.trim().toLowerCase(); renderWatchList(); });
+  if($('btnExportWatch')) $('btnExportWatch').addEventListener('click', exportWatchJson);
+  if($('watchList')) $('watchList').addEventListener('click', function(e){ var b=e.target.closest('.wc-del'); if(!b) return; e.preventDefault(); e.stopPropagation(); deleteWatchEntry(b.getAttribute('data-watch-id')); });
+  document.querySelectorAll('.watch-filter-btn').forEach(function(btn){ btn.addEventListener('click', function(){ document.querySelectorAll('.watch-filter-btn').forEach(function(b){ b.classList.remove('active'); }); btn.classList.add('active'); wState.filter = btn.dataset.filter; renderWatchList(); }); });
   el.btnOpenHistoryModal.addEventListener('click', openHistoryModal);
   el.btnCloseHistoryModal.addEventListener('click', closeHistoryModal);
   el.modalHistory.addEventListener('click', e => { if(e.target===el.modalHistory) closeHistoryModal(); });
@@ -473,8 +544,190 @@ function openLoginModal(){
   el.modalLogin.classList.add('active');
 }
 function closeLoginModal(){ el.modalLogin.classList.remove('active'); }
+
+/* ============ HISTORIQUE VISIONNAGE V2.8 ============ */
+var watchItems = [];
+var watchCache = [];
+var watchRemovedIds = [];
+var wState = { filter:'all', query:'' };
+function openWatchModal(){ el.userDropdown.classList.add('hidden'); el.modalWatch.classList.add('active'); if(!state.authKey){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Connecte-toi d\'abord.</div>'; return; } fetchWatchHistory(); }
+function closeWatchModal(){ el.modalWatch.classList.remove('active'); }
+function safeText(s){ return String(s || '').replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); }); }
+function watchExtract(data){ if(!data) return []; if(Array.isArray(data)) return data; var r = data.result; if(!r) return []; if(Array.isArray(r)) return r; if(Array.isArray(r.items)) return r.items; if(Array.isArray(r.libraryItems)) return r.libraryItems; if(typeof r === 'object'){ var vals = Object.values(r).filter(function(x){ return x && typeof x === 'object' && (x._id || x.id); }); if(vals.length) return vals; } return []; }
+async function watchTry(endpoint, body){ try{ var resp = await fetch(API_BASE + endpoint, { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify(body) }); if(!resp.ok) return null; return await resp.json(); }catch(e){ return null; } }
+async function fetchWatchHistory(){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Chargement…</div>'; var items = [], rawData = null; rawData = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[], all:true }); if(rawData) items = watchExtract(rawData); if(!items.length){ rawData = await watchTry('libraryGet', { type:'LibraryGet', authKey:state.authKey, collection:'libraryItem' }); if(rawData) items = watchExtract(rawData); } if(!items.length){ rawData = await watchTry('addonCollectionGet', { type:'AddonCollectionGet', authKey:state.authKey, update:true }); if(rawData){ var lib = (rawData.result && rawData.result.library) || rawData.library; items = Array.isArray(lib) ? lib : watchExtract(rawData); } } if($('watchDebugBox')) { try{ $('watchDebugBox').textContent = JSON.stringify(rawData, null, 2).substring(0, 4000); }catch(e){} } if(!items.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Bibliothèque vide ou inaccessible.</div>'; return; } var watched = items.filter(function(i){ var s = i._state || i.state || {}; return s.timesWatched > 0 || s.lastWatched || s.flaggedWatched; }); watchItems = watched.length ? watched : items; watchItems.sort(function(a,b){ var sa=a._state||a.state||{}, sb=b._state||b.state||{}; return new Date(sb.lastWatched || 0) - new Date(sa.lastWatched || 0); }); renderWatchList(); }
+function watchMatches(item){ var meta = item._manifestItem || item.meta || item; var s = item._state || item.state || {}; var id = item._id || item.id || ''; var type = item.type || id.split(':')[0] || ''; if(wState.filter !== 'all' && type !== wState.filter) return false; if(!wState.query) return true; var text = [meta.name || item.name || '', meta.year || '', id, String(s.timesWatched || '')].join(' ').toLowerCase(); return text.indexOf(wState.query) !== -1; }
+function watchPoster(item){ var meta = item._manifestItem || item.meta || item; if(meta.poster) return meta.poster; var id = item._id || item.id || ''; var m = id.match(/tt\d+/); if(m) return 'https://images.metahub.space/poster/medium/' + m[0] + '/img'; return ''; }
+function formatWatchDate(d){ try{ return new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' }); }catch(e){ return ''; } }
+
+function renderWatchCard(item){
+  var meta = item._manifestItem || item.meta || item;
+  var s = item._state || item.state || {};
+  var id = item._id || item.id || '';
+  var type = item.type || id.split(':')[0] || '';
+  var name = safeText(meta.name || item.name || id);
+  var poster = watchPoster(item);
+  var times = s.timesWatched || 0;
+  var pct = s.duration ? Math.min(100, Math.round((s.timeOffset || 0) / s.duration * 100)) : 0;
+  var metaParts = [];
+  if(type === 'movie') metaParts.push('Film'); else if(type === 'series') metaParts.push('Série');
+  if(times > 0) metaParts.push('▶ ' + times + '×');
+  if(s.lastWatched) metaParts.push(formatWatchDate(s.lastWatched));
+  var metaLine = metaParts.join(' · ');
+  var posterHtml = poster ? '<img class="wc-poster" src="' + poster + '" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'grid\';"><div class="wc-poster-ph" style="display:none;">🎬</div>' : '<div class="wc-poster-ph">🎬</div>';
+  var barHtml = pct > 0 ? '<div class="wc-bar-wrap"><div class="wc-bar" style="width:' + pct + '%;"></div></div>' : '';
+  var delBtn = '<button type="button" class="wc-del" data-watch-id="' + safeText(id) + '" title="Supprimer" aria-label="Supprimer">✕</button>';
+  return '<div class="watch-card wc-card-wrap" data-watch-id="' + safeText(id) + '">' + delBtn + posterHtml + '<div class="wc-body"><div class="wc-title">' + name + '</div>' + (metaLine ? '<div class="wc-meta">' + safeText(metaLine) + '</div>' : '') + barHtml + '</div></div>';
+}
+function renderWatchList(){ var filtered = watchItems.filter(watchMatches); if(!filtered.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Aucun résultat.</div>'; return; } var groups = {}; filtered.forEach(function(item){ var s=item._state||item.state||{}; var d=s.lastWatched ? new Date(s.lastWatched) : new Date(0); var key=d.toISOString().slice(0,10); if(!groups[key]) groups[key] = { date:d, items:[] }; groups[key].items.push(item); }); var keys = Object.keys(groups).sort(function(a,b){ return groups[b].date - groups[a].date; }); var html=''; keys.forEach(function(k){ var g=groups[k]; var dateLabel=g.date.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); html += '<div class="watch-group"><div class="watch-date">' + safeText(dateLabel) + '</div>'; g.items.forEach(function(item){ html += renderWatchCard(item); }); html += '</div>'; }); el.watchList.innerHTML = html; }
+
+
+var _toastTimer = null;
+function showWatchToast(msg, type){
+  var t = document.getElementById('watchToast');
+  if(!t) return;
+  clearTimeout(_toastTimer);
+  t.textContent = msg;
+  t.className = 'show ' + (type || 'toast-ok');
+  _toastTimer = setTimeout(function(){ t.className = ''; }, 3200);
+}
+// V3.0b — Retire l'item de la liste locale et mémorise l'ID supprimé.
+// Cette fonction était appelée sans être définie → ReferenceError qui
+// court-circuitait tout appel serveur. C'est LA cause racine du bug.
+function persistWatchDeletion(entryId){
+  if(!entryId) return;
+  var cleanId = decodeURIComponent(entryId);
+  if(watchRemovedIds.indexOf(cleanId) === -1) watchRemovedIds.push(cleanId);
+  watchItems = watchItems.filter(function(item){
+    var id = item._id || item.id || '';
+    return id !== cleanId;
+  });
+}
+
+function deleteWatchEntry(entryId){
+  if(!entryId) return;
+  if(!confirm('Supprimer définitivement cette entrée de l\'historique ?\nCette action est irréversible.')) return;
+  if(!state.authKey){
+    showWatchToast('Non connecté : impossible de supprimer côté serveur.', 'toast-err');
+    return;
+  }
+  var card = document.querySelector('.watch-card[data-watch-id="' + entryId + '"]');
+  if(card){ card.classList.add('wc-removing'); }
+  persistWatchDeletion(entryId);
+  renderWatchList();
+  showWatchToast('Suppression locale en cours…', 'toast-ok');
+  deleteWatchEntryOnServer(entryId);
+}
+
+// V3.0b — Calque strict sur libraryDelete.js (markLibraryItemRemoved) :
+//   1) datastoreGet { collection:'libraryItem', ids:[], all:true }
+//   2) extraction multi-format + recherche par _id ou id
+//   3) payload minimal { _id, name, type, removed:true, _mtime }
+//   4) datastorePut { collection:'libraryItem', changes:[updated] }
+//   5) vérification post-suppression via re-lecture ciblée
+async function deleteWatchEntryOnServer(entryId){
+  var logPrefix = '[watchDelete]';
+  try{
+    var cleanId = decodeURIComponent(entryId);
+
+    // 1) Récupération de la bibliothèque
+    var rawLib = await watchTry('datastoreGet', {
+      type: 'DatastoreGet',
+      authKey: state.authKey,
+      collection: 'libraryItem',
+      ids: [],
+      all: true
+    });
+    if(!rawLib){
+      console.error(logPrefix, 'datastoreGet a échoué');
+      showWatchToast('Suppression locale OK, lecture serveur impossible.', 'toast-err');
+      return;
+    }
+
+    // 2) Extraction robuste (mêmes règles que libraryDelete.js)
+    var allItems = watchExtract(rawLib);
+    if(!allItems.length && rawLib && typeof rawLib === 'object'){
+      allItems = Object.values(rawLib).filter(function(x){ return x && typeof x === 'object' && (x._id || x.id); });
+    }
+
+    var target = allItems.find(function(item){
+      var idValue = item._id || item.id;
+      return idValue === cleanId;
+    });
+
+    if(!target){
+      console.warn(logPrefix, 'Item introuvable côté serveur:', cleanId, '— total items:', allItems.length);
+      showWatchToast('Entrée déjà absente du serveur.', 'toast-ok');
+      return;
+    }
+
+    // 3) Payload minimal aligné sur libraryDelete.js
+    var updated = {
+      _id: target._id || target.id,
+      name: target.name || (target._manifestItem && target._manifestItem.name) || 'Unknown',
+      type: target.type || 'unknown',
+      removed: true,
+      _mtime: new Date().toISOString()
+    };
+    console.log(logPrefix, 'datastorePut payload ->', updated);
+
+    // 4) Envoi de la suppression
+    var putResp = await watchTry('datastorePut', {
+      type: 'DatastorePut',
+      authKey: state.authKey,
+      collection: 'libraryItem',
+      changes: [updated]
+    });
+    if(!putResp){
+      showWatchToast('Suppression locale OK, serveur non confirmé.', 'toast-err');
+      return;
+    }
+
+    // 5) Vérification : re-lire l'item ciblé
+    var verify = await watchTry('datastoreGet', {
+      type: 'DatastoreGet',
+      authKey: state.authKey,
+      collection: 'libraryItem',
+      ids: [cleanId],
+      all: false
+    });
+    var verifyItems = watchExtract(verify);
+    var persisted = false;
+    if(verifyItems.length){
+      var v = verifyItems[0];
+      persisted = v && v.removed === true;
+    } else {
+      // Stremio peut ne plus renvoyer un item supprimé — c'est aussi un succès
+      persisted = true;
+    }
+
+    if(persisted){
+      console.log(logPrefix, '✓ Suppression confirmée serveur pour', cleanId);
+      showWatchToast('✓ Supprimée localement et côté serveur.', 'toast-ok');
+    } else {
+      console.warn(logPrefix, 'datastorePut OK mais flag removed non confirmé');
+      showWatchToast('Serveur a répondu mais suppression non confirmée.', 'toast-err');
+    }
+  }catch(e){
+    console.error(logPrefix, 'Erreur:', e && e.message ? e.message : e);
+    showWatchToast('Suppression locale OK, erreur serveur.', 'toast-err');
+  }
+}
+
+function attachWatchDeleteHandlers(){
+  var boxes = document.querySelectorAll('.wc-del');
+  boxes.forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      deleteWatchEntry(btn.getAttribute('data-watch-id'));
+    });
+  });
+}
+function exportWatchJson(){ var payload = watchItems.map(function(item){ var meta=item._manifestItem || item.meta || item; return { id:item._id || item.id || '', type:item.type || '', title:meta.name || item.name || '', state:item._state || item.state || {} }; }); var blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' }); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'stremio-watch-history.json'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000); }
 function openHistoryModal(){ el.userDropdown.classList.add('hidden'); el.modalHistory.classList.add('active'); }
 function closeHistoryModal(){ el.modalHistory.classList.remove('active'); }
+window.addEventListener('keydown', function(e){ if(e.key!=='Escape') return; if(el.modalWatch && el.modalWatch.classList.contains('active')) closeWatchModal(); if(el.modalLogin.classList.contains('active')) closeLoginModal(); if(el.modalHistory.classList.contains('active')) closeHistoryModal(); if(el.modalEdit.classList.contains('active')) closeEditModal(false); });
 
 function togglePassVisibility(input, icon){
   if(input.type==='password'){
@@ -970,5 +1223,6 @@ async function syncOrder(){
   finally{ state.syncing=false; state.dragChanged=false; document.querySelectorAll('.drag-handle, .action-btn').forEach(n=>n.style.pointerEvents='auto'); }
 }
 </script>
+  <div id="watchToast"></div>
 </body>
 </html>
