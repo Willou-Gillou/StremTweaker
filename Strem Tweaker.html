@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V4.0a</title>
+  <title>Strem Tweaker V4.1</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -177,7 +177,7 @@
     .wc-bar-wrap{height:4px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden;margin-top:2px;}
     .wc-bar{height:100%;background:var(--blue);border-radius:99px;}
     .wc-time{font-size:10px;color:var(--muted);margin-top:5px;}
-    .wc-episode{display:inline-block;margin-top:5px;font-size:10px;font-weight:700;color:var(--blue);background:rgba(100,160,255,.12);border:1px solid rgba(100,160,255,.25);padding:2px 7px;border-radius:6px;letter-spacing:.03em;}
+    .wc-episode{display:inline-block;margin-top:5px;font-size:10px;font-weight:700;color:var(--blue);background:rgba(100,160,255,.12);border:1px solid rgba(100,160,255,.25);padding:2px 7px;border-radius:6px;letter-spacing:.03em;width:fit-content;}
     #watchList{overflow-x:hidden;}
     .watch-filter-btn{white-space:nowrap;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font:inherit;font-size:12px;font-weight:600;padding:5px 14px;border-radius:999px;cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
     .watch-filter-btn.active,.watch-filter-btn:hover{background:rgba(125,168,255,.15);color:var(--blue);border-color:rgba(125,168,255,.35);}
@@ -241,7 +241,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V4.0a</span>
+        <span class="version-badge">V4.1</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -385,7 +385,9 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V3.8</span></div><div class="history-note">Regroupement par date locale : la clé de groupe utilisait <code>toISOString()</code> (UTC) — un film vu à 23h en France tombait le lendemain en UTC, dupliquant le groupe de date. Corrigé avec <code>getFullYear/Month/Date</code> (fuseau local).</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V3.9</span></div><div class="history-note">Carte visionnage : heure du visionnage sous la barre de progression. Séries : badge dernier épisode (S01 E05) affiché uniquement sur l'occurrence la plus récente de chaque série.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.0</span></div><div class="history-note">Correctif badge épisode invisible : détection élargie à <code>s.season</code>, <code>s.episode</code> et <code>s.video_id</code>.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.0a</span></div><div class="history-note">Correctif S00 E00 sur toutes les cartes : <code>season != null</code> acceptait <code>0</code> → affiché sur films et séries. Corrigé : valeurs strictement <code>&gt; 0</code> requises. Détection série restreinte à <code>type === 'series'</code> explicite.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.0a</span></div><div class="history-note">Correctif S00 E00 sur toutes les cartes : valeurs strictement <code>&gt; 0</code> requises. Détection série restreinte à <code>type === 'series'</code> explicite.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.0b</span></div><div class="history-note">Badge épisode ajusté à son contenu : <code>display:inline-block</code> + <code>width:fit-content</code> dans un wrapper block.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.1</span></div><div class="history-note">Config distante : <code>debugOpen</code> et <code>loginCollapsed</code> synchronisés dans la librairie Stremio sous <code>_id:'strem-tweaker-config'</code> via <code>datastorePut/Get</code>. Chargée après connexion, sauvegardée uniquement si valeur changée. Filtrée dans <code>fetchWatchHistory</code>. Paramètres : boutons <b>Exporter localStorage</b> et <b>RAZ localStorage</b> (conserve authKey).</div></div>
       </div>
     </div>
   </div>
@@ -416,6 +418,10 @@
           </div>
         </div>
         <div class="actions"><button id="m_loginBtn" class="primary" type="button">Connexion &amp; Charger</button></div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button id="btnExportLocalStorage" class="watch-filter-btn" style="flex:1;color:var(--ok);border-color:rgba(56,211,159,.3);" type="button" title="Télécharger le contenu du localStorage">⬇ Exporter localStorage</button>
+          <button id="btnRazLocalStorage" class="watch-filter-btn" style="flex:1;color:#ff6b6b;border-color:rgba(255,107,107,.35);" type="button" title="Effacer toutes les données locales">🗑 RAZ localStorage</button>
+        </div>
         <button id="m_debugToggle" class="debug-toggle" type="button">Afficher debug</button>
         <div id="m_debugWrap" class="field hidden"><textarea id="m_debugBox" readonly placeholder="Réponses API"></textarea></div>
       </div>
@@ -423,10 +429,11 @@
   </div>
 
 <script>
-const APP_VERSION = 'V4.0a';
+const APP_VERSION = 'V4.1';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
+const CONFIG_ID = 'strem-tweaker-config'; // ID de l'entrée de config dans la librairie Stremio
 const FALLBACK_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMykiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTkuNDM5IDE4LjUzMkExMCAxMCAwIDAgMSAzLjQ2NSAxNCIvPjxwYXRoIGQ9Ik0xOS40MzkgNS40NjhBMTAgMTAgMCAwIDEgMjAuNTM1IDEwIi8+PHBhdGggZD0iTTQuNTYxIDUuNDY4QTEwIDEwIDAgMCAxIDEyIDIiLz48cGF0aCBkPSJNMTIgMjJhMTAgMTAgMCAwIDEtNy40MzktNC41NjgiLz48cGF0aCBkPSJNMTEgMTJoMiIvPjxwYXRoIGQ9Ik0xMiAxMXYyIi8+PC9zdmc+';
 
 const state = { email:'', password:'', authKey:'', addons:[], syncing:false, debugOpen:false, dragItem:null, dragClone:null, dragOffsetY:0, dragChanged:false, lastPointerY:0, scrollSpeed:0 };
@@ -480,12 +487,13 @@ function bind(){
   [el.email, el.password, el.authKey].forEach(i => i.addEventListener('keydown', e => { if(e.key==='Enter'){e.preventDefault(); loginAndGetKey(el.email.value, el.password.value, el.authKey.value);} }));
   el.toggleAuthKey.addEventListener('click', () => togglePassVisibility(el.authKey, el.toggleAuthKey));
   el.copyAuthKeyIcon.addEventListener('click', () => copyValue(el.authKey.value));
-  el.debugToggle.addEventListener('click', () => { state.debugOpen=!state.debugOpen; renderDebug(state.debugOpen, el.debugWrap, el.debugToggle); saveLocal(); });
+  el.debugToggle.addEventListener('click', () => { state.debugOpen=!state.debugOpen; renderDebug(state.debugOpen, el.debugWrap, el.debugToggle); saveLocal(); saveRemoteConfig(); });
   $('loginHead').addEventListener('click', e => {
     if(e.target.closest('button')||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
     state.loginCollapsed=!state.loginCollapsed;
     renderLoginCollapsed();
     saveLocal();
+    saveRemoteConfig();
   });
 
   // Modal connexion form
@@ -503,6 +511,8 @@ function bind(){
   if($('btnExportWatch')) $('btnExportWatch').addEventListener('click', exportWatchJson);
   if($('btnResetWatch')) $('btnResetWatch').addEventListener('click', resetWatchHistory);
   if($('btnImportWatch')) $('btnImportWatch').addEventListener('click', function(){ var f = $('watchImportFile'); if(f){ f.value = ''; f.click(); } });
+  if($('btnExportLocalStorage')) $('btnExportLocalStorage').addEventListener('click', exportLocalStorage);
+  if($('btnRazLocalStorage')) $('btnRazLocalStorage').addEventListener('click', razLocalStorage);
   if($('watchImportFile')) $('watchImportFile').addEventListener('change', function(e){ var file = e.target.files && e.target.files[0]; if(file) importWatchJson(file); });
   if($('watchList')) $('watchList').addEventListener('click', function(e){ var b=e.target.closest('.wc-del'); if(!b) return; e.preventDefault(); e.stopPropagation(); deleteWatchEntry(b.getAttribute('data-watch-id')); });
   document.querySelectorAll('.watch-filter-btn[data-filter]').forEach(function(btn){ btn.addEventListener('click', function(){ document.querySelectorAll('.watch-filter-btn[data-filter]').forEach(function(b){ b.classList.remove('active'); }); btn.classList.add('active'); wState.filter = btn.dataset.filter; renderWatchList(); }); });
@@ -578,7 +588,7 @@ function closeWatchModal(){ el.modalWatch.classList.remove('active'); }
 function safeText(s){ return String(s || '').replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); }); }
 function watchExtract(data){ if(!data) return []; if(Array.isArray(data)) return data; var r = data.result; if(!r) return []; if(Array.isArray(r)) return r; if(Array.isArray(r.items)) return r.items; if(Array.isArray(r.libraryItems)) return r.libraryItems; if(typeof r === 'object'){ var vals = Object.values(r).filter(function(x){ return x && typeof x === 'object' && (x._id || x.id); }); if(vals.length) return vals; } return []; }
 async function watchTry(endpoint, body){ try{ var resp = await fetch(API_BASE + endpoint, { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify(body) }); if(!resp.ok) return null; return await resp.json(); }catch(e){ return null; } }
-async function fetchWatchHistory(){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Chargement…</div>'; var items = [], rawData = null; rawData = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[], all:true }); if(rawData) items = watchExtract(rawData); if(!items.length){ rawData = await watchTry('libraryGet', { type:'LibraryGet', authKey:state.authKey, collection:'libraryItem' }); if(rawData) items = watchExtract(rawData); } if(!items.length){ rawData = await watchTry('addonCollectionGet', { type:'AddonCollectionGet', authKey:state.authKey, update:true }); if(rawData){ var lib = (rawData.result && rawData.result.library) || rawData.library; items = Array.isArray(lib) ? lib : watchExtract(rawData); } } if($('watchDebugBox')) { try{ $('watchDebugBox').textContent = JSON.stringify(rawData, null, 2).substring(0, 4000); }catch(e){} } if(!items.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Bibliothèque vide ou inaccessible.</div>'; return; } /* Exclure uniquement les items supprimés dans la session courante (watchRemovedIds) */ items = items.filter(function(i){ var id = (i && (i._id || i.id)) || ''; return watchRemovedIds.indexOf(id) === -1; }); var watched = items.filter(function(i){ var s = i._state || i.state || {}; return s.timesWatched > 0 || s.lastWatched || s.flaggedWatched; }); watchItems = watched.length ? watched : items; watchItems.sort(function(a,b){ var sa=a._state||a.state||{}, sb=b._state||b.state||{}; return new Date(sb.lastWatched || 0) - new Date(sa.lastWatched || 0); }); renderWatchList(); }
+async function fetchWatchHistory(){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Chargement…</div>'; var items = [], rawData = null; rawData = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[], all:true }); if(rawData) items = watchExtract(rawData); if(!items.length){ rawData = await watchTry('libraryGet', { type:'LibraryGet', authKey:state.authKey, collection:'libraryItem' }); if(rawData) items = watchExtract(rawData); } if(!items.length){ rawData = await watchTry('addonCollectionGet', { type:'AddonCollectionGet', authKey:state.authKey, update:true }); if(rawData){ var lib = (rawData.result && rawData.result.library) || rawData.library; items = Array.isArray(lib) ? lib : watchExtract(rawData); } } if($('watchDebugBox')) { try{ $('watchDebugBox').textContent = JSON.stringify(rawData, null, 2).substring(0, 4000); }catch(e){} } if(!items.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Bibliothèque vide ou inaccessible.</div>'; return; } /* V4.1 — Exclure l'entrée de config et les items supprimés dans la session */ items = items.filter(function(i){ var id = (i && (i._id || i.id)) || ''; return id !== CONFIG_ID && watchRemovedIds.indexOf(id) === -1; }); var watched = items.filter(function(i){ var s = i._state || i.state || {}; return s.timesWatched > 0 || s.lastWatched || s.flaggedWatched; }); watchItems = watched.length ? watched : items; watchItems.sort(function(a,b){ var sa=a._state||a.state||{}, sb=b._state||b.state||{}; return new Date(sb.lastWatched || 0) - new Date(sa.lastWatched || 0); }); renderWatchList(); }
 function watchMatches(item){ var meta = item._manifestItem || item.meta || item; var s = item._state || item.state || {}; var id = item._id || item.id || ''; var type = item.type || id.split(':')[0] || ''; if(wState.filter !== 'all' && type !== wState.filter) return false; if(!wState.query) return true; var text = [meta.name || item.name || '', meta.year || '', id, String(s.timesWatched || '')].join(' ').toLowerCase(); return text.indexOf(wState.query) !== -1; }
 function watchPoster(item){ var meta = item._manifestItem || item.meta || item; if(meta.poster) return meta.poster; var id = item._id || item.id || ''; var m = id.match(/tt\d+/); if(m) return 'https://images.metahub.space/poster/medium/' + m[0] + '/img'; return ''; }
 function formatWatchDate(d){ try{ return new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' }); }catch(e){ return ''; } }
@@ -624,7 +634,7 @@ function renderWatchCard(item, showEpisode){
       var epLabel = '';
       if(epSeason != null) epLabel += 'S' + String(epSeason).padStart(2,'0');
       if(epEpisode != null) epLabel += (epLabel ? ' ' : '') + 'E' + String(epEpisode).padStart(2,'0');
-      if(epLabel) epHtml = '<div class="wc-episode">' + safeText(epLabel) + '</div>';
+      if(epLabel) epHtml = '<div style="display:block;margin-top:5px;"><span class="wc-episode">' + safeText(epLabel) + '</span></div>';
     }
   }
   var delBtn = '<button type="button" class="wc-del" data-watch-id="' + safeText(id) + '" title="Supprimer" aria-label="Supprimer">✕</button>';
@@ -923,6 +933,31 @@ async function importWatchJson(file){
     showWatchToast('Erreur pendant l\'import.', 'toast-err');
   }
 }
+// V4.1 — Export localStorage
+function exportLocalStorage(){
+  try{
+    var data = localStorage.getItem(STORAGE_KEY);
+    var payload = data ? JSON.parse(data) : {};
+    var ts = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
+    var a = document.createElement('a');
+    a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(payload, null, 2));
+    a.download = 'strem-tweaker-localstorage-' + ts + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+  }catch(e){ setStatus('red','Export localStorage échoué.'); }
+}
+
+// V4.1 — RAZ localStorage (conserve authKey pour ne pas déconnecter)
+function razLocalStorage(){
+  if(!confirm('Effacer toutes les données locales ?\n(authKey conservée pour rester connecté)')) return;
+  var authKey = state.authKey;
+  localStorage.removeItem(STORAGE_KEY);
+  state.email=''; state.password=''; state.debugOpen=false; state.loginCollapsed=false;
+  deletedAddons=[];
+  if(authKey){ state.authKey = authKey; saveLocal(); }
+  hydrateForms(); renderLoginState(); updateLoginPill(); renderList();
+  setStatus('green','LocalStorage réinitialisé.');
+}
+
 function openHistoryModal(){ el.userDropdown.classList.add('hidden'); el.modalHistory.classList.add('active'); }
 function closeHistoryModal(){ el.modalHistory.classList.remove('active'); }
 window.addEventListener('keydown', function(e){ if(e.key!=='Escape') return; if(el.modalWatch && el.modalWatch.classList.contains('active')) closeWatchModal(); if(el.modalLogin.classList.contains('active')) closeLoginModal(); if(el.modalHistory.classList.contains('active')) closeHistoryModal(); if(el.modalEdit.classList.contains('active')) closeEditModal(false); });
@@ -967,6 +1002,51 @@ function loadLocal(){
   } catch(_){}
 }
 function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({email:state.email,password:state.password,authKey:state.authKey,debugOpen:state.debugOpen,loginCollapsed:state.loginCollapsed,deletedAddons})); }
+
+// V4.1 — Config distante : lit/écrit debugOpen et loginCollapsed dans la librairie Stremio
+// sous l'entrée _id:'strem-tweaker-config'. Utilisée après connexion uniquement.
+async function loadRemoteConfig(){
+  if(!state.authKey) return;
+  try{
+    var raw = await watchTry('datastoreGet', {
+      type:'DatastoreGet', authKey:state.authKey,
+      collection:'libraryItem', ids:[CONFIG_ID], all:false
+    });
+    var items = watchExtract(raw);
+    var entry = items.find(function(i){ return (i._id||i.id) === CONFIG_ID; });
+    if(!entry || !entry.config) return;
+    var cfg = entry.config;
+    if(cfg.debugOpen !== undefined){ state.debugOpen = !!cfg.debugOpen; renderDebug(state.debugOpen, el.debugWrap, el.debugToggle); renderDebug(state.debugOpen, el.m_debugWrap, el.m_debugToggle); }
+    if(cfg.loginCollapsed !== undefined){ state.loginCollapsed = !!cfg.loginCollapsed; renderLoginState(); }
+    saveLocal(); // Sync localStorage avec les valeurs distantes
+    logDebug('Config distante chargée : ' + JSON.stringify(cfg));
+  }catch(e){ logDebug('loadRemoteConfig erreur : ' + (e&&e.message||e)); }
+}
+
+// Évite les appels inutiles : ne sauvegarde que si un booléen a changé
+var _lastRemoteCfg = null;
+async function saveRemoteConfig(){
+  if(!state.authKey) return;
+  var cfg = { debugOpen: state.debugOpen, loginCollapsed: state.loginCollapsed };
+  var cfgStr = JSON.stringify(cfg);
+  if(cfgStr === _lastRemoteCfg) return; // Pas de changement → pas d'appel API
+  _lastRemoteCfg = cfgStr;
+  try{
+    await watchTry('datastorePut', {
+      type:'DatastorePut', authKey:state.authKey,
+      collection:'libraryItem',
+      changes:[{
+        _id: CONFIG_ID,
+        name: 'Strem Tweaker Config',
+        type: 'other',
+        removed: false,
+        _mtime: new Date().toISOString(),
+        config: cfg
+      }]
+    });
+    logDebug('Config distante sauvegardée : ' + cfgStr);
+  }catch(e){ logDebug('saveRemoteConfig erreur : ' + (e&&e.message||e)); }
+}
 
 function renderDebug(open, wrap, toggle){ wrap.classList.toggle('hidden',!open); toggle.textContent=open?'Masquer debug':'Afficher debug'; }
 function renderLoginCollapsed(){
@@ -1024,6 +1104,7 @@ async function loginAndGetKey(email, password, authKeyValue){
     disableTop(true);
     await fetchUserEmail();
     await loadAddons();
+    await loadRemoteConfig();
     return;
   }
   email=(email||'').trim(); password=password||'';
@@ -1038,6 +1119,7 @@ async function loginAndGetKey(email, password, authKeyValue){
     state.authKey=authKey; hydrateForms(); saveLocal(); updateLoginPill(); renderLoginState();
     setStatus('green','Connecté. Chargement des addons...');
     await loadAddons();
+    await loadRemoteConfig();
   } catch(err){
     state.authKey=''; saveLocal(); updateLoginPill(); renderLoginState();
     setStatus('red','Erreur : '+(err.message||'échec'));
