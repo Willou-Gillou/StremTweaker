@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V4.2</title>
+  <title>Strem Tweaker V4.3</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -243,7 +243,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V4.2</span>
+        <span class="version-badge">V4.3</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -405,7 +405,8 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.0a</span></div><div class="history-note">Correctif S00 E00 sur toutes les cartes : valeurs strictement <code>&gt; 0</code> requises. Détection série restreinte à <code>type === 'series'</code> explicite.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.0b</span></div><div class="history-note">Badge épisode ajusté à son contenu : <code>display:inline-block</code> + <code>width:fit-content</code> dans un wrapper block.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.1</span></div><div class="history-note">Config distante : <code>debugOpen</code> et <code>loginCollapsed</code> synchronisés dans la librairie Stremio. Paramètres : boutons Exporter/RAZ localStorage.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.2</span></div><div class="history-note">Addons supprimés déplacés dans un modal dédié (icône poubelle+liste dans la toolbar). Badge rouge indique le nombre d'addons en corbeille. Modal : Restaurer à la position d'origine ou Supprimer définitivement.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.2</span></div><div class="history-note">Addons supprimés déplacés dans un modal dédié. Badge rouge compteur. Restaurer à la position d'origine ou Supprimer définitivement.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.3</span></div><div class="history-note">Correctif : <code>deleteAddon</code> (bouton ✕ sur la carte) ne peuplait pas <code>deletedAddons</code> — l'addon disparaissait sans passer par la corbeille. Corrigé en alignant <code>deleteAddon</code> sur <code>hideAddon</code> : backup avec <code>_originalIndex</code> ajouté à <code>deletedAddons</code> avant suppression.</div></div>
       </div>
     </div>
   </div>
@@ -447,7 +448,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V4.2';
+const APP_VERSION = 'V4.3';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -1293,8 +1294,21 @@ function closeEditModal(save){
 // Addon actions
 function deleteAddon(addon){
   const t=(addon.manifest&&addon.manifest.name)||'cet addon';
-  if(confirm('Supprimer définitivement "'+t+'" ?')){
-    const i=state.addons.indexOf(addon); if(i>-1){ state.addons.splice(i,1); renderList(); syncOrder(); }
+  if(confirm('Supprimer "'+t+'" ?')){
+    const i=state.addons.indexOf(addon);
+    if(i>-1){
+      // V4.3 — Ajouter à deletedAddons (comme hideAddon) pour apparaître dans la corbeille
+      const backup = JSON.parse(JSON.stringify(addon));
+      backup._originalIndex = i;
+      if(!deletedAddons.find(a => (a.manifest&&a.manifest.id)===(addon.manifest&&addon.manifest.id))){
+        deletedAddons.push(backup);
+      }
+      state.addons.splice(i,1);
+      renderList();
+      renderDeletedList();
+      saveLocal();
+      syncOrder();
+    }
   }
 }
 function applyUpdate(addon){ if(!addon._hasUpdate) return; addon.manifest=addon._hasUpdate; addon._hasUpdate=null; renderList(); syncOrder(); }
