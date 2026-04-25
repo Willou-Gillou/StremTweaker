@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V3.8</title>
+  <title>Strem Tweaker V4.0a</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -176,6 +176,8 @@
     .wc-meta{font-size:11px;color:var(--muted);}
     .wc-bar-wrap{height:4px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden;margin-top:2px;}
     .wc-bar{height:100%;background:var(--blue);border-radius:99px;}
+    .wc-time{font-size:10px;color:var(--muted);margin-top:5px;}
+    .wc-episode{display:inline-block;margin-top:5px;font-size:10px;font-weight:700;color:var(--blue);background:rgba(100,160,255,.12);border:1px solid rgba(100,160,255,.25);padding:2px 7px;border-radius:6px;letter-spacing:.03em;}
     #watchList{overflow-x:hidden;}
     .watch-filter-btn{white-space:nowrap;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font:inherit;font-size:12px;font-weight:600;padding:5px 14px;border-radius:999px;cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
     .watch-filter-btn.active,.watch-filter-btn:hover{background:rgba(125,168,255,.15);color:var(--blue);border-color:rgba(125,168,255,.35);}
@@ -239,7 +241,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V3.8</span>
+        <span class="version-badge">V4.0a</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -381,6 +383,9 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V3.6</span></div><div class="history-note">Icône Installer remplacée par un <b>+</b>. Historique versions raccourci.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V3.7</span></div><div class="history-note">Historique visionnage : suppression du filtre <code>removed:true</code> — il excluait des films réellement visionnés. Seuls les items supprimés dans la session courante (<code>watchRemovedIds</code>) sont désormais exclus.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V3.8</span></div><div class="history-note">Regroupement par date locale : la clé de groupe utilisait <code>toISOString()</code> (UTC) — un film vu à 23h en France tombait le lendemain en UTC, dupliquant le groupe de date. Corrigé avec <code>getFullYear/Month/Date</code> (fuseau local).</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V3.9</span></div><div class="history-note">Carte visionnage : heure du visionnage sous la barre de progression. Séries : badge dernier épisode (S01 E05) affiché uniquement sur l'occurrence la plus récente de chaque série.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.0</span></div><div class="history-note">Correctif badge épisode invisible : détection élargie à <code>s.season</code>, <code>s.episode</code> et <code>s.video_id</code>.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.0a</span></div><div class="history-note">Correctif S00 E00 sur toutes les cartes : <code>season != null</code> acceptait <code>0</code> → affiché sur films et séries. Corrigé : valeurs strictement <code>&gt; 0</code> requises. Détection série restreinte à <code>type === 'series'</code> explicite.</div></div>
       </div>
     </div>
   </div>
@@ -418,7 +423,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V3.8';
+const APP_VERSION = 'V4.0a';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -578,7 +583,7 @@ function watchMatches(item){ var meta = item._manifestItem || item.meta || item;
 function watchPoster(item){ var meta = item._manifestItem || item.meta || item; if(meta.poster) return meta.poster; var id = item._id || item.id || ''; var m = id.match(/tt\d+/); if(m) return 'https://images.metahub.space/poster/medium/' + m[0] + '/img'; return ''; }
 function formatWatchDate(d){ try{ return new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' }); }catch(e){ return ''; } }
 
-function renderWatchCard(item){
+function renderWatchCard(item, showEpisode){
   var meta = item._manifestItem || item.meta || item;
   var s = item._state || item.state || {};
   var id = item._id || item.id || '';
@@ -594,10 +599,38 @@ function renderWatchCard(item){
   var metaLine = metaParts.join(' · ');
   var posterHtml = poster ? '<img class="wc-poster" src="' + poster + '" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'grid\';"><div class="wc-poster-ph" style="display:none;">🎬</div>' : '<div class="wc-poster-ph">🎬</div>';
   var barHtml = pct > 0 ? '<div class="wc-bar-wrap"><div class="wc-bar" style="width:' + pct + '%;"></div></div>' : '';
+  // V3.9 — Heure du visionnage
+  var timeHtml = '';
+  if(s.lastWatched){
+    var h = new Date(s.lastWatched).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    timeHtml = '<div class="wc-time">🕐 ' + h + '</div>';
+  }
+  // V4.0a — Dernier épisode : uniquement type==='series' ET valeurs significatives (>0)
+  var epHtml = '';
+  if(showEpisode){
+    var epSeason = (s.season > 0) ? s.season : null;
+    var epEpisode = (s.episode > 0) ? s.episode : null;
+    // Fallback video_id "ttXXX:saison:episode" seulement si saison/episode manquants
+    if((epSeason == null || epEpisode == null) && s.video_id){
+      var parts = String(s.video_id).split(':');
+      if(parts.length >= 3){
+        var ps = parseInt(parts[parts.length-2], 10);
+        var pe = parseInt(parts[parts.length-1], 10);
+        if(epSeason == null && ps > 0) epSeason = ps;
+        if(epEpisode == null && pe > 0) epEpisode = pe;
+      }
+    }
+    if(epSeason != null || epEpisode != null){
+      var epLabel = '';
+      if(epSeason != null) epLabel += 'S' + String(epSeason).padStart(2,'0');
+      if(epEpisode != null) epLabel += (epLabel ? ' ' : '') + 'E' + String(epEpisode).padStart(2,'0');
+      if(epLabel) epHtml = '<div class="wc-episode">' + safeText(epLabel) + '</div>';
+    }
+  }
   var delBtn = '<button type="button" class="wc-del" data-watch-id="' + safeText(id) + '" title="Supprimer" aria-label="Supprimer">✕</button>';
-  return '<div class="watch-card wc-card-wrap" data-watch-id="' + safeText(id) + '">' + delBtn + posterHtml + '<div class="wc-body"><div class="wc-title">' + name + '</div>' + (metaLine ? '<div class="wc-meta">' + safeText(metaLine) + '</div>' : '') + barHtml + '</div></div>';
+  return '<div class="watch-card wc-card-wrap" data-watch-id="' + safeText(id) + '">' + delBtn + posterHtml + '<div class="wc-body"><div class="wc-title">' + name + '</div>' + (metaLine ? '<div class="wc-meta">' + safeText(metaLine) + '</div>' : '') + barHtml + timeHtml + epHtml + '</div></div>';
 }
-function renderWatchList(){ var filtered = watchItems.filter(watchMatches); if(!filtered.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Aucun résultat.</div>'; return; } var groups = {}; filtered.forEach(function(item){ var s=item._state||item.state||{}; var d=s.lastWatched ? new Date(s.lastWatched) : new Date(0); /* V3.8 — clé en date locale pour éviter le décalage UTC qui dupliquait les groupes */ var key = s.lastWatched ? (d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()) : '0000-00-00'; if(!groups[key]) groups[key] = { date:d, items:[] }; groups[key].items.push(item); }); var keys = Object.keys(groups).sort(function(a,b){ return groups[b].date - groups[a].date; }); var html=''; keys.forEach(function(k){ var g=groups[k]; var dateLabel = (k==='0000-00-00') ? 'Date inconnue' : g.date.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); html += '<div class="watch-group"><div class="watch-date">' + safeText(dateLabel) + '</div>'; g.items.forEach(function(item){ html += renderWatchCard(item); }); html += '</div>'; }); el.watchList.innerHTML = html; }
+function renderWatchList(){ var filtered = watchItems.filter(watchMatches); if(!filtered.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Aucun résultat.</div>'; return; } var groups = {}; filtered.forEach(function(item){ var s=item._state||item.state||{}; var d=s.lastWatched ? new Date(s.lastWatched) : new Date(0); var key = s.lastWatched ? (d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()) : '0000-00-00'; if(!groups[key]) groups[key] = { date:d, items:[] }; groups[key].items.push(item); }); var keys = Object.keys(groups).sort(function(a,b){ return groups[b].date - groups[a].date; }); var seenSeries = {}; var html=''; keys.forEach(function(k){ var g=groups[k]; var dateLabel = (k==='0000-00-00') ? 'Date inconnue' : g.date.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); html += '<div class="watch-group"><div class="watch-date">' + safeText(dateLabel) + '</div>'; g.items.forEach(function(item){ var id = item._id || item.id || ''; var type = item.type || ''; /* V4.0a — série uniquement si type explicitement 'series' */ var isSeries = (type === 'series'); var showEp = isSeries && !seenSeries[id]; if(isSeries) seenSeries[id] = true; html += renderWatchCard(item, showEp); }); html += '</div>'; }); el.watchList.innerHTML = html; }
 
 
 var _toastTimer = null;
