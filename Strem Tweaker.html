@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V4.1</title>
+  <title>Strem Tweaker V4.2</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -135,6 +135,8 @@
   .deleted-wrap{margin-top:14px;}
   .deleted-card{opacity:.72;border-style:dashed;}
   .deleted-card .addon-title{text-decoration:line-through;color:var(--muted);}
+  .pill-btn-wrap{position:relative;display:inline-flex;}
+  .pill-btn-badge{position:absolute;top:-5px;right:-5px;background:var(--ko);color:#fff;font-size:9px;font-weight:700;border-radius:99px;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none;}
     .history-list{display:grid;gap:10px;margin-top:12px;max-height:60dvh;overflow-y:auto;padding-right:4px;}
     .history-item{border:1px solid var(--line);border-radius:16px;padding:12px;background:rgba(255,255,255,.04);}
     .history-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
@@ -241,7 +243,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V4.1</span>
+        <span class="version-badge">V4.2</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -302,16 +304,18 @@
           <button id="btnClearAddons" class="pill-btn" title="Supprimer tous les addons (sauvegarde auto)" style="color:#ff6b6b;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
           </button>
+          <div class="pill-btn-wrap">
+            <button id="btnOpenDeletedModal" class="pill-btn" title="Addons supprimés" style="color:var(--muted);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+            </button>
+            <span id="deletedBadge" class="pill-btn-badge hidden"></span>
+          </div>
           <input type="file" id="fileRestore" accept=".json" class="hidden">
           <div class="pill"><span id="countLabel">0 addon</span></div>
         </div>
       </div>
       <div id="fitWrap" class="addons-fit">
         <div id="addonsList" class="list"></div>
-        <div id="deletedWrap" class="deleted-wrap hidden">
-          <h2 style="margin:0 0 8px;font-size:16px;">Supprimés</h2>
-          <div id="deletedList" class="list"></div>
-        </div>
       </div>
       <div id="emptyState" class="empty hidden">Aucun addon trouvé.</div>
     </section>
@@ -331,6 +335,19 @@
   </div>
 
     <!-- ── MODAL HISTORIQUE VISIONNAGE ── -->
+  <!-- ── MODAL ADDONS SUPPRIMÉS ── -->
+  <div id="modalDeleted" class="modal-overlay">
+    <div class="modal-box" style="max-width:520px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <h3 style="margin:0;">Addons supprimés</h3>
+        <button type="button" id="btnCloseDeletedModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
+      </div>
+      <p class="sub" style="margin-bottom:12px;">Restaurez à la position d'origine ou supprimez définitivement.</p>
+      <div id="deletedList" class="list" style="max-height:60dvh;overflow-y:auto;"></div>
+      <div id="deletedEmpty" class="muted" style="text-align:center;padding:24px;display:none;">Aucun addon supprimé.</div>
+    </div>
+  </div>
+
   <div id="modalWatch" class="modal-overlay">
     <div class="modal-card" style="max-width:680px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;">
@@ -387,7 +404,8 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.0</span></div><div class="history-note">Correctif badge épisode invisible : détection élargie à <code>s.season</code>, <code>s.episode</code> et <code>s.video_id</code>.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.0a</span></div><div class="history-note">Correctif S00 E00 sur toutes les cartes : valeurs strictement <code>&gt; 0</code> requises. Détection série restreinte à <code>type === 'series'</code> explicite.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.0b</span></div><div class="history-note">Badge épisode ajusté à son contenu : <code>display:inline-block</code> + <code>width:fit-content</code> dans un wrapper block.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.1</span></div><div class="history-note">Config distante : <code>debugOpen</code> et <code>loginCollapsed</code> synchronisés dans la librairie Stremio sous <code>_id:'strem-tweaker-config'</code> via <code>datastorePut/Get</code>. Chargée après connexion, sauvegardée uniquement si valeur changée. Filtrée dans <code>fetchWatchHistory</code>. Paramètres : boutons <b>Exporter localStorage</b> et <b>RAZ localStorage</b> (conserve authKey).</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.1</span></div><div class="history-note">Config distante : <code>debugOpen</code> et <code>loginCollapsed</code> synchronisés dans la librairie Stremio. Paramètres : boutons Exporter/RAZ localStorage.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.2</span></div><div class="history-note">Addons supprimés déplacés dans un modal dédié (icône poubelle+liste dans la toolbar). Badge rouge indique le nombre d'addons en corbeille. Modal : Restaurer à la position d'origine ou Supprimer définitivement.</div></div>
       </div>
     </div>
   </div>
@@ -429,7 +447,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V4.1';
+const APP_VERSION = 'V4.2';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -458,6 +476,7 @@ const el = {
   m_loginBtn: $('m_loginBtn'), m_debugToggle: $('m_debugToggle'), m_debugWrap: $('m_debugWrap'), m_debugBox: $('m_debugBox'),
   modalLogin: $('modalLogin'), btnCloseLoginModal: $('btnCloseLoginModal'),
   btnOpenHistoryModal: $('btnOpenHistoryModal'), modalHistory: $('modalHistory'), btnCloseHistoryModal: $('btnCloseHistoryModal'), btnOpenWatchModal: $('btnOpenWatchModal'), modalWatch: $('modalWatch'), btnCloseWatchModal: $('btnCloseWatchModal'), watchList: $('watchList'), watchSearch: $('watchSearch'), btnExportWatch: $('btnExportWatch'),
+  modalDeleted: $('modalDeleted'), btnOpenDeletedModal: $('btnOpenDeletedModal'), btnCloseDeletedModal: $('btnCloseDeletedModal'), deletedList: $('deletedList'), deletedEmpty: $('deletedEmpty'), deletedBadge: $('deletedBadge'),
   // Modal edit
   modalEdit: $('modalEdit'), modalEditTitle: $('modalEditTitle'), modalEditLabel: $('modalEditLabel'), modalEditInput: $('modalEditInput'),
   btnEditCancel: $('btnEditCancel'), btnEditSave: $('btnEditSave'),
@@ -513,6 +532,9 @@ function bind(){
   if($('btnImportWatch')) $('btnImportWatch').addEventListener('click', function(){ var f = $('watchImportFile'); if(f){ f.value = ''; f.click(); } });
   if($('btnExportLocalStorage')) $('btnExportLocalStorage').addEventListener('click', exportLocalStorage);
   if($('btnRazLocalStorage')) $('btnRazLocalStorage').addEventListener('click', razLocalStorage);
+  if(el.btnOpenDeletedModal) el.btnOpenDeletedModal.addEventListener('click', openDeletedModal);
+  if(el.btnCloseDeletedModal) el.btnCloseDeletedModal.addEventListener('click', closeDeletedModal);
+  if(el.modalDeleted) el.modalDeleted.addEventListener('click', function(e){ if(e.target===el.modalDeleted) closeDeletedModal(); });
   if($('watchImportFile')) $('watchImportFile').addEventListener('change', function(e){ var file = e.target.files && e.target.files[0]; if(file) importWatchJson(file); });
   if($('watchList')) $('watchList').addEventListener('click', function(e){ var b=e.target.closest('.wc-del'); if(!b) return; e.preventDefault(); e.stopPropagation(); deleteWatchEntry(b.getAttribute('data-watch-id')); });
   document.querySelectorAll('.watch-filter-btn[data-filter]').forEach(function(btn){ btn.addEventListener('click', function(){ document.querySelectorAll('.watch-filter-btn[data-filter]').forEach(function(b){ b.classList.remove('active'); }); btn.classList.add('active'); wState.filter = btn.dataset.filter; renderWatchList(); }); });
@@ -934,6 +956,9 @@ async function importWatchJson(file){
   }
 }
 // V4.1 — Export localStorage
+function openDeletedModal(){ renderDeletedList(); el.modalDeleted.classList.add('active'); }
+function closeDeletedModal(){ el.modalDeleted.classList.remove('active'); }
+
 function exportLocalStorage(){
   try{
     var data = localStorage.getItem(STORAGE_KEY);
@@ -1298,7 +1323,13 @@ function moveToBottom(addon){
 
 function renderDeletedList(){
   el.deletedList.innerHTML='';
-  el.deletedWrap.classList.toggle('hidden', deletedAddons.length===0);
+  var isEmpty = deletedAddons.length === 0;
+  el.deletedEmpty.style.display = isEmpty ? 'block' : 'none';
+  // Badge sur l'icône
+  if(el.deletedBadge){
+    if(isEmpty){ el.deletedBadge.classList.add('hidden'); }
+    else { el.deletedBadge.classList.remove('hidden'); el.deletedBadge.textContent = deletedAddons.length; }
+  }
   deletedAddons.forEach(addon=>{
     const manifest=addon.manifest||{};
     const title=manifest.name||manifest.id||'Addon';
