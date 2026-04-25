@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V3.6</title>
+  <title>Strem Tweaker V3.8</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -239,7 +239,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V3.6</span>
+        <span class="version-badge">V3.8</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -379,6 +379,8 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V3.4</span></div><div class="history-note">Mes addons : icône poubelle — supprime tous les addons avec sauvegarde automatique préalable.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V3.5</span></div><div class="history-note">Icône Restaurer → dossier simple. Icône Configurer tronquée : <code>viewBox="-1 -1 26 26"</code> + <code>overflow:visible</code>.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V3.6</span></div><div class="history-note">Icône Installer remplacée par un <b>+</b>. Historique versions raccourci.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V3.7</span></div><div class="history-note">Historique visionnage : suppression du filtre <code>removed:true</code> — il excluait des films réellement visionnés. Seuls les items supprimés dans la session courante (<code>watchRemovedIds</code>) sont désormais exclus.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V3.8</span></div><div class="history-note">Regroupement par date locale : la clé de groupe utilisait <code>toISOString()</code> (UTC) — un film vu à 23h en France tombait le lendemain en UTC, dupliquant le groupe de date. Corrigé avec <code>getFullYear/Month/Date</code> (fuseau local).</div></div>
       </div>
     </div>
   </div>
@@ -416,7 +418,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V3.6';
+const APP_VERSION = 'V3.8';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -571,7 +573,7 @@ function closeWatchModal(){ el.modalWatch.classList.remove('active'); }
 function safeText(s){ return String(s || '').replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); }); }
 function watchExtract(data){ if(!data) return []; if(Array.isArray(data)) return data; var r = data.result; if(!r) return []; if(Array.isArray(r)) return r; if(Array.isArray(r.items)) return r.items; if(Array.isArray(r.libraryItems)) return r.libraryItems; if(typeof r === 'object'){ var vals = Object.values(r).filter(function(x){ return x && typeof x === 'object' && (x._id || x.id); }); if(vals.length) return vals; } return []; }
 async function watchTry(endpoint, body){ try{ var resp = await fetch(API_BASE + endpoint, { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify(body) }); if(!resp.ok) return null; return await resp.json(); }catch(e){ return null; } }
-async function fetchWatchHistory(){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Chargement…</div>'; var items = [], rawData = null; rawData = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[], all:true }); if(rawData) items = watchExtract(rawData); if(!items.length){ rawData = await watchTry('libraryGet', { type:'LibraryGet', authKey:state.authKey, collection:'libraryItem' }); if(rawData) items = watchExtract(rawData); } if(!items.length){ rawData = await watchTry('addonCollectionGet', { type:'AddonCollectionGet', authKey:state.authKey, update:true }); if(rawData){ var lib = (rawData.result && rawData.result.library) || rawData.library; items = Array.isArray(lib) ? lib : watchExtract(rawData); } } if($('watchDebugBox')) { try{ $('watchDebugBox').textContent = JSON.stringify(rawData, null, 2).substring(0, 4000); }catch(e){} } if(!items.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Bibliothèque vide ou inaccessible.</div>'; return; } /* V3.3 — Exclure les items supprimés (removed:true) et ceux supprimés localement */ items = items.filter(function(i){ if(i && i.removed === true) return false; var id = (i && (i._id || i.id)) || ''; return watchRemovedIds.indexOf(id) === -1; }); var watched = items.filter(function(i){ var s = i._state || i.state || {}; return s.timesWatched > 0 || s.lastWatched || s.flaggedWatched; }); watchItems = watched.length ? watched : items; watchItems.sort(function(a,b){ var sa=a._state||a.state||{}, sb=b._state||b.state||{}; return new Date(sb.lastWatched || 0) - new Date(sa.lastWatched || 0); }); renderWatchList(); }
+async function fetchWatchHistory(){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Chargement…</div>'; var items = [], rawData = null; rawData = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[], all:true }); if(rawData) items = watchExtract(rawData); if(!items.length){ rawData = await watchTry('libraryGet', { type:'LibraryGet', authKey:state.authKey, collection:'libraryItem' }); if(rawData) items = watchExtract(rawData); } if(!items.length){ rawData = await watchTry('addonCollectionGet', { type:'AddonCollectionGet', authKey:state.authKey, update:true }); if(rawData){ var lib = (rawData.result && rawData.result.library) || rawData.library; items = Array.isArray(lib) ? lib : watchExtract(rawData); } } if($('watchDebugBox')) { try{ $('watchDebugBox').textContent = JSON.stringify(rawData, null, 2).substring(0, 4000); }catch(e){} } if(!items.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Bibliothèque vide ou inaccessible.</div>'; return; } /* Exclure uniquement les items supprimés dans la session courante (watchRemovedIds) */ items = items.filter(function(i){ var id = (i && (i._id || i.id)) || ''; return watchRemovedIds.indexOf(id) === -1; }); var watched = items.filter(function(i){ var s = i._state || i.state || {}; return s.timesWatched > 0 || s.lastWatched || s.flaggedWatched; }); watchItems = watched.length ? watched : items; watchItems.sort(function(a,b){ var sa=a._state||a.state||{}, sb=b._state||b.state||{}; return new Date(sb.lastWatched || 0) - new Date(sa.lastWatched || 0); }); renderWatchList(); }
 function watchMatches(item){ var meta = item._manifestItem || item.meta || item; var s = item._state || item.state || {}; var id = item._id || item.id || ''; var type = item.type || id.split(':')[0] || ''; if(wState.filter !== 'all' && type !== wState.filter) return false; if(!wState.query) return true; var text = [meta.name || item.name || '', meta.year || '', id, String(s.timesWatched || '')].join(' ').toLowerCase(); return text.indexOf(wState.query) !== -1; }
 function watchPoster(item){ var meta = item._manifestItem || item.meta || item; if(meta.poster) return meta.poster; var id = item._id || item.id || ''; var m = id.match(/tt\d+/); if(m) return 'https://images.metahub.space/poster/medium/' + m[0] + '/img'; return ''; }
 function formatWatchDate(d){ try{ return new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' }); }catch(e){ return ''; } }
@@ -595,7 +597,7 @@ function renderWatchCard(item){
   var delBtn = '<button type="button" class="wc-del" data-watch-id="' + safeText(id) + '" title="Supprimer" aria-label="Supprimer">✕</button>';
   return '<div class="watch-card wc-card-wrap" data-watch-id="' + safeText(id) + '">' + delBtn + posterHtml + '<div class="wc-body"><div class="wc-title">' + name + '</div>' + (metaLine ? '<div class="wc-meta">' + safeText(metaLine) + '</div>' : '') + barHtml + '</div></div>';
 }
-function renderWatchList(){ var filtered = watchItems.filter(watchMatches); if(!filtered.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Aucun résultat.</div>'; return; } var groups = {}; filtered.forEach(function(item){ var s=item._state||item.state||{}; var d=s.lastWatched ? new Date(s.lastWatched) : new Date(0); var key=d.toISOString().slice(0,10); if(!groups[key]) groups[key] = { date:d, items:[] }; groups[key].items.push(item); }); var keys = Object.keys(groups).sort(function(a,b){ return groups[b].date - groups[a].date; }); var html=''; keys.forEach(function(k){ var g=groups[k]; var dateLabel=g.date.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); html += '<div class="watch-group"><div class="watch-date">' + safeText(dateLabel) + '</div>'; g.items.forEach(function(item){ html += renderWatchCard(item); }); html += '</div>'; }); el.watchList.innerHTML = html; }
+function renderWatchList(){ var filtered = watchItems.filter(watchMatches); if(!filtered.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Aucun résultat.</div>'; return; } var groups = {}; filtered.forEach(function(item){ var s=item._state||item.state||{}; var d=s.lastWatched ? new Date(s.lastWatched) : new Date(0); /* V3.8 — clé en date locale pour éviter le décalage UTC qui dupliquait les groupes */ var key = s.lastWatched ? (d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()) : '0000-00-00'; if(!groups[key]) groups[key] = { date:d, items:[] }; groups[key].items.push(item); }); var keys = Object.keys(groups).sort(function(a,b){ return groups[b].date - groups[a].date; }); var html=''; keys.forEach(function(k){ var g=groups[k]; var dateLabel = (k==='0000-00-00') ? 'Date inconnue' : g.date.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); html += '<div class="watch-group"><div class="watch-date">' + safeText(dateLabel) + '</div>'; g.items.forEach(function(item){ html += renderWatchCard(item); }); html += '</div>'; }); el.watchList.innerHTML = html; }
 
 
 var _toastTimer = null;
