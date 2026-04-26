@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V5.3</title>
+  <title>Strem Tweaker V5.4</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -268,7 +268,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V5.3</span>
+        <span class="version-badge">V5.4</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -447,8 +447,8 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.0b</span></div><div class="history-note">Logs exhaustifs pour diagnostic config librairie.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.1</span></div><div class="history-note"><code>type:'other'</code> → <code>type:'movie'</code>. Pas suffisant.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.2</span></div><div class="history-note">Config encodée dans le champ <code>name</code> (préfixe <code>STREM_TWEAKER_CFG_v1::</code>) car Stremio strippe les champs non-standard.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.3</span></div><div class="history-note">Icône Archive (DeletedAddons) en bleu. RAZ addons : <code>addonsCard</code> reste visible après suppression totale. Toolbar historique : boutons plus compacts sur mobile (font-size 11px, padding réduit, gap 5px) pour tenir sur une ligne iPhone.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.3</span></div><div class="history-note">Icône Archive (addons supprimés) → bleue. RAZ complète addons : <code>addonsCard</code> masqué immédiatement (évite de devoir rafraîchir). Boutons historique visionnage : labels raccourcis en icônes (⬆⬇🗑) pour tenir sur 1 ligne sur iPhone.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.3</span></div><div class="history-note">Icône Archive bleue. RAZ addons : <code>addonsCard</code> reste visible. Toolbar historique : boutons compacts sur mobile.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.4</span></div><div class="history-note">RAZ historique visionnage : les entrées réapparaissaient après refresh. Deux causes : (1) <code>CONFIG_ID</code> inclus dans la RAZ → config détruite. (2) Stremio ne persiste pas les suppressions en batch (success:true sans persistance réelle). Corrigé : <code>CONFIG_ID</code> exclu + envoi 1 item à la fois comme <code>deleteWatchEntryOnServer</code> qui fonctionne.</div></div>
       </div>
     </div>
   </div>
@@ -521,7 +521,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V5.3';
+const APP_VERSION = 'V5.4';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -917,37 +917,34 @@ async function resetWatchHistory(){
     if(!allItems.length && rawLib && typeof rawLib === 'object'){
       allItems = Object.values(rawLib).filter(function(x){ return x && typeof x === 'object' && (x._id || x.id); });
     }
-    var alive = allItems.filter(function(i){ return !(i && i.removed === true); });
+    // Exclure l'entrée de config de la RAZ
+    var alive = allItems.filter(function(i){
+      var id = i._id || i.id;
+      return !(i && i.removed === true) && id !== CONFIG_ID;
+    });
     if(!alive.length){ showWatchToast('Bibliothèque déjà vide.', 'toast-ok'); watchItems = []; renderWatchList(); return; }
     console.log(logPrefix, 'Items à supprimer:', alive.length);
 
-    // V3.3 — Payload complet (tous les champs de l'item original) + removed:true + _mtime,
-    // même logique que deleteWatchEntryOnServer qui fonctionne.
-    // Stremio ignore les payloads minimaux et remet les items à la date 1970 sinon.
     var nowIso = new Date().toISOString();
-    var changes = alive.map(function(it){
+    var totalSent = 0, failed = 0;
+
+    // V5.4 — Envoyer 1 item à la fois, comme deleteWatchEntryOnServer qui fonctionne.
+    // Stremio ne persiste pas les suppressions en batch (success:true mais rien sauvé).
+    for(var i=0; i<alive.length; i++){
+      var it = alive[i];
       var full = {};
-      // Copier tous les champs existants de l'item
       Object.keys(it).forEach(function(k){ full[k] = it[k]; });
-      // Écraser les champs de suppression
       full._id = it._id || it.id;
       full.removed = true;
       full._mtime = nowIso;
-      return full;
-    });
-
-    var BATCH = 50;
-    var totalSent = 0, failed = 0;
-    for(var i=0; i<changes.length; i+=BATCH){
-      var slice = changes.slice(i, i+BATCH);
       var resp = await watchTry('datastorePut', {
-        type: 'DatastorePut',
-        authKey: state.authKey,
-        collection: 'libraryItem',
-        changes: slice
+        type: 'DatastorePut', authKey: state.authKey,
+        collection: 'libraryItem', changes: [full]
       });
-      if(resp){ totalSent += slice.length; console.log(logPrefix, 'Lot', Math.floor(i/BATCH)+1, '→', slice.length, 'OK'); }
-      else { failed += slice.length; console.warn(logPrefix, 'Lot', Math.floor(i/BATCH)+1, '→ ÉCHEC'); }
+      if(resp){ totalSent++; }
+      else { failed++; console.warn(logPrefix, 'Échec item', full._id); }
+      // Progression tous les 10 items
+      if(totalSent % 10 === 0) showWatchToast('RAZ ' + totalSent + '/' + alive.length + '…', 'toast-ok');
     }
 
     // Mémoriser localement
