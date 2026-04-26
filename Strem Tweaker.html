@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V5.5</title>
+  <title>Strem Tweaker V5.6</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -268,7 +268,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V5.5</span>
+        <span class="version-badge">V5.6</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -450,6 +450,7 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.3</span></div><div class="history-note">Icône Archive bleue. RAZ addons : <code>addonsCard</code> reste visible. Toolbar historique : boutons compacts sur mobile.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.4</span></div><div class="history-note">RAZ historique visionnage : les entrées réapparaissaient après refresh. Deux causes : (1) <code>CONFIG_ID</code> inclus dans la RAZ → config détruite. (2) Stremio ne persiste pas les suppressions en batch (success:true sans persistance réelle). Corrigé : <code>CONFIG_ID</code> exclu + envoi 1 item à la fois comme <code>deleteWatchEntryOnServer</code> qui fonctionne.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.4b</span></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.6</span></div><div class="history-note">Config appli : bouton "Exporter librairie complète" — exporte tous les <code>libraryItem</code> du compte (sans filtre <code>removed</code>) dans un JSON horodaté avec métadonnées (<code>exportedAt</code>, <code>totalItems</code>).</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.5</span></div><div class="history-note">Config librairie : si l'entrée <code>CONFIG_ID</code> est trouvée avec <code>removed:true</code> (suite à une RAZ Stremio officielle ou externe), elle est automatiquement réécrite avec <code>removed:false</code>. Extraction brute sans filtre <code>removed</code> dans <code>fetchRemoteConfigEntry</code> pour retrouver l'entrée même supprimée.</div></div><div class="history-note">RAZ historique : "Bibliothèque déjà vide" alors que les items réapparaissaient. Cause : items avaient bien <code>removed:true</code> côté serveur mais <code>fetchWatchHistory</code> ne filtrait plus ce flag (retiré en V3.7). Double correction : (1) filtre <code>removed:true</code> réintroduit dans <code>fetchWatchHistory</code>. (2) <code>resetWatchHistory</code> traite tous les items (même déjà removed) pour forcer la mise à jour.</div></div>
       </div>
     </div>
@@ -487,6 +488,7 @@
         <button id="btnRazLocalStorage" class="watch-filter-btn" style="color:#ff6b6b;border-color:rgba(255,107,107,.35);" type="button">🗑 RAZ localStorage</button>
         <button id="btnExportRemoteConfig" class="watch-filter-btn" style="color:var(--ok);border-color:rgba(56,211,159,.3);" type="button">⬇ Exporter config librairie</button>
         <button id="btnRazRemoteConfig" class="watch-filter-btn" style="color:#ff6b6b;border-color:rgba(255,107,107,.35);" type="button">🗑 RAZ config librairie</button>
+        <button id="btnExportFullLibrary" class="watch-filter-btn" style="color:var(--ok);border-color:rgba(56,211,159,.3);grid-column:1/-1;" type="button">⬇ Exporter librairie complète</button>
       </div>
     </div>
   </div>
@@ -523,7 +525,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V5.5';
+const APP_VERSION = 'V5.6';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -615,6 +617,7 @@ function bind(){
   if($('btnRazLocalStorage')) $('btnRazLocalStorage').addEventListener('click', razLocalStorage);
   if($('btnExportRemoteConfig')) $('btnExportRemoteConfig').addEventListener('click', exportRemoteConfig);
   if($('btnRazRemoteConfig')) $('btnRazRemoteConfig').addEventListener('click', razRemoteConfig);
+  if($('btnExportFullLibrary')) $('btnExportFullLibrary').addEventListener('click', exportFullLibrary);
   if(el.btnOpenUserInfoModal) el.btnOpenUserInfoModal.addEventListener('click', openUserInfoModal);
   if(el.btnCloseUserInfoModal) el.btnCloseUserInfoModal.addEventListener('click', closeUserInfoModal);
   if(el.modalUserInfo) el.modalUserInfo.addEventListener('click', function(e){ if(e.target===el.modalUserInfo) closeUserInfoModal(); });
@@ -1095,6 +1098,38 @@ async function exportLibraryConfig(){
   }catch(e){ setStatus('red','Export config librairie échoué.'); }
 }
 
+async function exportFullLibrary(){
+  if(!state.authKey){ setStatus('orange','Non connecté.'); return; }
+  setStatus('orange','Chargement de la librairie…');
+  try{
+    var raw = await watchTry('datastoreGet', {
+      type:'DatastoreGet', authKey:state.authKey,
+      collection:'libraryItem', ids:[], all:true
+    });
+    if(!raw){ setStatus('red','Lecture librairie impossible.'); return; }
+    // Extraction brute : tous les items sans filtre (removed ou non, config incluse)
+    var items = [];
+    if(Array.isArray(raw)) items = raw;
+    else if(raw.result){
+      if(Array.isArray(raw.result)) items = raw.result;
+      else if(typeof raw.result === 'object') items = Object.values(raw.result).filter(function(x){ return x && typeof x === 'object' && (x._id||x.id); });
+    }
+    if(!items.length && typeof raw === 'object'){
+      items = Object.values(raw).filter(function(x){ return x && typeof x === 'object' && (x._id||x.id); });
+    }
+    var ts = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
+    var payload = {
+      exportedAt: new Date().toISOString(),
+      totalItems: items.length,
+      items: items
+    };
+    var a = document.createElement('a');
+    a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(payload, null, 2));
+    a.download = 'stremio-library-full-' + ts + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setStatus('green','✓ Librairie exportée (' + items.length + ' items).');
+  }catch(e){ setStatus('red','Export librairie échoué.'); }
+}
 async function razLibraryConfig(){
   if(!state.authKey){ setStatus('orange','Non connecté.'); return; }
   if(!confirm('Effacer la config librairie Stremio ?\n(debugOpen, loginCollapsed, deletedAddons seront réinitialisés)')) return;
@@ -1102,7 +1137,7 @@ async function razLibraryConfig(){
     await watchTry('datastorePut',{type:'DatastorePut',authKey:state.authKey,collection:'libraryItem',changes:[{_id:CONFIG_ID,name:'Strem Tweaker Config',type:'movie',removed:true,_mtime:new Date().toISOString()}]});
     state.debugOpen=false; state.loginCollapsed=false; deletedAddons=[];
     _lastRemoteCfg=null;
-    renderDeletedList(); renderAppConfig();
+    renderDeletedList(); renderAppConfigTables();
     setStatus('green','Config librairie réinitialisée.');
   }catch(e){ setStatus('red','RAZ config librairie échouée.'); }
 }
