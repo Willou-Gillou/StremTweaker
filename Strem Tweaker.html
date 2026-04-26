@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V5.7</title>
+  <title>Strem Tweaker V5.8</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -268,7 +268,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V5.7</span>
+        <span class="version-badge">V5.8</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -451,6 +451,7 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.3</span></div><div class="history-note">Icône Archive bleue. RAZ addons : <code>addonsCard</code> reste visible. Toolbar historique : boutons compacts sur mobile.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.4</span></div><div class="history-note">RAZ historique visionnage : les entrées réapparaissaient après refresh. Deux causes : (1) <code>CONFIG_ID</code> inclus dans la RAZ → config détruite. (2) Stremio ne persiste pas les suppressions en batch (success:true sans persistance réelle). Corrigé : <code>CONFIG_ID</code> exclu + envoi 1 item à la fois comme <code>deleteWatchEntryOnServer</code> qui fonctionne.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.4b</span></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.8</span></div><div class="history-note">Correctif poubelle RAZ addons : <code>syncOrder</code> utilisait encore <code>Content-Type: application/json</code> → échouait sur Safari iOS → <code>loadAddons()</code> dans le catch cachait <code>addonsCard</code>. Corrigé : passage en <code>text/plain</code> sur tous les appels fetch restants (login, getUser, addonCollectionGet, syncOrder). Le catch de <code>syncOrder</code> ne rappelle <code>loadAddons</code> que si la liste n'est pas volontairement vide.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.7</span></div><div class="history-note">Toolbar Mes addons : icônes centrées, séparateur à gauche de la poubelle (RAZ), poubelle positionnée tout à droite. Historique visionnage : boutons encore plus compacts sur mobile (10px, padding 3px). Infos utilisateur : nom affiché = <code>fullname</code> ou partie avant le <code>@</code> de l'email.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.6</span></div><div class="history-note">Config appli : bouton "Exporter librairie complète" — exporte tous les <code>libraryItem</code> du compte (sans filtre <code>removed</code>) dans un JSON horodaté avec métadonnées (<code>exportedAt</code>, <code>totalItems</code>).</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.5</span></div><div class="history-note">Config librairie : si l'entrée <code>CONFIG_ID</code> est trouvée avec <code>removed:true</code> (suite à une RAZ Stremio officielle ou externe), elle est automatiquement réécrite avec <code>removed:false</code>. Extraction brute sans filtre <code>removed</code> dans <code>fetchRemoteConfigEntry</code> pour retrouver l'entrée même supprimée.</div></div><div class="history-note">RAZ historique : "Bibliothèque déjà vide" alors que les items réapparaissaient. Cause : items avaient bien <code>removed:true</code> côté serveur mais <code>fetchWatchHistory</code> ne filtrait plus ce flag (retiré en V3.7). Double correction : (1) filtre <code>removed:true</code> réintroduit dans <code>fetchWatchHistory</code>. (2) <code>resetWatchHistory</code> traite tous les items (même déjà removed) pour forcer la mise à jour.</div></div>
@@ -527,7 +528,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V5.7';
+const APP_VERSION = 'V5.8';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -703,7 +704,7 @@ function openWatchModal(){ el.userDropdown.classList.add('hidden'); el.modalWatc
 function closeWatchModal(){ el.modalWatch.classList.remove('active'); }
 function safeText(s){ return String(s || '').replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); }); }
 function watchExtract(data){ if(!data) return []; if(Array.isArray(data)) return data; var r = data.result; if(!r) return []; if(Array.isArray(r)) return r; if(Array.isArray(r.items)) return r.items; if(Array.isArray(r.libraryItems)) return r.libraryItems; if(typeof r === 'object'){ var vals = Object.values(r).filter(function(x){ return x && typeof x === 'object' && (x._id || x.id); }); if(vals.length) return vals; } return []; }
-async function watchTry(endpoint, body){ try{ var resp = await fetch(API_BASE + endpoint, { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify(body) }); if(!resp.ok) return null; return await resp.json(); }catch(e){ return null; } }
+async function watchTry(endpoint, body){ try{ var resp = await fetch(API_BASE + endpoint, { method:'POST', headers:{'Content-Type':'text/plain;charset=UTF-8'}, body: JSON.stringify(body) }); if(!resp.ok) return null; return await resp.json(); }catch(e){ return null; } }
 async function fetchWatchHistory(){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Chargement…</div>'; var items = [], rawData = null; rawData = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[], all:true }); if(rawData) items = watchExtract(rawData); if(!items.length){ rawData = await watchTry('libraryGet', { type:'LibraryGet', authKey:state.authKey, collection:'libraryItem' }); if(rawData) items = watchExtract(rawData); } if(!items.length){ rawData = await watchTry('addonCollectionGet', { type:'AddonCollectionGet', authKey:state.authKey, update:true }); if(rawData){ var lib = (rawData.result && rawData.result.library) || rawData.library; items = Array.isArray(lib) ? lib : watchExtract(rawData); } } if($('watchDebugBox')) { try{ $('watchDebugBox').textContent = JSON.stringify(rawData, null, 2).substring(0, 4000); }catch(e){} } if(!items.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Bibliothèque vide ou inaccessible.</div>'; return; } /* V5.4b — Exclure removed:true, config et session locale */ items = items.filter(function(i){ if(i && i.removed === true) return false; var id = (i && (i._id || i.id)) || ''; return id !== CONFIG_ID && watchRemovedIds.indexOf(id) === -1; }); var watched = items.filter(function(i){ var s = i._state || i.state || {}; return s.timesWatched > 0 || s.lastWatched || s.flaggedWatched; }); watchItems = watched.length ? watched : items; watchItems.sort(function(a,b){ var sa=a._state||a.state||{}, sb=b._state||b.state||{}; return new Date(sb.lastWatched || 0) - new Date(sa.lastWatched || 0); }); renderWatchList(); }
 function watchMatches(item){ var meta = item._manifestItem || item.meta || item; var s = item._state || item.state || {}; var id = item._id || item.id || ''; var type = item.type || id.split(':')[0] || ''; if(wState.filter !== 'all' && type !== wState.filter) return false; if(!wState.query) return true; var text = [meta.name || item.name || '', meta.year || '', id, String(s.timesWatched || '')].join(' ').toLowerCase(); return text.indexOf(wState.query) !== -1; }
 function watchPoster(item){ var meta = item._manifestItem || item.meta || item; if(meta.poster) return meta.poster; var id = item._id || item.id || ''; var m = id.match(/tt\d+/); if(m) return 'https://images.metahub.space/poster/medium/' + m[0] + '/img'; return ''; }
@@ -1535,7 +1536,7 @@ async function copyValue(value){
 async function fetchUserEmail(){
   if(!state.authKey) return;
   try{
-    const resp = await fetch(API_BASE+'getUser',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({authKey:state.authKey})});
+    const resp = await fetch(API_BASE+'getUser',{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify({authKey:state.authKey})});
     const data = await resp.json();
     const email = (data&&data.result&&data.result.email)||(data&&data.email);
     if(email){ state.email=email; hydrateForms(); saveLocal(); updateLoginPill(); }
@@ -1558,7 +1559,7 @@ async function loginAndGetKey(email, password, authKeyValue){
   state.email=email; state.password=password;
   setStatus('orange','Connexion en cours...'); disableTop(true);
   try{
-    const resp=await fetch(API_BASE+'login',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({type:'Login',email,password,facebook:false})});
+    const resp=await fetch(API_BASE+'login',{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify({type:'Login',email,password,facebook:false})});
     const data=await resp.json();
     const authKey=(data&&data.result&&data.result.authKey)||data.authKey||'';
     if(!resp.ok||!authKey) throw new Error("Impossible de récupérer l'AuthKey");
@@ -1589,7 +1590,7 @@ async function loadAddons(){
   if(!state.authKey){ setStatus('red','AuthKey manquante.'); el.addonsCard.classList.add('hidden'); return; }
   setStatus('orange','Chargement des addons...'); disableTop(true);
   try{
-    const resp=await fetch(API_BASE+'addonCollectionGet',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({type:'AddonCollectionGet',authKey:state.authKey,update:true})});
+    const resp=await fetch(API_BASE+'addonCollectionGet',{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify({type:'AddonCollectionGet',authKey:state.authKey,update:true})});
     const data=await resp.json();
     if(!resp.ok||data.error||(data.result&&data.result.error)) throw new Error('Impossible de charger les addons');
     if(!state.email) fetchUserEmail();
@@ -1992,11 +1993,15 @@ async function syncOrder(){
   if(state.syncing) return; setStatus('orange','Mise à jour cloud Stremio...');
   try{
     state.syncing=true; document.querySelectorAll('.drag-handle, .action-btn').forEach(n=>n.style.pointerEvents='none');
-    const resp=await fetch(API_BASE+'addonCollectionSet',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({type:'AddonCollectionSet',authKey:state.authKey,addons:state.addons})});
+    const resp=await fetch(API_BASE+'addonCollectionSet',{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify({type:'AddonCollectionSet',authKey:state.authKey,addons:state.addons})});
     const data=await resp.json();
     if(!resp.ok||!(data.result&&data.result.success)) throw new Error('Échec sync');
     setStatus('green','Profil mis à jour.');
-  } catch(err){ setStatus('red','Erreur sync : '+(err.message||'échec')); await loadAddons(); }
+  } catch(err){
+    setStatus('red','Erreur sync : '+(err.message||'échec'));
+    // Ne recharge les addons que si on n'est pas en train de faire une RAZ volontaire
+    if(state.addons.length > 0) await loadAddons();
+  }
   finally{ state.syncing=false; state.dragChanged=false; document.querySelectorAll('.drag-handle, .action-btn').forEach(n=>n.style.pointerEvents='auto'); }
 }
 </script>
