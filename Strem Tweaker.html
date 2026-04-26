@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V5.4</title>
+  <title>Strem Tweaker V5.5</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -268,7 +268,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V5.4</span>
+        <span class="version-badge">V5.5</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -449,6 +449,8 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.2</span></div><div class="history-note">Config encodée dans le champ <code>name</code> (préfixe <code>STREM_TWEAKER_CFG_v1::</code>) car Stremio strippe les champs non-standard.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.3</span></div><div class="history-note">Icône Archive bleue. RAZ addons : <code>addonsCard</code> reste visible. Toolbar historique : boutons compacts sur mobile.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.4</span></div><div class="history-note">RAZ historique visionnage : les entrées réapparaissaient après refresh. Deux causes : (1) <code>CONFIG_ID</code> inclus dans la RAZ → config détruite. (2) Stremio ne persiste pas les suppressions en batch (success:true sans persistance réelle). Corrigé : <code>CONFIG_ID</code> exclu + envoi 1 item à la fois comme <code>deleteWatchEntryOnServer</code> qui fonctionne.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.4b</span></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.5</span></div><div class="history-note">Config librairie : si l'entrée <code>CONFIG_ID</code> est trouvée avec <code>removed:true</code> (suite à une RAZ Stremio officielle ou externe), elle est automatiquement réécrite avec <code>removed:false</code>. Extraction brute sans filtre <code>removed</code> dans <code>fetchRemoteConfigEntry</code> pour retrouver l'entrée même supprimée.</div></div><div class="history-note">RAZ historique : "Bibliothèque déjà vide" alors que les items réapparaissaient. Cause : items avaient bien <code>removed:true</code> côté serveur mais <code>fetchWatchHistory</code> ne filtrait plus ce flag (retiré en V3.7). Double correction : (1) filtre <code>removed:true</code> réintroduit dans <code>fetchWatchHistory</code>. (2) <code>resetWatchHistory</code> traite tous les items (même déjà removed) pour forcer la mise à jour.</div></div>
       </div>
     </div>
   </div>
@@ -521,7 +523,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V5.4';
+const APP_VERSION = 'V5.5';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -697,7 +699,7 @@ function closeWatchModal(){ el.modalWatch.classList.remove('active'); }
 function safeText(s){ return String(s || '').replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); }); }
 function watchExtract(data){ if(!data) return []; if(Array.isArray(data)) return data; var r = data.result; if(!r) return []; if(Array.isArray(r)) return r; if(Array.isArray(r.items)) return r.items; if(Array.isArray(r.libraryItems)) return r.libraryItems; if(typeof r === 'object'){ var vals = Object.values(r).filter(function(x){ return x && typeof x === 'object' && (x._id || x.id); }); if(vals.length) return vals; } return []; }
 async function watchTry(endpoint, body){ try{ var resp = await fetch(API_BASE + endpoint, { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify(body) }); if(!resp.ok) return null; return await resp.json(); }catch(e){ return null; } }
-async function fetchWatchHistory(){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Chargement…</div>'; var items = [], rawData = null; rawData = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[], all:true }); if(rawData) items = watchExtract(rawData); if(!items.length){ rawData = await watchTry('libraryGet', { type:'LibraryGet', authKey:state.authKey, collection:'libraryItem' }); if(rawData) items = watchExtract(rawData); } if(!items.length){ rawData = await watchTry('addonCollectionGet', { type:'AddonCollectionGet', authKey:state.authKey, update:true }); if(rawData){ var lib = (rawData.result && rawData.result.library) || rawData.library; items = Array.isArray(lib) ? lib : watchExtract(rawData); } } if($('watchDebugBox')) { try{ $('watchDebugBox').textContent = JSON.stringify(rawData, null, 2).substring(0, 4000); }catch(e){} } if(!items.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Bibliothèque vide ou inaccessible.</div>'; return; } /* V4.1 — Exclure l'entrée de config et les items supprimés dans la session */ items = items.filter(function(i){ var id = (i && (i._id || i.id)) || ''; return id !== CONFIG_ID && watchRemovedIds.indexOf(id) === -1; }); var watched = items.filter(function(i){ var s = i._state || i.state || {}; return s.timesWatched > 0 || s.lastWatched || s.flaggedWatched; }); watchItems = watched.length ? watched : items; watchItems.sort(function(a,b){ var sa=a._state||a.state||{}, sb=b._state||b.state||{}; return new Date(sb.lastWatched || 0) - new Date(sa.lastWatched || 0); }); renderWatchList(); }
+async function fetchWatchHistory(){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Chargement…</div>'; var items = [], rawData = null; rawData = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[], all:true }); if(rawData) items = watchExtract(rawData); if(!items.length){ rawData = await watchTry('libraryGet', { type:'LibraryGet', authKey:state.authKey, collection:'libraryItem' }); if(rawData) items = watchExtract(rawData); } if(!items.length){ rawData = await watchTry('addonCollectionGet', { type:'AddonCollectionGet', authKey:state.authKey, update:true }); if(rawData){ var lib = (rawData.result && rawData.result.library) || rawData.library; items = Array.isArray(lib) ? lib : watchExtract(rawData); } } if($('watchDebugBox')) { try{ $('watchDebugBox').textContent = JSON.stringify(rawData, null, 2).substring(0, 4000); }catch(e){} } if(!items.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Bibliothèque vide ou inaccessible.</div>'; return; } /* V5.4b — Exclure removed:true, config et session locale */ items = items.filter(function(i){ if(i && i.removed === true) return false; var id = (i && (i._id || i.id)) || ''; return id !== CONFIG_ID && watchRemovedIds.indexOf(id) === -1; }); var watched = items.filter(function(i){ var s = i._state || i.state || {}; return s.timesWatched > 0 || s.lastWatched || s.flaggedWatched; }); watchItems = watched.length ? watched : items; watchItems.sort(function(a,b){ var sa=a._state||a.state||{}, sb=b._state||b.state||{}; return new Date(sb.lastWatched || 0) - new Date(sa.lastWatched || 0); }); renderWatchList(); }
 function watchMatches(item){ var meta = item._manifestItem || item.meta || item; var s = item._state || item.state || {}; var id = item._id || item.id || ''; var type = item.type || id.split(':')[0] || ''; if(wState.filter !== 'all' && type !== wState.filter) return false; if(!wState.query) return true; var text = [meta.name || item.name || '', meta.year || '', id, String(s.timesWatched || '')].join(' ').toLowerCase(); return text.indexOf(wState.query) !== -1; }
 function watchPoster(item){ var meta = item._manifestItem || item.meta || item; if(meta.poster) return meta.poster; var id = item._id || item.id || ''; var m = id.match(/tt\d+/); if(m) return 'https://images.metahub.space/poster/medium/' + m[0] + '/img'; return ''; }
 function formatWatchDate(d){ try{ return new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' }); }catch(e){ return ''; } }
@@ -917,12 +919,12 @@ async function resetWatchHistory(){
     if(!allItems.length && rawLib && typeof rawLib === 'object'){
       allItems = Object.values(rawLib).filter(function(x){ return x && typeof x === 'object' && (x._id || x.id); });
     }
-    // Exclure l'entrée de config de la RAZ
+    // Traiter TOUS les items (removed ou non) sauf CONFIG_ID
     var alive = allItems.filter(function(i){
       var id = i._id || i.id;
-      return !(i && i.removed === true) && id !== CONFIG_ID;
+      return id && id !== CONFIG_ID;
     });
-    if(!alive.length){ showWatchToast('Bibliothèque déjà vide.', 'toast-ok'); watchItems = []; renderWatchList(); return; }
+    if(!alive.length){ showWatchToast('Aucun item à traiter.', 'toast-err'); return; }
     console.log(logPrefix, 'Items à supprimer:', alive.length);
 
     var nowIso = new Date().toISOString();
@@ -1350,60 +1352,73 @@ async function loadRemoteConfig(){
 async function fetchRemoteConfigEntry(){
   function decodeFromEntry(entry){
     if(!entry) return null;
-    // V5.2 — Décoder depuis le champ name (préfixe STREM_TWEAKER_CFG_v1::)
     if(entry.name && typeof entry.name === 'string' && entry.name.indexOf('STREM_TWEAKER_CFG_v1::') === 0){
       var json = entry.name.substring('STREM_TWEAKER_CFG_v1::'.length);
-      try{ return JSON.parse(json); }catch(e){ logDebug('[config] parse JSON name échoué : '+e.message); return null; }
+      try{ return JSON.parse(json); }catch(e){ logDebug('[config] parse échoué : '+e.message); return null; }
     }
-    // Fallback : ancien format avec champ config (pour entrées créées avant V5.2)
     if(entry.config && typeof entry.config === 'object') return entry.config;
     return null;
   }
 
-  function findInRaw(raw, label){
-    if(!raw){ logDebug('[config] '+label+' → null'); return null; }
-    try{
-      var preview = JSON.stringify(raw).substring(0,500);
-      logDebug('[config] '+label+' brut : '+preview);
-    }catch(_){}
+  function extractAll(raw){
+    // V5.5 — Extraction brute sans filtre removed, pour trouver CONFIG_ID même si removed:true
+    if(!raw) return [];
+    if(Array.isArray(raw)) return raw;
+    var items = [];
+    if(raw.result){
+      if(Array.isArray(raw.result)) items = raw.result;
+      else if(typeof raw.result === 'object') items = Object.values(raw.result);
+    }
+    if(!items.length && typeof raw === 'object') items = Object.values(raw);
+    return items.filter(function(x){ return x && typeof x === 'object' && (x._id||x.id); });
+  }
 
-    // Format dict : { result: { "strem-tweaker-config": {...} } }
+  function findEntry(raw, label){
+    if(!raw){ logDebug('[config] '+label+' → null'); return null; }
+    try{ logDebug('[config] '+label+' brut : '+JSON.stringify(raw).substring(0,400)); }catch(_){}
+    // Format dict direct
     if(raw.result && typeof raw.result === 'object' && raw.result[CONFIG_ID]){
-      logDebug('[config] '+label+' → trouvé via result[CONFIG_ID]');
-      return decodeFromEntry(raw.result[CONFIG_ID]);
+      logDebug('[config] '+label+' → result[CONFIG_ID]');
+      return raw.result[CONFIG_ID];
     }
-    var items = watchExtract(raw);
-    logDebug('[config] '+label+' → watchExtract : '+items.length+' items');
-    if(!items.length && typeof raw === 'object'){
-      items = Object.values(raw).filter(function(x){ return x && typeof x === 'object' && (x._id||x.id); });
-      logDebug('[config] '+label+' → Object.values : '+items.length+' items');
-    }
-    var entry = items.find(function(i){ return (i._id||i.id) === CONFIG_ID; });
-    if(entry){
-      logDebug('[config] '+label+' → entrée trouvée, name='+(entry.name?entry.name.substring(0,60):'(vide)'));
-    } else {
-      logDebug('[config] '+label+' → CONFIG_ID non trouvé parmi : '+items.slice(0,5).map(function(i){ return i._id||i.id; }).join(','));
-    }
-    return decodeFromEntry(entry);
+    var items = extractAll(raw);
+    logDebug('[config] '+label+' → '+items.length+' items (bruts, incl. removed)');
+    var e = items.find(function(i){ return (i._id||i.id) === CONFIG_ID; });
+    if(e) logDebug('[config] '+label+' → trouvé, removed='+e.removed+', name='+(e.name||'').substring(0,50));
+    else logDebug('[config] '+label+' → CONFIG_ID absent');
+    return e || null;
   }
 
   // Essai 1 : requête ciblée
-  var raw1 = await watchTry('datastoreGet', {
-    type:'DatastoreGet', authKey:state.authKey,
-    collection:'libraryItem', ids:[CONFIG_ID], all:false
-  });
-  var cfg1 = findInRaw(raw1, 'essai1-ids');
-  if(cfg1){ logDebug('[config] essai1 → config OK : '+JSON.stringify(cfg1).substring(0,200)); return cfg1; }
+  var raw1 = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[CONFIG_ID], all:false });
+  var entry1 = findEntry(raw1, 'essai1');
+  var cfg1 = decodeFromEntry(entry1);
+  if(cfg1){
+    logDebug('[config] essai1 OK, removed='+entry1.removed);
+    // V5.5 — Si removed:true, réécrire immédiatement avec removed:false
+    if(entry1 && entry1.removed === true){
+      logDebug('[config] removed:true détecté → réécriture forcée');
+      _remoteConfigLoaded = true; // Autoriser temporairement
+      await saveRemoteConfig();
+    }
+    return cfg1;
+  }
 
   // Essai 2 : fallback all:true
   logDebug('[config] essai1 vide → fallback all:true');
-  var raw2 = await watchTry('datastoreGet', {
-    type:'DatastoreGet', authKey:state.authKey,
-    collection:'libraryItem', ids:[], all:true
-  });
-  var cfg2 = findInRaw(raw2, 'essai2-all');
-  if(cfg2){ logDebug('[config] essai2 → config OK : '+JSON.stringify(cfg2).substring(0,200)); }
-  else { logDebug('[config] essai2 → config NON TROUVÉE'); }
+  var raw2 = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[], all:true });
+  var entry2 = findEntry(raw2, 'essai2');
+  var cfg2 = decodeFromEntry(entry2);
+  if(cfg2){
+    logDebug('[config] essai2 OK, removed='+entry2.removed);
+    if(entry2 && entry2.removed === true){
+      logDebug('[config] removed:true détecté → réécriture forcée');
+      _remoteConfigLoaded = true;
+      await saveRemoteConfig();
+    }
+  } else {
+    logDebug('[config] essai2 → config NON TROUVÉE');
+  }
   return cfg2;
 }
 
