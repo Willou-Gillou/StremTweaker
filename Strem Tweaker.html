@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V5.0</title>
+  <title>Strem Tweaker V5.0b</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -264,7 +264,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V5.0</span>
+        <span class="version-badge">V5.0b</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -439,7 +439,8 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.8</span></div><div class="history-note">Config appli : valeurs exactes. Export config librairie : <code>all:true</code> + filtre.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.9</span></div><div class="history-note">Correctif config librairie écrasée : <code>all:true</code> + filtre + init <code>_lastRemoteCfg</code> après chargement.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.9b</span></div><div class="history-note">Extraction config robuste via <code>fetchRemoteConfigEntry()</code>.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.0</span></div><div class="history-note">Correctif <b>fatal</b> : <code>init()</code> n'appelait <b>jamais</b> <code>loadRemoteConfig</code> au démarrage avec authKey existante. Au premier événement, <code>saveRemoteConfig</code> écrasait la config distante avec <code>deletedAddons:[]</code>. Corrigé : <code>init()</code> est désormais async et appelle <code>loadRemoteConfig</code> après <code>loadAddons</code>. Garde-fou : <code>saveRemoteConfig</code> refuse d'écrire tant que <code>_remoteConfigLoaded</code> est <code>false</code> (anti race-condition).</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.0</span></div><div class="history-note">Correctif fatal : <code>init()</code> n'appelait jamais <code>loadRemoteConfig</code> au démarrage. Garde-fou <code>_remoteConfigLoaded</code>.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.0b</span></div><div class="history-note">Ajout de logs exhaustifs dans <code>fetchRemoteConfigEntry</code> et <code>saveRemoteConfig</code> pour diagnostiquer la perte de config : réponse brute Stremio, format de réponse détecté, payload envoyé, réponse reçue. Activer "Afficher debug" pour voir les traces.</div></div>
       </div>
     </div>
   </div>
@@ -512,7 +513,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V5.0';
+const APP_VERSION = 'V5.0b';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -1339,20 +1340,31 @@ async function loadRemoteConfig(){
 // Essai 1 : requête légère ids:[CONFIG_ID] — évite de charger toute la librairie.
 // Essai 2 : fallback all:true si l'essai 1 ne retourne rien.
 async function fetchRemoteConfigEntry(){
-  function findInRaw(raw){
-    if(!raw) return null;
+  function findInRaw(raw, label){
+    if(!raw){ logDebug('[config] '+label+' → null'); return null; }
+    // Log la réponse brute (tronquée) pour diagnostic
+    try{
+      var preview = JSON.stringify(raw).substring(0,500);
+      logDebug('[config] '+label+' brut : '+preview);
+    }catch(_){}
+
     // Format dict : { result: { "strem-tweaker-config": {...} } }
     if(raw.result && typeof raw.result === 'object' && raw.result[CONFIG_ID]){
       var e = raw.result[CONFIG_ID];
+      logDebug('[config] '+label+' → trouvé via result[CONFIG_ID]');
       return (e && e.config) ? e.config : null;
     }
     // Format tableau via watchExtract
     var items = watchExtract(raw);
-    // Format dict sans result
+    logDebug('[config] '+label+' → watchExtract : '+items.length+' items');
+    // Format dict sans result : Object.values
     if(!items.length && typeof raw === 'object'){
       items = Object.values(raw).filter(function(x){ return x && typeof x === 'object' && (x._id||x.id); });
+      logDebug('[config] '+label+' → Object.values : '+items.length+' items');
     }
     var entry = items.find(function(i){ return (i._id||i.id) === CONFIG_ID; });
+    if(entry){ logDebug('[config] '+label+' → entrée trouvée, config='+(entry.config?'oui':'NON')); }
+    else { logDebug('[config] '+label+' → CONFIG_ID non trouvé parmi : '+items.slice(0,3).map(function(i){ return i._id||i.id; }).join(',')); }
     return (entry && entry.config) ? entry.config : null;
   }
 
@@ -1361,16 +1373,19 @@ async function fetchRemoteConfigEntry(){
     type:'DatastoreGet', authKey:state.authKey,
     collection:'libraryItem', ids:[CONFIG_ID], all:false
   });
-  var cfg1 = findInRaw(raw1);
-  if(cfg1) return cfg1;
+  var cfg1 = findInRaw(raw1, 'essai1-ids');
+  if(cfg1){ logDebug('[config] essai1 → config OK : '+JSON.stringify(cfg1).substring(0,200)); return cfg1; }
 
-  // Essai 2 : fallback all:true (plus lourd mais exhaustif)
-  logDebug('fetchRemoteConfigEntry : essai 1 vide, fallback all:true');
+  // Essai 2 : fallback all:true
+  logDebug('[config] essai1 vide → fallback all:true');
   var raw2 = await watchTry('datastoreGet', {
     type:'DatastoreGet', authKey:state.authKey,
     collection:'libraryItem', ids:[], all:true
   });
-  return findInRaw(raw2);
+  var cfg2 = findInRaw(raw2, 'essai2-all');
+  if(cfg2){ logDebug('[config] essai2 → config OK : '+JSON.stringify(cfg2).substring(0,200)); }
+  else { logDebug('[config] essai2 → config NON TROUVÉE'); }
+  return cfg2;
 }
 
 // V5.0 — Flag de protection : tant que loadRemoteConfig n'a pas terminé,
@@ -1387,8 +1402,9 @@ async function saveRemoteConfig(){
   var cfgStr = JSON.stringify(cfg);
   if(cfgStr === _lastRemoteCfg) return;
   _lastRemoteCfg = cfgStr;
+  logDebug('[config] saveRemoteConfig → envoi payload (deletedAddons.length='+deletedAddons.length+') : '+cfgStr.substring(0,300));
   try{
-    await watchTry('datastorePut', {
+    var putResult = await watchTry('datastorePut', {
       type:'DatastorePut', authKey:state.authKey,
       collection:'libraryItem',
       changes:[{
@@ -1400,7 +1416,7 @@ async function saveRemoteConfig(){
         config: cfg
       }]
     });
-    logDebug('Config distante sauvegardée : ' + cfgStr);
+    logDebug('[config] saveRemoteConfig → réponse Stremio : '+JSON.stringify(putResult).substring(0,200));
   }catch(e){ logDebug('saveRemoteConfig erreur : ' + (e&&e.message||e)); }
 }
 
