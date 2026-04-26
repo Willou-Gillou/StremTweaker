@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V5.6</title>
+  <title>Strem Tweaker V5.7</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -178,8 +178,8 @@
       .header-email{font-size:10px;padding:4px 8px;max-width:120px;}
       .addon-actions{padding:0 6px 10px 34px;gap:6px;}
       .login-modal-body .row{grid-template-columns:1fr;}
-      .watch-filter-btn{font-size:11px;padding:4px 8px;}
-      .wfb-icon{padding:4px 7px;}
+      .watch-filter-btn{font-size:10px;padding:3px 7px;}
+      .wfb-icon{padding:3px 6px;}
     }
   
     .watch-group{margin-bottom:18px;}
@@ -268,7 +268,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V5.6</span>
+        <span class="version-badge">V5.7</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -315,7 +315,7 @@
           <h2 style="margin:0;">Mes addons</h2>
           <span id="countLabel" class="pill" style="font-size:11px;padding:2px 9px;">0</span>
         </div>
-        <div class="toolbar-actions">
+        <div class="toolbar-actions" style="flex:1;justify-content:center;">
           <button id="btnCheckUpdates" class="pill-btn" title="Vérifier les mises à jour" style="color:var(--wait);border-color:rgba(255,184,77,.3);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
           </button>
@@ -329,15 +329,16 @@
           <button id="btnRestoreJson" class="pill-btn" title="Restaurer (JSON)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
           </button>
-          <button id="btnClearAddons" class="pill-btn" title="Supprimer tous les addons (sauvegarde auto)" style="color:#ff6b6b;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
-          </button>
           <div class="pill-btn-wrap">
             <button id="btnOpenDeletedModal" class="pill-btn" title="Addons supprimés" style="color:var(--blue);">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5" rx="1"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
             </button>
             <span id="deletedBadge" class="pill-btn-badge hidden"></span>
           </div>
+          <div style="width:1px;height:20px;background:var(--line);margin:0 4px;"></div>
+          <button id="btnClearAddons" class="pill-btn" title="Supprimer tous les addons (sauvegarde auto)" style="color:#ff6b6b;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+          </button>
           <input type="file" id="fileRestore" accept=".json" class="hidden">
         </div>
       </div>
@@ -450,6 +451,7 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.3</span></div><div class="history-note">Icône Archive bleue. RAZ addons : <code>addonsCard</code> reste visible. Toolbar historique : boutons compacts sur mobile.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.4</span></div><div class="history-note">RAZ historique visionnage : les entrées réapparaissaient après refresh. Deux causes : (1) <code>CONFIG_ID</code> inclus dans la RAZ → config détruite. (2) Stremio ne persiste pas les suppressions en batch (success:true sans persistance réelle). Corrigé : <code>CONFIG_ID</code> exclu + envoi 1 item à la fois comme <code>deleteWatchEntryOnServer</code> qui fonctionne.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.4b</span></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.7</span></div><div class="history-note">Toolbar Mes addons : icônes centrées, séparateur à gauche de la poubelle (RAZ), poubelle positionnée tout à droite. Historique visionnage : boutons encore plus compacts sur mobile (10px, padding 3px). Infos utilisateur : nom affiché = <code>fullname</code> ou partie avant le <code>@</code> de l'email.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.6</span></div><div class="history-note">Config appli : bouton "Exporter librairie complète" — exporte tous les <code>libraryItem</code> du compte (sans filtre <code>removed</code>) dans un JSON horodaté avec métadonnées (<code>exportedAt</code>, <code>totalItems</code>).</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.5</span></div><div class="history-note">Config librairie : si l'entrée <code>CONFIG_ID</code> est trouvée avec <code>removed:true</code> (suite à une RAZ Stremio officielle ou externe), elle est automatiquement réécrite avec <code>removed:false</code>. Extraction brute sans filtre <code>removed</code> dans <code>fetchRemoteConfigEntry</code> pour retrouver l'entrée même supprimée.</div></div><div class="history-note">RAZ historique : "Bibliothèque déjà vide" alors que les items réapparaissaient. Cause : items avaient bien <code>removed:true</code> côté serveur mais <code>fetchWatchHistory</code> ne filtrait plus ce flag (retiré en V3.7). Double correction : (1) filtre <code>removed:true</code> réintroduit dans <code>fetchWatchHistory</code>. (2) <code>resetWatchHistory</code> traite tous les items (même déjà removed) pour forcer la mise à jour.</div></div>
       </div>
@@ -525,7 +527,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V5.6';
+const APP_VERSION = 'V5.7';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -1272,7 +1274,7 @@ function renderUserInfo(u){
   var html = '<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line);">'
     + avatarHtml
     + '<div>'
-    + '<div style="font-size:16px;font-weight:700;margin-bottom:2px;">'+(u.fullname||u.email||'—')+'</div>'
+    + '<div style="font-size:16px;font-weight:700;margin-bottom:2px;">'+(u.fullname || (u.email ? u.email.split('@')[0] : '—'))+'</div>'
     + (u.fullname && u.email ? '<div style="font-size:12px;color:var(--muted);">'+u.email+'</div>' : '')
     + '</div></div>';
 
