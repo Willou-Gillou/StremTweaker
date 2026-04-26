@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V4.3</title>
+  <title>Strem Tweaker V4.5</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -137,6 +137,14 @@
   .deleted-card .addon-title{text-decoration:line-through;color:var(--muted);}
   .pill-btn-wrap{position:relative;display:inline-flex;}
   .pill-btn-badge{position:absolute;top:-5px;right:-5px;background:var(--ko);color:#fff;font-size:9px;font-weight:700;border-radius:99px;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none;}
+  .user-info-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--line);}
+  .user-info-avatar-ph{width:64px;height:64px;border-radius:50%;background:rgba(125,168,255,.15);border:2px solid var(--line);display:grid;place-items:center;font-size:24px;}
+  .user-info-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);}
+  .user-info-row:last-child{border-bottom:none;}
+  .user-info-label{font-size:11px;color:var(--muted);min-width:110px;flex-shrink:0;padding-top:1px;}
+  .user-info-val{font-size:13px;color:var(--text);word-break:break-all;}
+  .user-info-premium{display:inline-block;background:rgba(255,184,77,.15);color:var(--wait);border:1px solid rgba(255,184,77,.35);border-radius:6px;font-size:11px;font-weight:700;padding:2px 8px;}
+  .user-info-free{display:inline-block;background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--line);border-radius:6px;font-size:11px;padding:2px 8px;}
     .history-list{display:grid;gap:10px;margin-top:12px;max-height:60dvh;overflow-y:auto;padding-right:4px;}
     .history-item{border:1px solid var(--line);border-radius:16px;padding:12px;background:rgba(255,255,255,.04);}
     .history-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
@@ -217,6 +225,11 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-left:2px;"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
           <div id="userDropdown" class="user-dropdown hidden">
+            <div class="dropdown-item" id="btnOpenUserInfoModal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              Infos utilisateur
+            </div>
+            <div class="dropdown-divider"></div>
             <div class="dropdown-item" id="btnOpenLoginModal">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
               Paramètres
@@ -243,7 +256,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V4.3</span>
+        <span class="version-badge">V4.5</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -286,7 +299,10 @@
     <!-- ── ADDONS ── -->
     <section id="addonsCard" class="panel glass addons-panel hidden">
       <div class="toolbar">
-        <h2>Mes addons</h2>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <h2 style="margin:0;">Mes addons</h2>
+          <span id="countLabel" class="pill" style="font-size:11px;padding:2px 9px;">0</span>
+        </div>
         <div class="toolbar-actions">
           <button id="btnCheckUpdates" class="pill-btn" title="Vérifier les mises à jour" style="color:var(--wait);border-color:rgba(255,184,77,.3);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
@@ -306,12 +322,11 @@
           </button>
           <div class="pill-btn-wrap">
             <button id="btnOpenDeletedModal" class="pill-btn" title="Addons supprimés" style="color:var(--muted);">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5" rx="1"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
             </button>
             <span id="deletedBadge" class="pill-btn-badge hidden"></span>
           </div>
           <input type="file" id="fileRestore" accept=".json" class="hidden">
-          <div class="pill"><span id="countLabel">0 addon</span></div>
         </div>
       </div>
       <div id="fitWrap" class="addons-fit">
@@ -406,12 +421,29 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.0b</span></div><div class="history-note">Badge épisode ajusté à son contenu : <code>display:inline-block</code> + <code>width:fit-content</code> dans un wrapper block.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.1</span></div><div class="history-note">Config distante : <code>debugOpen</code> et <code>loginCollapsed</code> synchronisés dans la librairie Stremio. Paramètres : boutons Exporter/RAZ localStorage.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.2</span></div><div class="history-note">Addons supprimés déplacés dans un modal dédié. Badge rouge compteur. Restaurer à la position d'origine ou Supprimer définitivement.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.3</span></div><div class="history-note">Correctif : <code>deleteAddon</code> (bouton ✕ sur la carte) ne peuplait pas <code>deletedAddons</code> — l'addon disparaissait sans passer par la corbeille. Corrigé en alignant <code>deleteAddon</code> sur <code>hideAddon</code> : backup avec <code>_originalIndex</code> ajouté à <code>deletedAddons</code> avant suppression.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.3</span></div><div class="history-note">Correctif : <code>deleteAddon</code> ne peuplait pas <code>deletedAddons</code>. Aligné sur <code>hideAddon</code>.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.4</span></div><div class="history-note">Menu : section "Infos utilisateur". Icône DeletedAddons → Archive. Compteur addons dans le titre.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.4a</span></div><div class="history-note">Date premium : timestamp Unix secondes → ms. Champ "Compte anonyme" supprimé.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.4b</span></div><div class="history-note">Premium : <code>premium_expire = 0</code> → "Gratuit". Garde-fou <code>getFullYear() > 2000</code>.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.5</span></div><div class="history-note"><code>deletedAddons</code> migré du localStorage vers la librairie Stremio (entrée <code>strem-tweaker-config</code>). Synchronisé sur toutes les modifications : suppression, restauration, oubli définitif. Chargé au login via <code>loadRemoteConfig</code>. Retiré de <code>saveLocal</code>/<code>loadLocal</code>.</div></div>
       </div>
     </div>
   </div>
 
   <!-- ── MODAL CONNEXION (depuis le menu) ── -->
+  <!-- ── MODAL INFOS UTILISATEUR ── -->
+  <div id="modalUserInfo" class="modal-overlay">
+    <div class="modal-box" style="max-width:420px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h3 style="margin:0;">Infos utilisateur</h3>
+        <button type="button" id="btnCloseUserInfoModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
+      </div>
+      <div id="userInfoBody" style="max-height:65dvh;overflow-y:auto;">
+        <div style="color:var(--muted);text-align:center;padding:24px;">Chargement…</div>
+      </div>
+    </div>
+  </div>
+
   <div id="modalLogin" class="modal-overlay">
     <div class="modal-card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
@@ -448,7 +480,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V4.3';
+const APP_VERSION = 'V4.5';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -478,6 +510,7 @@ const el = {
   modalLogin: $('modalLogin'), btnCloseLoginModal: $('btnCloseLoginModal'),
   btnOpenHistoryModal: $('btnOpenHistoryModal'), modalHistory: $('modalHistory'), btnCloseHistoryModal: $('btnCloseHistoryModal'), btnOpenWatchModal: $('btnOpenWatchModal'), modalWatch: $('modalWatch'), btnCloseWatchModal: $('btnCloseWatchModal'), watchList: $('watchList'), watchSearch: $('watchSearch'), btnExportWatch: $('btnExportWatch'),
   modalDeleted: $('modalDeleted'), btnOpenDeletedModal: $('btnOpenDeletedModal'), btnCloseDeletedModal: $('btnCloseDeletedModal'), deletedList: $('deletedList'), deletedEmpty: $('deletedEmpty'), deletedBadge: $('deletedBadge'),
+  modalUserInfo: $('modalUserInfo'), btnOpenUserInfoModal: $('btnOpenUserInfoModal'), btnCloseUserInfoModal: $('btnCloseUserInfoModal'), userInfoBody: $('userInfoBody'),
   // Modal edit
   modalEdit: $('modalEdit'), modalEditTitle: $('modalEditTitle'), modalEditLabel: $('modalEditLabel'), modalEditInput: $('modalEditInput'),
   btnEditCancel: $('btnEditCancel'), btnEditSave: $('btnEditSave'),
@@ -533,6 +566,9 @@ function bind(){
   if($('btnImportWatch')) $('btnImportWatch').addEventListener('click', function(){ var f = $('watchImportFile'); if(f){ f.value = ''; f.click(); } });
   if($('btnExportLocalStorage')) $('btnExportLocalStorage').addEventListener('click', exportLocalStorage);
   if($('btnRazLocalStorage')) $('btnRazLocalStorage').addEventListener('click', razLocalStorage);
+  if(el.btnOpenUserInfoModal) el.btnOpenUserInfoModal.addEventListener('click', openUserInfoModal);
+  if(el.btnCloseUserInfoModal) el.btnCloseUserInfoModal.addEventListener('click', closeUserInfoModal);
+  if(el.modalUserInfo) el.modalUserInfo.addEventListener('click', function(e){ if(e.target===el.modalUserInfo) closeUserInfoModal(); });
   if(el.btnOpenDeletedModal) el.btnOpenDeletedModal.addEventListener('click', openDeletedModal);
   if(el.btnCloseDeletedModal) el.btnCloseDeletedModal.addEventListener('click', closeDeletedModal);
   if(el.modalDeleted) el.modalDeleted.addEventListener('click', function(e){ if(e.target===el.modalDeleted) closeDeletedModal(); });
@@ -960,6 +996,63 @@ async function importWatchJson(file){
 function openDeletedModal(){ renderDeletedList(); el.modalDeleted.classList.add('active'); }
 function closeDeletedModal(){ el.modalDeleted.classList.remove('active'); }
 
+function openUserInfoModal(){
+  el.userDropdown.classList.add('hidden');
+  el.modalUserInfo.classList.add('active');
+  el.userInfoBody.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;">Chargement…</div>';
+  fetchAndRenderUserInfo();
+}
+function closeUserInfoModal(){ el.modalUserInfo.classList.remove('active'); }
+
+async function fetchAndRenderUserInfo(){
+  if(!state.authKey){ el.userInfoBody.innerHTML='<div style="color:var(--muted);text-align:center;padding:24px;">Non connecté.</div>'; return; }
+  try{
+    var data = await watchTry('getUser', { type:'GetUser', authKey:state.authKey });
+    var u = (data && data.result) ? data.result : (data || {});
+    renderUserInfo(u);
+  }catch(e){
+    el.userInfoBody.innerHTML='<div style="color:var(--muted);text-align:center;padding:24px;">Erreur de chargement.</div>';
+  }
+}
+
+function renderUserInfo(u){
+  function fmt(val){ if(!val) return '—'; try{ var d = (val instanceof Date) ? val : new Date(val); if(isNaN(d.getTime())) return '—'; return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}); }catch(e){ return String(val); } }
+  function row(label, val){ return '<div class="user-info-row"><span class="user-info-label">'+label+'</span><span class="user-info-val">'+val+'</span></div>'; }
+
+  var avatarHtml = u.avatar
+    ? '<img class="user-info-avatar" src="'+u.avatar+'" alt="avatar" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'grid\'"><div class="user-info-avatar-ph" style="display:none;">👤</div>'
+    : '<div class="user-info-avatar-ph">👤</div>';
+
+  var premiumHtml = '<span class="user-info-free">Gratuit</span>';
+  var rawExp = u.premium_expire || u.premiumExpire;
+  if(rawExp && rawExp !== 0){
+    var expDate = (typeof rawExp === 'number') ? new Date(rawExp * 1000) : new Date(rawExp);
+    if(!isNaN(expDate.getTime()) && expDate.getFullYear() > 2000){
+      var isPremium = expDate > new Date();
+      premiumHtml = isPremium
+        ? '<span class="user-info-premium">⭐ Premium jusqu\'au '+fmt(expDate)+'</span>'
+        : '<span class="user-info-free">Expiré le '+fmt(expDate)+'</span>';
+    }
+  }
+
+  var html = '<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line);">'
+    + avatarHtml
+    + '<div>'
+    + '<div style="font-size:16px;font-weight:700;margin-bottom:2px;">'+(u.fullname||u.email||'—')+'</div>'
+    + (u.fullname && u.email ? '<div style="font-size:12px;color:var(--muted);">'+u.email+'</div>' : '')
+    + '</div></div>';
+
+  html += row('Email', u.email || '—');
+  html += row('Nom complet', u.fullname || '—');
+  html += row('Inscription', fmt(u.dateRegistered || u.date_registered));
+  html += row('Dernière modif.', fmt(u.lastModified || u.last_modified));
+  html += row('Premium', premiumHtml);
+  html += row('Langue', u.lang || '—');
+  html += row('ID', u._id || '—');
+
+  el.userInfoBody.innerHTML = html;
+}
+
 function exportLocalStorage(){
   try{
     var data = localStorage.getItem(STORAGE_KEY);
@@ -979,14 +1072,14 @@ function razLocalStorage(){
   localStorage.removeItem(STORAGE_KEY);
   state.email=''; state.password=''; state.debugOpen=false; state.loginCollapsed=false;
   deletedAddons=[];
-  if(authKey){ state.authKey = authKey; saveLocal(); }
+  if(authKey){ state.authKey = authKey; saveLocal(); saveRemoteConfig(); }
   hydrateForms(); renderLoginState(); updateLoginPill(); renderList();
   setStatus('green','LocalStorage réinitialisé.');
 }
 
 function openHistoryModal(){ el.userDropdown.classList.add('hidden'); el.modalHistory.classList.add('active'); }
 function closeHistoryModal(){ el.modalHistory.classList.remove('active'); }
-window.addEventListener('keydown', function(e){ if(e.key!=='Escape') return; if(el.modalWatch && el.modalWatch.classList.contains('active')) closeWatchModal(); if(el.modalLogin.classList.contains('active')) closeLoginModal(); if(el.modalHistory.classList.contains('active')) closeHistoryModal(); if(el.modalEdit.classList.contains('active')) closeEditModal(false); });
+window.addEventListener('keydown', function(e){ if(e.key!=='Escape') return; if(el.modalUserInfo && el.modalUserInfo.classList.contains('active')) closeUserInfoModal(); if(el.modalWatch && el.modalWatch.classList.contains('active')) closeWatchModal(); if(el.modalLogin.classList.contains('active')) closeLoginModal(); if(el.modalHistory.classList.contains('active')) closeHistoryModal(); if(el.modalEdit.classList.contains('active')) closeEditModal(false); });
 
 function togglePassVisibility(input, icon){
   if(input.type==='password'){
@@ -1024,10 +1117,10 @@ function loadLocal(){
     state.authKey = s.authKey||'';
     state.debugOpen = !!s.debugOpen;
     state.loginCollapsed = !!s.loginCollapsed;
-    deletedAddons = Array.isArray(s.deletedAddons) ? s.deletedAddons : [];
+    deletedAddons = []; // V4.5 — migré dans la librairie Stremio (loadRemoteConfig)
   } catch(_){}
 }
-function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({email:state.email,password:state.password,authKey:state.authKey,debugOpen:state.debugOpen,loginCollapsed:state.loginCollapsed,deletedAddons})); }
+function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({email:state.email,password:state.password,authKey:state.authKey,debugOpen:state.debugOpen,loginCollapsed:state.loginCollapsed})); }
 
 // V4.1 — Config distante : lit/écrit debugOpen et loginCollapsed dans la librairie Stremio
 // sous l'entrée _id:'strem-tweaker-config'. Utilisée après connexion uniquement.
@@ -1044,6 +1137,7 @@ async function loadRemoteConfig(){
     var cfg = entry.config;
     if(cfg.debugOpen !== undefined){ state.debugOpen = !!cfg.debugOpen; renderDebug(state.debugOpen, el.debugWrap, el.debugToggle); renderDebug(state.debugOpen, el.m_debugWrap, el.m_debugToggle); }
     if(cfg.loginCollapsed !== undefined){ state.loginCollapsed = !!cfg.loginCollapsed; renderLoginState(); }
+    if(Array.isArray(cfg.deletedAddons)){ deletedAddons = cfg.deletedAddons; renderDeletedList(); }
     saveLocal(); // Sync localStorage avec les valeurs distantes
     logDebug('Config distante chargée : ' + JSON.stringify(cfg));
   }catch(e){ logDebug('loadRemoteConfig erreur : ' + (e&&e.message||e)); }
@@ -1053,7 +1147,7 @@ async function loadRemoteConfig(){
 var _lastRemoteCfg = null;
 async function saveRemoteConfig(){
   if(!state.authKey) return;
-  var cfg = { debugOpen: state.debugOpen, loginCollapsed: state.loginCollapsed };
+  var cfg = { debugOpen: state.debugOpen, loginCollapsed: state.loginCollapsed, deletedAddons: deletedAddons };
   var cfgStr = JSON.stringify(cfg);
   if(cfgStr === _lastRemoteCfg) return; // Pas de changement → pas d'appel API
   _lastRemoteCfg = cfgStr;
@@ -1307,6 +1401,7 @@ function deleteAddon(addon){
       renderList();
       renderDeletedList();
       saveLocal();
+      saveRemoteConfig();
       syncOrder();
     }
   }
@@ -1393,6 +1488,7 @@ function hideAddon(addon){
     renderList();
     renderDeletedList();
     saveLocal();
+    saveRemoteConfig();
     syncOrder();
   }
 }
@@ -1407,6 +1503,7 @@ function restoreDeleted(addon){
   renderList();
   renderDeletedList();
   saveLocal();
+  saveRemoteConfig();
   syncOrder();
 }
 
@@ -1417,6 +1514,7 @@ function forgetDeleted(addon){
   deletedAddons.splice(idx,1);
   renderDeletedList();
   saveLocal();
+  saveRemoteConfig();
 }
 
 function renderList(activeAddon){
@@ -1424,7 +1522,7 @@ function renderList(activeAddon){
   el.addonsList.style.minHeight=el.addonsList.scrollHeight+'px';
   el.addonsList.innerHTML='';
   const count=state.addons.length;
-  el.countLabel.textContent=count+(count>1?' addons':' addon');
+  el.countLabel.textContent=count;
   el.emptyState.classList.toggle('hidden',count!==0);
   state.addons.forEach((addon,index)=>{
     const manifest=addon.manifest||{};
