@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V4.5</title>
+  <title>Strem Tweaker V4.6</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -145,6 +145,10 @@
   .user-info-val{font-size:13px;color:var(--text);word-break:break-all;}
   .user-info-premium{display:inline-block;background:rgba(255,184,77,.15);color:var(--wait);border:1px solid rgba(255,184,77,.35);border-radius:6px;font-size:11px;font-weight:700;padding:2px 8px;}
   .user-info-free{display:inline-block;background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--line);border-radius:6px;font-size:11px;padding:2px 8px;}
+  .cfg-table td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
+  .cfg-table td:first-child{color:var(--muted);font-size:11px;width:45%;word-break:break-all;}
+  .cfg-table td:last-child{color:var(--text);word-break:break-all;font-family:monospace;font-size:11px;}
+  .cfg-table tr:last-child td{border-bottom:none;}
     .history-list{display:grid;gap:10px;margin-top:12px;max-height:60dvh;overflow-y:auto;padding-right:4px;}
     .history-item{border:1px solid var(--line);border-radius:16px;padding:12px;background:rgba(255,255,255,.04);}
     .history-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
@@ -229,6 +233,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
               Infos utilisateur
             </div>
+            <div class="dropdown-item" id="btnOpenAppConfigModal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>
+              Config appli
+            </div>
             <div class="dropdown-divider"></div>
             <div class="dropdown-item" id="btnOpenLoginModal">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -256,7 +264,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V4.5</span>
+        <span class="version-badge">V4.6</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -425,7 +433,9 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.4</span></div><div class="history-note">Menu : section "Infos utilisateur". Icône DeletedAddons → Archive. Compteur addons dans le titre.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.4a</span></div><div class="history-note">Date premium : timestamp Unix secondes → ms. Champ "Compte anonyme" supprimé.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.4b</span></div><div class="history-note">Premium : <code>premium_expire = 0</code> → "Gratuit". Garde-fou <code>getFullYear() > 2000</code>.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.5</span></div><div class="history-note"><code>deletedAddons</code> migré du localStorage vers la librairie Stremio (entrée <code>strem-tweaker-config</code>). Synchronisé sur toutes les modifications : suppression, restauration, oubli définitif. Chargé au login via <code>loadRemoteConfig</code>. Retiré de <code>saveLocal</code>/<code>loadLocal</code>.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.5</span></div><div class="history-note"><code>deletedAddons</code> migré du localStorage vers la librairie Stremio.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.6</span></div><div class="history-note">localStorage réduit à <code>email</code> + <code>authKey</code> uniquement. Menu : ajout "Config appli" — tableau localStorage et config librairie côte à côte, 4 boutons : Exporter/RAZ localStorage et Exporter/RAZ config librairie. Boutons export/raz retirés du modal Paramètres.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.6</span></div><div class="history-note">LocalStorage : retrait de <code>password</code>, <code>debugOpen</code>, <code>loginCollapsed</code> (ne restent que <code>email</code> et <code>authKey</code>). Menu : ajout "Config appli" — tableau localStorage vs config librairie, 4 boutons : Exporter/RAZ localStorage et Exporter/RAZ config librairie.</div></div>
       </div>
     </div>
   </div>
@@ -440,6 +450,28 @@
       </div>
       <div id="userInfoBody" style="max-height:65dvh;overflow-y:auto;">
         <div style="color:var(--muted);text-align:center;padding:24px;">Chargement…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL CONFIG APPLI ── -->
+  <div id="modalAppConfig" class="modal-overlay">
+    <div class="modal-box" style="max-width:480px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h3 style="margin:0;">Config appli</h3>
+        <button type="button" id="btnCloseAppConfigModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
+      </div>
+      <div style="max-height:60dvh;overflow-y:auto;">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">LocalStorage</p>
+        <table id="appConfigTableLocal" style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:18px;"></table>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">Config librairie Stremio</p>
+        <table id="appConfigTableRemote" style="width:100%;border-collapse:collapse;font-size:12px;"></table>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;">
+        <button id="btnExportLocalStorage" class="watch-filter-btn" style="color:var(--ok);border-color:rgba(56,211,159,.3);" type="button">⬇ Exporter localStorage</button>
+        <button id="btnRazLocalStorage" class="watch-filter-btn" style="color:#ff6b6b;border-color:rgba(255,107,107,.35);" type="button">🗑 RAZ localStorage</button>
+        <button id="btnExportRemoteConfig" class="watch-filter-btn" style="color:var(--ok);border-color:rgba(56,211,159,.3);" type="button">⬇ Exporter config librairie</button>
+        <button id="btnRazRemoteConfig" class="watch-filter-btn" style="color:#ff6b6b;border-color:rgba(255,107,107,.35);" type="button">🗑 RAZ config librairie</button>
       </div>
     </div>
   </div>
@@ -469,10 +501,6 @@
           </div>
         </div>
         <div class="actions"><button id="m_loginBtn" class="primary" type="button">Connexion &amp; Charger</button></div>
-        <div style="display:flex;gap:8px;margin-top:10px;">
-          <button id="btnExportLocalStorage" class="watch-filter-btn" style="flex:1;color:var(--ok);border-color:rgba(56,211,159,.3);" type="button" title="Télécharger le contenu du localStorage">⬇ Exporter localStorage</button>
-          <button id="btnRazLocalStorage" class="watch-filter-btn" style="flex:1;color:#ff6b6b;border-color:rgba(255,107,107,.35);" type="button" title="Effacer toutes les données locales">🗑 RAZ localStorage</button>
-        </div>
         <button id="m_debugToggle" class="debug-toggle" type="button">Afficher debug</button>
         <div id="m_debugWrap" class="field hidden"><textarea id="m_debugBox" readonly placeholder="Réponses API"></textarea></div>
       </div>
@@ -480,7 +508,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V4.5';
+const APP_VERSION = 'V4.6';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -511,6 +539,7 @@ const el = {
   btnOpenHistoryModal: $('btnOpenHistoryModal'), modalHistory: $('modalHistory'), btnCloseHistoryModal: $('btnCloseHistoryModal'), btnOpenWatchModal: $('btnOpenWatchModal'), modalWatch: $('modalWatch'), btnCloseWatchModal: $('btnCloseWatchModal'), watchList: $('watchList'), watchSearch: $('watchSearch'), btnExportWatch: $('btnExportWatch'),
   modalDeleted: $('modalDeleted'), btnOpenDeletedModal: $('btnOpenDeletedModal'), btnCloseDeletedModal: $('btnCloseDeletedModal'), deletedList: $('deletedList'), deletedEmpty: $('deletedEmpty'), deletedBadge: $('deletedBadge'),
   modalUserInfo: $('modalUserInfo'), btnOpenUserInfoModal: $('btnOpenUserInfoModal'), btnCloseUserInfoModal: $('btnCloseUserInfoModal'), userInfoBody: $('userInfoBody'),
+  modalAppConfig: $('modalAppConfig'), btnOpenAppConfigModal: $('btnOpenAppConfigModal'), btnCloseAppConfigModal: $('btnCloseAppConfigModal'),
   // Modal edit
   modalEdit: $('modalEdit'), modalEditTitle: $('modalEditTitle'), modalEditLabel: $('modalEditLabel'), modalEditInput: $('modalEditInput'),
   btnEditCancel: $('btnEditCancel'), btnEditSave: $('btnEditSave'),
@@ -566,9 +595,14 @@ function bind(){
   if($('btnImportWatch')) $('btnImportWatch').addEventListener('click', function(){ var f = $('watchImportFile'); if(f){ f.value = ''; f.click(); } });
   if($('btnExportLocalStorage')) $('btnExportLocalStorage').addEventListener('click', exportLocalStorage);
   if($('btnRazLocalStorage')) $('btnRazLocalStorage').addEventListener('click', razLocalStorage);
+  if($('btnExportRemoteConfig')) $('btnExportRemoteConfig').addEventListener('click', exportRemoteConfig);
+  if($('btnRazRemoteConfig')) $('btnRazRemoteConfig').addEventListener('click', razRemoteConfig);
   if(el.btnOpenUserInfoModal) el.btnOpenUserInfoModal.addEventListener('click', openUserInfoModal);
   if(el.btnCloseUserInfoModal) el.btnCloseUserInfoModal.addEventListener('click', closeUserInfoModal);
   if(el.modalUserInfo) el.modalUserInfo.addEventListener('click', function(e){ if(e.target===el.modalUserInfo) closeUserInfoModal(); });
+  if(el.btnOpenAppConfigModal) el.btnOpenAppConfigModal.addEventListener('click', openAppConfigModal);
+  if(el.btnCloseAppConfigModal) el.btnCloseAppConfigModal.addEventListener('click', closeAppConfigModal);
+  if(el.modalAppConfig) el.modalAppConfig.addEventListener('click', function(e){ if(e.target===el.modalAppConfig) closeAppConfigModal(); });
   if(el.btnOpenDeletedModal) el.btnOpenDeletedModal.addEventListener('click', openDeletedModal);
   if(el.btnCloseDeletedModal) el.btnCloseDeletedModal.addEventListener('click', closeDeletedModal);
   if(el.modalDeleted) el.modalDeleted.addEventListener('click', function(e){ if(e.target===el.modalDeleted) closeDeletedModal(); });
@@ -996,6 +1030,139 @@ async function importWatchJson(file){
 function openDeletedModal(){ renderDeletedList(); el.modalDeleted.classList.add('active'); }
 function closeDeletedModal(){ el.modalDeleted.classList.remove('active'); }
 
+function openDeletedModal(){ renderDeletedList(); el.modalDeleted.classList.add('active'); }
+function closeDeletedModal(){ el.modalDeleted.classList.remove('active'); }
+
+function openAppConfigModal(){ el.userDropdown.classList.add('hidden'); el.modalAppConfig.classList.add('active'); renderAppConfig(); }
+function closeAppConfigModal(){ el.modalAppConfig.classList.remove('active'); }
+
+async function renderAppConfig(){
+  var lsData = {};
+  try{ var raw=localStorage.getItem(STORAGE_KEY); if(raw) lsData=JSON.parse(raw); }catch(_){}
+  var remCfg = {};
+  if(state.authKey){
+    try{
+      var raw2=await watchTry('datastoreGet',{type:'DatastoreGet',authKey:state.authKey,collection:'libraryItem',ids:[CONFIG_ID],all:false});
+      var items=watchExtract(raw2);
+      var entry=items.find(function(i){ return (i._id||i.id)===CONFIG_ID; });
+      if(entry&&entry.config) remCfg=entry.config;
+    }catch(_){}
+  }
+  function maskVal(key,val){
+    if(val===undefined||val===null||val==='') return '<span style="color:var(--muted)">—</span>';
+    if(key==='authKey'&&typeof val==='string'&&val.length>8) return '<span style="font-family:monospace;font-size:11px;">'+val.substring(0,4)+'…'+val.slice(-4)+'</span>';
+    if(typeof val==='object') return '<span style="font-size:11px;color:var(--muted);">['+( Array.isArray(val)?val.length+' éléments':'objet')+']</span>';
+    return '<span>'+String(val)+'</span>';
+  }
+  var lsRows=Object.keys(lsData).map(function(k){ return '<tr><td style="color:var(--muted);font-size:11px;padding:6px 8px 6px 0;white-space:nowrap;">'+k+'</td><td style="padding:6px 0;font-size:12px;">'+maskVal(k,lsData[k])+'</td></tr>'; }).join('');
+  var remKeys=Object.keys(remCfg).filter(function(k){ return k!=='deletedAddons'; });
+  var remRows=remKeys.map(function(k){ return '<tr><td style="color:var(--muted);font-size:11px;padding:6px 8px 6px 0;white-space:nowrap;">'+k+'</td><td style="padding:6px 0;font-size:12px;">'+maskVal(k,remCfg[k])+'</td></tr>'; }).join('');
+  var deletedCount=Array.isArray(remCfg.deletedAddons)?remCfg.deletedAddons.length:0;
+  var html='<div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">LocalStorage</div>'
+    +'<table style="width:100%;border-collapse:collapse;margin-bottom:16px;">'+(lsRows||'<tr><td colspan="2" style="color:var(--muted);font-size:12px;padding:6px 0;">Vide</td></tr>')+'</table>'
+    +'<div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Config librairie Stremio</div>'
+    +'<table style="width:100%;border-collapse:collapse;margin-bottom:8px;">'+(remRows||'<tr><td colspan="2" style="color:var(--muted);font-size:12px;padding:6px 0;">—</td></tr>')
+    +'<tr><td style="color:var(--muted);font-size:11px;padding:6px 8px 6px 0;">deletedAddons</td><td style="font-size:12px;padding:6px 0;"><span style="color:var(--muted);">['+deletedCount+' addon'+(deletedCount!==1?'s':'')+']</span></td></tr></table>';
+  el.appConfigBody.innerHTML=html;
+}
+
+async function exportLibraryConfig(){
+  if(!state.authKey){ setStatus('orange','Non connecté.'); return; }
+  try{
+    var raw=await watchTry('datastoreGet',{type:'DatastoreGet',authKey:state.authKey,collection:'libraryItem',ids:[CONFIG_ID],all:false});
+    var items=watchExtract(raw);
+    var entry=items.find(function(i){ return (i._id||i.id)===CONFIG_ID; });
+    var ts=new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
+    var a=document.createElement('a');
+    a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(entry||{},null,2));
+    a.download='strem-tweaker-library-config-'+ts+'.json';
+    document.body.appendChild(a); a.click(); a.remove();
+  }catch(e){ setStatus('red','Export config librairie échoué.'); }
+}
+
+async function razLibraryConfig(){
+  if(!state.authKey){ setStatus('orange','Non connecté.'); return; }
+  if(!confirm('Effacer la config librairie Stremio ?\n(debugOpen, loginCollapsed, deletedAddons seront réinitialisés)')) return;
+  try{
+    await watchTry('datastorePut',{type:'DatastorePut',authKey:state.authKey,collection:'libraryItem',changes:[{_id:CONFIG_ID,name:'Strem Tweaker Config',type:'other',removed:true,_mtime:new Date().toISOString()}]});
+    state.debugOpen=false; state.loginCollapsed=false; deletedAddons=[];
+    _lastRemoteCfg=null;
+    renderDeletedList(); renderAppConfig();
+    setStatus('green','Config librairie réinitialisée.');
+  }catch(e){ setStatus('red','RAZ config librairie échouée.'); }
+}
+
+function openAppConfigModal(){
+  el.userDropdown.classList.add('hidden');
+  el.modalAppConfig.classList.add('active');
+  renderAppConfigTables();
+}
+function closeAppConfigModal(){ el.modalAppConfig.classList.remove('active'); }
+
+function renderAppConfigTables(){
+  // Tableau LocalStorage
+  var lsData = {};
+  try{ var raw = localStorage.getItem(STORAGE_KEY); if(raw) lsData = JSON.parse(raw); }catch(_){}
+  var lsTable = $('appConfigTableLocal');
+  lsTable.className = 'cfg-table';
+  lsTable.innerHTML = Object.keys(lsData).length === 0
+    ? '<tr><td colspan="2" style="color:var(--muted);padding:8px;">Vide</td></tr>'
+    : Object.entries(lsData).map(function(e){
+        var val = typeof e[1] === 'object' ? JSON.stringify(e[1]).substring(0,80)+'…' : String(e[1]);
+        // Masquer partiellement l'authKey
+        if(e[0] === 'authKey' && val.length > 8) val = val.substring(0,4)+'••••'+val.slice(-4);
+        return '<tr><td>'+e[0]+'</td><td>'+val+'</td></tr>';
+      }).join('');
+
+  // Tableau Config librairie (lecture de _lastRemoteCfg ou rechargement)
+  var remoteTable = $('appConfigTableRemote');
+  remoteTable.className = 'cfg-table';
+  remoteTable.innerHTML = '<tr><td colspan="2" style="color:var(--muted);padding:8px;">Chargement…</td></tr>';
+  if(!state.authKey){ remoteTable.innerHTML = '<tr><td colspan="2" style="color:var(--muted);padding:8px;">Non connecté.</td></tr>'; return; }
+  watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[CONFIG_ID], all:false })
+    .then(function(raw){
+      var items = watchExtract(raw);
+      var entry = items.find(function(i){ return (i._id||i.id) === CONFIG_ID; });
+      var cfg = (entry && entry.config) || {};
+      var rows = Object.entries(cfg).map(function(e){
+        var val = e[0] === 'deletedAddons'
+          ? (Array.isArray(e[1]) ? e[1].length + ' addon(s)' : '—')
+          : (typeof e[1] === 'object' ? JSON.stringify(e[1]).substring(0,80) : String(e[1]));
+        return '<tr><td>'+e[0]+'</td><td>'+val+'</td></tr>';
+      });
+      remoteTable.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="2" style="color:var(--muted);padding:8px;">Vide</td></tr>';
+    })
+    .catch(function(){ remoteTable.innerHTML = '<tr><td colspan="2" style="color:var(--muted);padding:8px;">Erreur de lecture.</td></tr>'; });
+}
+
+async function exportRemoteConfig(){
+  if(!state.authKey){ setStatus('orange','Non connecté.'); return; }
+  var raw = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[CONFIG_ID], all:false });
+  var items = watchExtract(raw);
+  var entry = items.find(function(i){ return (i._id||i.id) === CONFIG_ID; });
+  var cfg = (entry && entry.config) || {};
+  var ts = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
+  var a = document.createElement('a');
+  a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(cfg, null, 2));
+  a.download = 'strem-tweaker-remote-config-' + ts + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+async function razRemoteConfig(){
+  if(!state.authKey){ setStatus('orange','Non connecté.'); return; }
+  if(!confirm('Effacer la config librairie ?\n(deletedAddons, debugOpen, loginCollapsed seront réinitialisés)')) return;
+  deletedAddons = [];
+  state.debugOpen = false;
+  state.loginCollapsed = false;
+  _lastRemoteCfg = null; // Forcer la sauvegarde
+  await saveRemoteConfig();
+  renderDeletedList();
+  renderDebug(false, el.debugWrap, el.debugToggle);
+  renderLoginState();
+  renderAppConfigTables();
+  setStatus('green','Config librairie réinitialisée.');
+}
+
 function openUserInfoModal(){
   el.userDropdown.classList.add('hidden');
   el.modalUserInfo.classList.add('active');
@@ -1079,7 +1246,7 @@ function razLocalStorage(){
 
 function openHistoryModal(){ el.userDropdown.classList.add('hidden'); el.modalHistory.classList.add('active'); }
 function closeHistoryModal(){ el.modalHistory.classList.remove('active'); }
-window.addEventListener('keydown', function(e){ if(e.key!=='Escape') return; if(el.modalUserInfo && el.modalUserInfo.classList.contains('active')) closeUserInfoModal(); if(el.modalWatch && el.modalWatch.classList.contains('active')) closeWatchModal(); if(el.modalLogin.classList.contains('active')) closeLoginModal(); if(el.modalHistory.classList.contains('active')) closeHistoryModal(); if(el.modalEdit.classList.contains('active')) closeEditModal(false); });
+window.addEventListener('keydown', function(e){ if(e.key!=='Escape') return; if(el.modalUserInfo && el.modalUserInfo.classList.contains('active')) closeUserInfoModal(); if(el.modalAppConfig && el.modalAppConfig.classList.contains('active')) closeAppConfigModal(); if(el.modalWatch && el.modalWatch.classList.contains('active')) closeWatchModal(); if(el.modalLogin.classList.contains('active')) closeLoginModal(); if(el.modalHistory.classList.contains('active')) closeHistoryModal(); if(el.modalEdit.classList.contains('active')) closeEditModal(false); });
 
 function togglePassVisibility(input, icon){
   if(input.type==='password'){
@@ -1113,14 +1280,12 @@ function loadLocal(){
     if(!raw) return;
     const s = JSON.parse(raw);
     state.email = s.email||'';
-    state.password = s.password||'';
     state.authKey = s.authKey||'';
-    state.debugOpen = !!s.debugOpen;
-    state.loginCollapsed = !!s.loginCollapsed;
+    // password, debugOpen, loginCollapsed : gérés par la config librairie (loadRemoteConfig)
     deletedAddons = []; // V4.5 — migré dans la librairie Stremio (loadRemoteConfig)
   } catch(_){}
 }
-function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({email:state.email,password:state.password,authKey:state.authKey,debugOpen:state.debugOpen,loginCollapsed:state.loginCollapsed})); }
+function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({email:state.email,authKey:state.authKey})); }
 
 // V4.1 — Config distante : lit/écrit debugOpen et loginCollapsed dans la librairie Stremio
 // sous l'entrée _id:'strem-tweaker-config'. Utilisée après connexion uniquement.
