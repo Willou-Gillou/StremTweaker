@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V4.7</title>
+  <title>Strem Tweaker V4.8</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -264,7 +264,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V4.7</span>
+        <span class="version-badge">V4.8</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -435,7 +435,8 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.4b</span></div><div class="history-note">Premium : <code>premium_expire = 0</code> → "Gratuit". Garde-fou <code>getFullYear() > 2000</code>.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.5</span></div><div class="history-note"><code>deletedAddons</code> migré du localStorage vers la librairie Stremio.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.6</span></div><div class="history-note">localStorage réduit à <code>email</code> + <code>authKey</code>. Menu : "Config appli" avec tableaux localStorage / config librairie et 4 boutons export/raz.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.7</span></div><div class="history-note">Correctif tableau "Config librairie" vide : <code>ids:[CONFIG_ID]</code> avec <code>all:false</code> ne retournait pas l'entrée. Remplacé par <code>all:true</code> + filtre sur <code>CONFIG_ID</code>. Fallback sur <code>_lastRemoteCfg</code> (cache mémoire) pour affichage instantané si déjà chargé.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.7</span></div><div class="history-note">Correctif tableau "Config librairie" vide : <code>all:true</code> + filtre <code>CONFIG_ID</code>. Fallback sur <code>_lastRemoteCfg</code>.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.8</span></div><div class="history-note">Config appli : valeurs exactes affichées (<code>deletedAddons</code> en JSON scrollable, booléens et chaînes sans troncature). Export config librairie corrigé : utilisait <code>ids:[CONFIG_ID]</code> → remplacé par <code>all:true</code> + filtre.</div></div>
       </div>
     </div>
   </div>
@@ -508,7 +509,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V4.7';
+const APP_VERSION = 'V4.8';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -1129,9 +1130,12 @@ function renderAppConfigTables(){
     if(!entries.length){ remoteTable.innerHTML = '<tr><td colspan="2" style="color:var(--muted);padding:8px;">Vide</td></tr>'; return; }
     remoteTable.innerHTML = entries.map(function(e){
       var val;
-      if(e[0] === 'deletedAddons') val = Array.isArray(e[1]) ? e[1].length + ' addon(s)' : '—';
-      else if(typeof e[1] === 'object') val = JSON.stringify(e[1]).substring(0,80);
-      else val = String(e[1]);
+      if(e[0] === 'deletedAddons'){
+        // Afficher le JSON complet dans un bloc scrollable
+        val = '<pre style="margin:0;max-height:120px;overflow-y:auto;font-size:10px;white-space:pre-wrap;word-break:break-all;">'+JSON.stringify(e[1], null, 2)+'</pre>';
+      } else {
+        val = '<span style="word-break:break-all;">'+JSON.stringify(e[1])+'</span>';
+      }
       return '<tr><td>'+e[0]+'</td><td>'+val+'</td></tr>';
     }).join('');
   }
@@ -1164,10 +1168,13 @@ function renderAppConfigTables(){
 
 async function exportRemoteConfig(){
   if(!state.authKey){ setStatus('orange','Non connecté.'); return; }
-  var raw = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[CONFIG_ID], all:false });
-  var items = watchExtract(raw);
-  var entry = items.find(function(i){ return (i._id||i.id) === CONFIG_ID; });
-  var cfg = (entry && entry.config) || {};
+  var raw = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[], all:true });
+  var allItems = watchExtract(raw);
+  if(!allItems.length && raw && typeof raw === 'object'){
+    allItems = Object.values(raw).filter(function(x){ return x && typeof x === 'object' && (x._id || x.id); });
+  }
+  var entry = allItems.find(function(i){ return (i._id||i.id) === CONFIG_ID; });
+  var cfg = (entry && entry.config) ? entry.config : {};
   var ts = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
   var a = document.createElement('a');
   a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(cfg, null, 2));
