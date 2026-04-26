@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V5.2</title>
+  <title>Strem Tweaker V5.3</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -178,6 +178,8 @@
       .header-email{font-size:10px;padding:4px 8px;max-width:120px;}
       .addon-actions{padding:0 6px 10px 34px;gap:6px;}
       .login-modal-body .row{grid-template-columns:1fr;}
+      .watch-filter-btn{font-size:11px;padding:4px 8px;}
+      .wfb-icon{padding:4px 7px;}
     }
   
     .watch-group{margin-bottom:18px;}
@@ -193,8 +195,10 @@
     .wc-time{font-size:10px;color:var(--muted);margin-top:5px;}
     .wc-episode{display:inline-block;margin-top:5px;font-size:10px;font-weight:700;color:var(--blue);background:rgba(100,160,255,.12);border:1px solid rgba(100,160,255,.25);padding:2px 7px;border-radius:6px;letter-spacing:.03em;width:fit-content;}
     #watchList{overflow-x:hidden;}
-    .watch-filter-btn{white-space:nowrap;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font:inherit;font-size:12px;font-weight:600;padding:5px 14px;border-radius:999px;cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
+    .watch-filter-btn{white-space:nowrap;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font:inherit;font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
     .watch-filter-btn.active,.watch-filter-btn:hover{background:rgba(125,168,255,.15);color:var(--blue);border-color:rgba(125,168,255,.35);}
+    .wfb-icon{padding:5px 9px;}
+    .wfb-icon{padding:5px 10px;font-size:14px;}
 
   
     .wc-card-wrap{position:relative;padding-bottom:18px;}
@@ -264,7 +268,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V5.2</span>
+        <span class="version-badge">V5.3</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -329,7 +333,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
           </button>
           <div class="pill-btn-wrap">
-            <button id="btnOpenDeletedModal" class="pill-btn" title="Addons supprimés" style="color:var(--muted);">
+            <button id="btnOpenDeletedModal" class="pill-btn" title="Addons supprimés" style="color:var(--blue);">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5" rx="1"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
             </button>
             <span id="deletedBadge" class="pill-btn-badge hidden"></span>
@@ -382,14 +386,14 @@
       </div>
       <div style="display:grid;gap:8px;margin-bottom:12px;">
         <input id="watchSearch" type="text" placeholder="Rechercher…" autocomplete="off" style="width:100%;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);outline:none;border-radius:14px;padding:11px 14px;font:inherit;">
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:nowrap;overflow-x:auto;">
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;">
           <button class="watch-filter-btn active" data-filter="all">Tout</button>
           <button class="watch-filter-btn" data-filter="movie">Films</button>
           <button class="watch-filter-btn" data-filter="series">Séries</button>
-          <div style="flex:1;min-width:4px;"></div>
-          <button type="button" id="btnImportWatch" class="watch-filter-btn" style="color:var(--accent,#8ab4ff);border-color:rgba(138,180,255,.35);" title="Importer une sauvegarde JSON">Importer</button>
-          <button type="button" id="btnExportWatch" class="watch-filter-btn" style="color:var(--ok);border-color:rgba(56,211,159,.3);">Exporter</button>
-          <button type="button" id="btnResetWatch" class="watch-filter-btn" style="color:#ff6b6b;border-color:rgba(255,107,107,.35);" title="Supprimer TOUT l'historique du compte">RAZ</button>
+          <div style="flex:1;min-width:2px;"></div>
+          <button type="button" id="btnImportWatch" class="watch-filter-btn wfb-icon" style="color:var(--accent,#8ab4ff);border-color:rgba(138,180,255,.35);" title="Importer une sauvegarde JSON">⬆</button>
+          <button type="button" id="btnExportWatch" class="watch-filter-btn wfb-icon" style="color:var(--ok);border-color:rgba(56,211,159,.3);" title="Exporter">⬇</button>
+          <button type="button" id="btnResetWatch" class="watch-filter-btn wfb-icon" style="color:#ff6b6b;border-color:rgba(255,107,107,.35);" title="Supprimer TOUT l'historique du compte">🗑</button>
         </div>
         <input type="file" id="watchImportFile" accept="application/json,.json" style="display:none;">
       </div>
@@ -442,7 +446,9 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.0</span></div><div class="history-note">Correctif fatal : <code>init()</code> n'appelait jamais <code>loadRemoteConfig</code> au démarrage. Garde-fou <code>_remoteConfigLoaded</code>.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.0b</span></div><div class="history-note">Logs exhaustifs pour diagnostic config librairie.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.1</span></div><div class="history-note"><code>type:'other'</code> → <code>type:'movie'</code>. Pas suffisant.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.2</span></div><div class="history-note">Correctif définitif : Stremio strippe les champs inconnus (incl. <code>config</code>) des libraryItem → l'écriture réussit mais le champ disparaît. Solution : encoder le JSON de la config dans le champ standard <code>name</code>, préfixé par <code>STREM_TWEAKER_CFG_v1::</code>. Le champ <code>name</code> est conservé tel quel par Stremio. Décodage automatique avec fallback sur l'ancien format <code>config</code>.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.2</span></div><div class="history-note">Config encodée dans le champ <code>name</code> (préfixe <code>STREM_TWEAKER_CFG_v1::</code>) car Stremio strippe les champs non-standard.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.3</span></div><div class="history-note">Icône Archive (DeletedAddons) en bleu. RAZ addons : <code>addonsCard</code> reste visible après suppression totale. Toolbar historique : boutons plus compacts sur mobile (font-size 11px, padding réduit, gap 5px) pour tenir sur une ligne iPhone.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.3</span></div><div class="history-note">Icône Archive (addons supprimés) → bleue. RAZ complète addons : <code>addonsCard</code> masqué immédiatement (évite de devoir rafraîchir). Boutons historique visionnage : labels raccourcis en icônes (⬆⬇🗑) pour tenir sur 1 ligne sur iPhone.</div></div>
       </div>
     </div>
   </div>
@@ -515,7 +521,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V5.2';
+const APP_VERSION = 'V5.3';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -1595,6 +1601,7 @@ async function clearAllAddons(){
 
   // 2) Vider et synchroniser
   state.addons = [];
+  el.addonsCard.classList.remove('hidden'); // Garder la section visible
   renderList();
   await syncOrder();
   setStatus('green', '✓ Tous les addons supprimés. Restaure via l\'icône JSON si besoin.');
