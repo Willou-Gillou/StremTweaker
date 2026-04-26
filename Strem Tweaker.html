@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V4.9b</title>
+  <title>Strem Tweaker V5.0</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -264,7 +264,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V4.9b</span>
+        <span class="version-badge">V5.0</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -438,7 +438,8 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.7</span></div><div class="history-note">Correctif tableau "Config librairie" vide : <code>all:true</code> + filtre <code>CONFIG_ID</code>. Fallback sur <code>_lastRemoteCfg</code>.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.8</span></div><div class="history-note">Config appli : valeurs exactes. Export config librairie : <code>all:true</code> + filtre.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.9</span></div><div class="history-note">Correctif config librairie écrasée : <code>all:true</code> + filtre + init <code>_lastRemoteCfg</code> après chargement.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.9b</span></div><div class="history-note">Correctif sync multi-appareils : extraction robuste de l'entrée config via <code>fetchRemoteConfigEntry()</code> — gère les formats dict <code>result[CONFIG_ID]</code>, tableau et valeurs brutes. Double tentative : requête ciblée <code>ids:[CONFIG_ID]</code> d'abord (légère), fallback <code>all:true</code> si vide. Utilisé par <code>loadRemoteConfig</code>, <code>renderAppConfigTables</code> et <code>exportRemoteConfig</code>.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.9b</span></div><div class="history-note">Extraction config robuste via <code>fetchRemoteConfigEntry()</code>.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.0</span></div><div class="history-note">Correctif <b>fatal</b> : <code>init()</code> n'appelait <b>jamais</b> <code>loadRemoteConfig</code> au démarrage avec authKey existante. Au premier événement, <code>saveRemoteConfig</code> écrasait la config distante avec <code>deletedAddons:[]</code>. Corrigé : <code>init()</code> est désormais async et appelle <code>loadRemoteConfig</code> après <code>loadAddons</code>. Garde-fou : <code>saveRemoteConfig</code> refuse d'écrire tant que <code>_remoteConfigLoaded</code> est <code>false</code> (anti race-condition).</div></div>
       </div>
     </div>
   </div>
@@ -511,7 +512,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V4.9b';
+const APP_VERSION = 'V5.0';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -554,7 +555,7 @@ let deletedAddons = [];
 
 init();
 
-function init(){
+async function init(){
   loadLocal();
   bind();
   hydrateForms();
@@ -562,7 +563,10 @@ function init(){
   renderLoginState();
   if(state.authKey){
     setStatus('orange','AuthKey locale trouvée, chargement...');
-    loadAddons();
+    await loadAddons();
+    // V5.0 — CRITIQUE : charger la config distante avant que toute interaction
+    // ne déclenche un saveRemoteConfig qui écraserait la config avec des valeurs vides.
+    await loadRemoteConfig();
   }
 }
 
@@ -1313,12 +1317,19 @@ async function loadRemoteConfig(){
   if(!state.authKey) return;
   try{
     var cfg = await fetchRemoteConfigEntry();
-    if(!cfg){ logDebug('loadRemoteConfig : entrée config non trouvée'); return; }
+    if(!cfg){
+      logDebug('loadRemoteConfig : entrée config non trouvée (première utilisation)');
+      // Première utilisation : initialiser _lastRemoteCfg avec l'état courant pour que
+      // saveRemoteConfig puisse créer l'entrée au prochain changement réel
+      _lastRemoteCfg = JSON.stringify({ debugOpen: state.debugOpen, loginCollapsed: state.loginCollapsed, deletedAddons: deletedAddons });
+      _remoteConfigLoaded = true;
+      return;
+    }
     if(cfg.debugOpen !== undefined){ state.debugOpen = !!cfg.debugOpen; renderDebug(state.debugOpen, el.debugWrap, el.debugToggle); renderDebug(state.debugOpen, el.m_debugWrap, el.m_debugToggle); }
     if(cfg.loginCollapsed !== undefined){ state.loginCollapsed = !!cfg.loginCollapsed; renderLoginState(); }
     if(Array.isArray(cfg.deletedAddons)){ deletedAddons = cfg.deletedAddons; renderDeletedList(); }
-    // Initialiser _lastRemoteCfg pour éviter d'écraser la config au premier saveRemoteConfig
     _lastRemoteCfg = JSON.stringify({ debugOpen: state.debugOpen, loginCollapsed: state.loginCollapsed, deletedAddons: deletedAddons });
+    _remoteConfigLoaded = true;
     saveLocal();
     logDebug('Config distante chargée : ' + JSON.stringify(cfg));
   }catch(e){ logDebug('loadRemoteConfig erreur : ' + (e&&e.message||e)); }
@@ -1362,13 +1373,19 @@ async function fetchRemoteConfigEntry(){
   return findInRaw(raw2);
 }
 
-// Évite les appels inutiles : ne sauvegarde que si un booléen a changé
+// V5.0 — Flag de protection : tant que loadRemoteConfig n'a pas terminé,
+// saveRemoteConfig refuse d'écrire pour éviter d'écraser la config avec des valeurs vides.
 var _lastRemoteCfg = null;
+var _remoteConfigLoaded = false;
 async function saveRemoteConfig(){
   if(!state.authKey) return;
+  if(!_remoteConfigLoaded){
+    logDebug('saveRemoteConfig BLOQUÉ : config distante pas encore chargée');
+    return;
+  }
   var cfg = { debugOpen: state.debugOpen, loginCollapsed: state.loginCollapsed, deletedAddons: deletedAddons };
   var cfgStr = JSON.stringify(cfg);
-  if(cfgStr === _lastRemoteCfg) return; // Pas de changement → pas d'appel API
+  if(cfgStr === _lastRemoteCfg) return;
   _lastRemoteCfg = cfgStr;
   try{
     await watchTry('datastorePut', {
@@ -1468,6 +1485,7 @@ async function loginAndGetKey(email, password, authKeyValue){
 
 function clearAll(){
   state.email=''; state.password=''; state.authKey=''; state.addons=[]; state.loginCollapsed=false; deletedAddons=[];
+  _remoteConfigLoaded = false; _lastRemoteCfg = null;
   localStorage.removeItem(STORAGE_KEY);
   hydrateForms();
   el.userDropdown.classList.add('hidden');
