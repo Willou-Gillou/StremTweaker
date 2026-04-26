@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V6.0a</title>
+  <title>Strem Tweaker V5.9b</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -271,7 +271,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </button>
         </div>
-        <span class="version-badge">V6.0a</span>
+        <span class="version-badge">V5.9b</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -454,8 +454,7 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.3</span></div><div class="history-note">Icône Archive bleue. RAZ addons : <code>addonsCard</code> reste visible. Toolbar historique : boutons compacts sur mobile.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.4</span></div><div class="history-note">RAZ historique visionnage : les entrées réapparaissaient après refresh. Deux causes : (1) <code>CONFIG_ID</code> inclus dans la RAZ → config détruite. (2) Stremio ne persiste pas les suppressions en batch (success:true sans persistance réelle). Corrigé : <code>CONFIG_ID</code> exclu + envoi 1 item à la fois comme <code>deleteWatchEntryOnServer</code> qui fonctionne.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.4b</span></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V6.0a</span></div><div class="history-note">Correctif déconnexion au refresh : <code>updateLoginPill</code> cachait le menu si <code>state.email</code> était vide, même avec une <code>authKey</code> valide. Le menu s'affiche désormais dès qu'une <code>authKey</code> existe (email affiché comme <code>···</code> si absent).</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V6.0</span></div><div class="history-note">Historique visionnage retiré du menu (accessible via l'icône dans le hero). <code>debugOpen</code> retiré de la config librairie (reste en localStorage local uniquement). Installation addon : choix de position — OK = en premier, Annuler = en dernier.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.9b</span></div><div class="history-note">Historique visionnage retiré du menu (accès via icône 🎬 dans le hero). Installation addon : choix de position — OK = en premier, Annuler = en dernier.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.9</span></div><div class="history-note">Hero : icône 🎬 à côté du titre, cliquable pour ouvrir l'historique de visionnage (sans texte). Filtres historique : labels remplacés par ∗ / 🎬 / 📺 pour tenir sur une ligne sans troncature. Classe <code>wfb-filter</code> pour style compact.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.8</span></div><div class="history-note">Correctif poubelle RAZ addons : <code>syncOrder</code> utilisait encore <code>Content-Type: application/json</code> → échouait sur Safari iOS → <code>loadAddons()</code> dans le catch cachait <code>addonsCard</code>. Corrigé : passage en <code>text/plain</code> sur tous les appels fetch restants (login, getUser, addonCollectionGet, syncOrder). Le catch de <code>syncOrder</code> ne rappelle <code>loadAddons</code> que si la liste n'est pas volontairement vide.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.7</span></div><div class="history-note">Toolbar Mes addons : icônes centrées, séparateur à gauche de la poubelle (RAZ), poubelle positionnée tout à droite. Historique visionnage : boutons encore plus compacts sur mobile (10px, padding 3px). Infos utilisateur : nom affiché = <code>fullname</code> ou partie avant le <code>@</code> de l'email.</div></div>
@@ -534,7 +533,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V6.0a';
+const APP_VERSION = 'V5.9b';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -598,7 +597,7 @@ function bind(){
   [el.email, el.password, el.authKey].forEach(i => i.addEventListener('keydown', e => { if(e.key==='Enter'){e.preventDefault(); loginAndGetKey(el.email.value, el.password.value, el.authKey.value);} }));
   el.toggleAuthKey.addEventListener('click', () => togglePassVisibility(el.authKey, el.toggleAuthKey));
   el.copyAuthKeyIcon.addEventListener('click', () => copyValue(el.authKey.value));
-  el.debugToggle.addEventListener('click', () => { state.debugOpen=!state.debugOpen; renderDebug(state.debugOpen, el.debugWrap, el.debugToggle); saveLocal(); });
+  el.debugToggle.addEventListener('click', () => { state.debugOpen=!state.debugOpen; renderDebug(state.debugOpen, el.debugWrap, el.debugToggle); saveLocal(); saveRemoteConfig(); });
   $('loginHead').addEventListener('click', e => {
     if(e.target.closest('button')||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
     state.loginCollapsed=!state.loginCollapsed;
@@ -664,7 +663,6 @@ function bind(){
       const manifest = await res.json();
       if(!manifest || !manifest.id) throw new Error('Manifest invalide');
       if(state.addons.find(a => a.transportUrl === url)) throw new Error('Addon déjà installé');
-      // Choix de la position
       const pos = confirm('"' + manifest.name + '" — Placer en premier ?\n\nOK = En premier\nAnnuler = En dernier');
       if(pos) state.addons.unshift({ transportUrl: url, transportName: 'http', manifest: manifest });
       else     state.addons.push(   { transportUrl: url, transportName: 'http', manifest: manifest });
@@ -1145,7 +1143,7 @@ async function exportFullLibrary(){
 }
 async function razLibraryConfig(){
   if(!state.authKey){ setStatus('orange','Non connecté.'); return; }
-  if(!confirm('Effacer la config librairie Stremio ?\n(loginCollapsed, deletedAddons seront réinitialisés)')) return;
+  if(!confirm('Effacer la config librairie Stremio ?\n(debugOpen, loginCollapsed, deletedAddons seront réinitialisés)')) return;
   try{
     await watchTry('datastorePut',{type:'DatastorePut',authKey:state.authKey,collection:'libraryItem',changes:[{_id:CONFIG_ID,name:'Strem Tweaker Config',type:'movie',removed:true,_mtime:new Date().toISOString()}]});
     state.debugOpen=false; state.loginCollapsed=false; deletedAddons=[];
@@ -1230,7 +1228,7 @@ async function exportRemoteConfig(){
 
 async function razRemoteConfig(){
   if(!state.authKey){ setStatus('orange','Non connecté.'); return; }
-  if(!confirm('Effacer la config librairie ?\n(loginCollapsed, deletedAddons seront réinitialisés)')) return;
+  if(!confirm('Effacer la config librairie ?\n(deletedAddons, debugOpen, loginCollapsed seront réinitialisés)')) return;
   deletedAddons = [];
   state.debugOpen = false;
   state.loginCollapsed = false;
@@ -1361,13 +1359,13 @@ function loadLocal(){
     const s = JSON.parse(raw);
     state.email = s.email||'';
     state.authKey = s.authKey||'';
-    // password : non persisté. debugOpen : localStorage local. loginCollapsed : config librairie
+    // password, debugOpen, loginCollapsed : gérés par la config librairie (loadRemoteConfig)
     deletedAddons = []; // V4.5 — migré dans la librairie Stremio (loadRemoteConfig)
   } catch(_){}
 }
 function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({email:state.email,authKey:state.authKey})); }
 
-// V4.1+ — Config distante : lit/écrit loginCollapsed et deletedAddons dans la librairie Stremio
+// V4.1 — Config distante : lit/écrit debugOpen et loginCollapsed dans la librairie Stremio
 // sous l'entrée _id:'strem-tweaker-config'. Utilisée après connexion uniquement.
 async function loadRemoteConfig(){
   if(!state.authKey) return;
@@ -1381,9 +1379,10 @@ async function loadRemoteConfig(){
       await saveRemoteConfig();
       return;
     }
+    if(cfg.debugOpen !== undefined){ state.debugOpen = !!cfg.debugOpen; renderDebug(state.debugOpen, el.debugWrap, el.debugToggle); renderDebug(state.debugOpen, el.m_debugWrap, el.m_debugToggle); }
     if(cfg.loginCollapsed !== undefined){ state.loginCollapsed = !!cfg.loginCollapsed; renderLoginState(); }
     if(Array.isArray(cfg.deletedAddons)){ deletedAddons = cfg.deletedAddons; renderDeletedList(); }
-    _lastRemoteCfg = JSON.stringify({ loginCollapsed: state.loginCollapsed, deletedAddons: deletedAddons });
+    _lastRemoteCfg = JSON.stringify({ debugOpen: state.debugOpen, loginCollapsed: state.loginCollapsed, deletedAddons: deletedAddons });
     _remoteConfigLoaded = true;
     // V5.1 — Forcer réécriture pour migrer type:'other' → type:'movie'
     _lastRemoteCfg = null;
@@ -1479,7 +1478,7 @@ async function saveRemoteConfig(){
     logDebug('saveRemoteConfig BLOQUÉ : config distante pas encore chargée');
     return;
   }
-  var cfg = { loginCollapsed: state.loginCollapsed, deletedAddons: deletedAddons };
+  var cfg = { debugOpen: state.debugOpen, loginCollapsed: state.loginCollapsed, deletedAddons: deletedAddons };
   var cfgStr = JSON.stringify(cfg);
   if(cfgStr === _lastRemoteCfg) return;
   _lastRemoteCfg = cfgStr;
@@ -1521,9 +1520,8 @@ function updateLoginPill(){
   const isAuth = !!state.authKey;
   el.loginStatePill.textContent = isAuth?'Connecté':'Non connecté';
   el.loginStatePill.className = 'pill '+(isAuth?'connected':'disconnected');
-  if(isAuth){
-    // Afficher le menu dès qu'on a une authKey — email optionnel
-    el.headerEmailText.textContent = state.email ? state.email.split('@')[0] : '···';
+  if(state.email){
+    el.headerEmailText.textContent = state.email.split('@')[0];
     el.headerUserMenu.classList.remove('hidden');
   } else {
     el.headerUserMenu.classList.add('hidden');
