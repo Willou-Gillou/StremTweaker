@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V5.9c</title>
+  <title>Strem Tweaker V5.9</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -248,6 +248,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
               Paramètres
             </div>
+            <div class="dropdown-item" id="btnOpenWatchModal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+              Historique visionnage
+            </div>
             <div class="dropdown-item" id="btnOpenHistoryModal">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="9"></circle></svg>
               Historique versions
@@ -271,7 +275,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </button>
         </div>
-        <span class="version-badge">V5.9c</span>
+        <span class="version-badge">V5.9</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -454,7 +458,6 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.3</span></div><div class="history-note">Icône Archive bleue. RAZ addons : <code>addonsCard</code> reste visible. Toolbar historique : boutons compacts sur mobile.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.4</span></div><div class="history-note">RAZ historique visionnage : les entrées réapparaissaient après refresh. Deux causes : (1) <code>CONFIG_ID</code> inclus dans la RAZ → config détruite. (2) Stremio ne persiste pas les suppressions en batch (success:true sans persistance réelle). Corrigé : <code>CONFIG_ID</code> exclu + envoi 1 item à la fois comme <code>deleteWatchEntryOnServer</code> qui fonctionne.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.4b</span></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.9c</span></div><div class="history-note">Historique visionnage retiré du menu (accès via icône dans le hero). Installation addon : choix de position — OK = en premier, Annuler = en dernier.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.9</span></div><div class="history-note">Hero : icône 🎬 à côté du titre, cliquable pour ouvrir l'historique de visionnage (sans texte). Filtres historique : labels remplacés par ∗ / 🎬 / 📺 pour tenir sur une ligne sans troncature. Classe <code>wfb-filter</code> pour style compact.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.8</span></div><div class="history-note">Correctif poubelle RAZ addons : <code>syncOrder</code> utilisait encore <code>Content-Type: application/json</code> → échouait sur Safari iOS → <code>loadAddons()</code> dans le catch cachait <code>addonsCard</code>. Corrigé : passage en <code>text/plain</code> sur tous les appels fetch restants (login, getUser, addonCollectionGet, syncOrder). Le catch de <code>syncOrder</code> ne rappelle <code>loadAddons</code> que si la liste n'est pas volontairement vide.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.7</span></div><div class="history-note">Toolbar Mes addons : icônes centrées, séparateur à gauche de la poubelle (RAZ), poubelle positionnée tout à droite. Historique visionnage : boutons encore plus compacts sur mobile (10px, padding 3px). Infos utilisateur : nom affiché = <code>fullname</code> ou partie avant le <code>@</code> de l'email.</div></div>
@@ -533,7 +536,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V5.9c';
+const APP_VERSION = 'V5.9';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -663,13 +666,11 @@ function bind(){
       const manifest = await res.json();
       if(!manifest || !manifest.id) throw new Error('Manifest invalide');
       if(state.addons.find(a => a.transportUrl === url)) throw new Error('Addon déjà installé');
-      const pos = confirm('"' + manifest.name + '" — Placer en premier ?\n\nOK = En premier\nAnnuler = En dernier');
-      if(pos) state.addons.unshift({ transportUrl: url, transportName: 'http', manifest: manifest });
-      else     state.addons.push(   { transportUrl: url, transportName: 'http', manifest: manifest });
+      state.addons.push({ transportUrl: url, transportName: 'http', manifest: manifest });
       renderList();
       saveLocal();
       await syncOrder();
-      setStatus('green', manifest.name + ' installé ' + (pos ? 'en premier' : 'en dernier') + ' !');
+      setStatus('green', manifest.name + ' installé !');
     } catch(e) {
       setStatus('red', 'Erreur install: ' + e.message);
     }
