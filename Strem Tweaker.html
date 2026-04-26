@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V5.0b</title>
+  <title>Strem Tweaker V5.1</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -264,7 +264,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V5.0b</span>
+        <span class="version-badge">V5.1</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -440,7 +440,8 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.9</span></div><div class="history-note">Correctif config librairie écrasée : <code>all:true</code> + filtre + init <code>_lastRemoteCfg</code> après chargement.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.9b</span></div><div class="history-note">Extraction config robuste via <code>fetchRemoteConfigEntry()</code>.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.0</span></div><div class="history-note">Correctif fatal : <code>init()</code> n'appelait jamais <code>loadRemoteConfig</code> au démarrage. Garde-fou <code>_remoteConfigLoaded</code>.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.0b</span></div><div class="history-note">Ajout de logs exhaustifs dans <code>fetchRemoteConfigEntry</code> et <code>saveRemoteConfig</code> pour diagnostiquer la perte de config : réponse brute Stremio, format de réponse détecté, payload envoyé, réponse reçue. Activer "Afficher debug" pour voir les traces.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.0b</span></div><div class="history-note">Logs exhaustifs pour diagnostic config librairie.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.1</span></div><div class="history-note">Correctif config librairie : Stremio ignore les items <code>type:'other'</code> dans <code>datastoreGet</code> → ils sont écrits mais jamais retournés en lecture. Migré vers <code>type:'movie'</code>. Réécriture forcée au chargement pour migrer les entrées existantes. Si config non trouvée, création immédiate avec le bon type.</div></div>
       </div>
     </div>
   </div>
@@ -513,7 +514,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V5.0b';
+const APP_VERSION = 'V5.1';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -1092,7 +1093,7 @@ async function razLibraryConfig(){
   if(!state.authKey){ setStatus('orange','Non connecté.'); return; }
   if(!confirm('Effacer la config librairie Stremio ?\n(debugOpen, loginCollapsed, deletedAddons seront réinitialisés)')) return;
   try{
-    await watchTry('datastorePut',{type:'DatastorePut',authKey:state.authKey,collection:'libraryItem',changes:[{_id:CONFIG_ID,name:'Strem Tweaker Config',type:'other',removed:true,_mtime:new Date().toISOString()}]});
+    await watchTry('datastorePut',{type:'DatastorePut',authKey:state.authKey,collection:'libraryItem',changes:[{_id:CONFIG_ID,name:'Strem Tweaker Config',type:'movie',removed:true,_mtime:new Date().toISOString()}]});
     state.debugOpen=false; state.loginCollapsed=false; deletedAddons=[];
     _lastRemoteCfg=null;
     renderDeletedList(); renderAppConfig();
@@ -1319,11 +1320,11 @@ async function loadRemoteConfig(){
   try{
     var cfg = await fetchRemoteConfigEntry();
     if(!cfg){
-      logDebug('loadRemoteConfig : entrée config non trouvée (première utilisation)');
-      // Première utilisation : initialiser _lastRemoteCfg avec l'état courant pour que
-      // saveRemoteConfig puisse créer l'entrée au prochain changement réel
-      _lastRemoteCfg = JSON.stringify({ debugOpen: state.debugOpen, loginCollapsed: state.loginCollapsed, deletedAddons: deletedAddons });
+      logDebug('loadRemoteConfig : entrée config non trouvée (première utilisation ou type non reconnu)');
+      _lastRemoteCfg = null;
       _remoteConfigLoaded = true;
+      // Créer l'entrée avec le bon type dès maintenant
+      await saveRemoteConfig();
       return;
     }
     if(cfg.debugOpen !== undefined){ state.debugOpen = !!cfg.debugOpen; renderDebug(state.debugOpen, el.debugWrap, el.debugToggle); renderDebug(state.debugOpen, el.m_debugWrap, el.m_debugToggle); }
@@ -1331,6 +1332,9 @@ async function loadRemoteConfig(){
     if(Array.isArray(cfg.deletedAddons)){ deletedAddons = cfg.deletedAddons; renderDeletedList(); }
     _lastRemoteCfg = JSON.stringify({ debugOpen: state.debugOpen, loginCollapsed: state.loginCollapsed, deletedAddons: deletedAddons });
     _remoteConfigLoaded = true;
+    // V5.1 — Forcer réécriture pour migrer type:'other' → type:'movie'
+    _lastRemoteCfg = null;
+    await saveRemoteConfig();
     saveLocal();
     logDebug('Config distante chargée : ' + JSON.stringify(cfg));
   }catch(e){ logDebug('loadRemoteConfig erreur : ' + (e&&e.message||e)); }
@@ -1410,7 +1414,7 @@ async function saveRemoteConfig(){
       changes:[{
         _id: CONFIG_ID,
         name: 'Strem Tweaker Config',
-        type: 'other',
+        type: 'movie',
         removed: false,
         _mtime: new Date().toISOString(),
         config: cfg
