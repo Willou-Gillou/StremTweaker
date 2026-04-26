@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V5.1</title>
+  <title>Strem Tweaker V5.2</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -264,7 +264,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V5.1</span>
+        <span class="version-badge">V5.2</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -441,7 +441,8 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.9b</span></div><div class="history-note">Extraction config robuste via <code>fetchRemoteConfigEntry()</code>.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.0</span></div><div class="history-note">Correctif fatal : <code>init()</code> n'appelait jamais <code>loadRemoteConfig</code> au démarrage. Garde-fou <code>_remoteConfigLoaded</code>.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.0b</span></div><div class="history-note">Logs exhaustifs pour diagnostic config librairie.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.1</span></div><div class="history-note">Correctif config librairie : Stremio ignore les items <code>type:'other'</code> dans <code>datastoreGet</code> → ils sont écrits mais jamais retournés en lecture. Migré vers <code>type:'movie'</code>. Réécriture forcée au chargement pour migrer les entrées existantes. Si config non trouvée, création immédiate avec le bon type.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.1</span></div><div class="history-note"><code>type:'other'</code> → <code>type:'movie'</code>. Pas suffisant.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.2</span></div><div class="history-note">Correctif définitif : Stremio strippe les champs inconnus (incl. <code>config</code>) des libraryItem → l'écriture réussit mais le champ disparaît. Solution : encoder le JSON de la config dans le champ standard <code>name</code>, préfixé par <code>STREM_TWEAKER_CFG_v1::</code>. Le champ <code>name</code> est conservé tel quel par Stremio. Décodage automatique avec fallback sur l'ancien format <code>config</code>.</div></div>
       </div>
     </div>
   </div>
@@ -514,7 +515,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V5.1';
+const APP_VERSION = 'V5.2';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -1344,9 +1345,20 @@ async function loadRemoteConfig(){
 // Essai 1 : requête légère ids:[CONFIG_ID] — évite de charger toute la librairie.
 // Essai 2 : fallback all:true si l'essai 1 ne retourne rien.
 async function fetchRemoteConfigEntry(){
+  function decodeFromEntry(entry){
+    if(!entry) return null;
+    // V5.2 — Décoder depuis le champ name (préfixe STREM_TWEAKER_CFG_v1::)
+    if(entry.name && typeof entry.name === 'string' && entry.name.indexOf('STREM_TWEAKER_CFG_v1::') === 0){
+      var json = entry.name.substring('STREM_TWEAKER_CFG_v1::'.length);
+      try{ return JSON.parse(json); }catch(e){ logDebug('[config] parse JSON name échoué : '+e.message); return null; }
+    }
+    // Fallback : ancien format avec champ config (pour entrées créées avant V5.2)
+    if(entry.config && typeof entry.config === 'object') return entry.config;
+    return null;
+  }
+
   function findInRaw(raw, label){
     if(!raw){ logDebug('[config] '+label+' → null'); return null; }
-    // Log la réponse brute (tronquée) pour diagnostic
     try{
       var preview = JSON.stringify(raw).substring(0,500);
       logDebug('[config] '+label+' brut : '+preview);
@@ -1354,22 +1366,22 @@ async function fetchRemoteConfigEntry(){
 
     // Format dict : { result: { "strem-tweaker-config": {...} } }
     if(raw.result && typeof raw.result === 'object' && raw.result[CONFIG_ID]){
-      var e = raw.result[CONFIG_ID];
       logDebug('[config] '+label+' → trouvé via result[CONFIG_ID]');
-      return (e && e.config) ? e.config : null;
+      return decodeFromEntry(raw.result[CONFIG_ID]);
     }
-    // Format tableau via watchExtract
     var items = watchExtract(raw);
     logDebug('[config] '+label+' → watchExtract : '+items.length+' items');
-    // Format dict sans result : Object.values
     if(!items.length && typeof raw === 'object'){
       items = Object.values(raw).filter(function(x){ return x && typeof x === 'object' && (x._id||x.id); });
       logDebug('[config] '+label+' → Object.values : '+items.length+' items');
     }
     var entry = items.find(function(i){ return (i._id||i.id) === CONFIG_ID; });
-    if(entry){ logDebug('[config] '+label+' → entrée trouvée, config='+(entry.config?'oui':'NON')); }
-    else { logDebug('[config] '+label+' → CONFIG_ID non trouvé parmi : '+items.slice(0,3).map(function(i){ return i._id||i.id; }).join(',')); }
-    return (entry && entry.config) ? entry.config : null;
+    if(entry){
+      logDebug('[config] '+label+' → entrée trouvée, name='+(entry.name?entry.name.substring(0,60):'(vide)'));
+    } else {
+      logDebug('[config] '+label+' → CONFIG_ID non trouvé parmi : '+items.slice(0,5).map(function(i){ return i._id||i.id; }).join(','));
+    }
+    return decodeFromEntry(entry);
   }
 
   // Essai 1 : requête ciblée
@@ -1406,18 +1418,21 @@ async function saveRemoteConfig(){
   var cfgStr = JSON.stringify(cfg);
   if(cfgStr === _lastRemoteCfg) return;
   _lastRemoteCfg = cfgStr;
-  logDebug('[config] saveRemoteConfig → envoi payload (deletedAddons.length='+deletedAddons.length+') : '+cfgStr.substring(0,300));
+  // V5.2 — Stremio strippe les champs inconnus (incl. "config") des libraryItem.
+  // Solution : encoder le JSON dans le champ "name" (standard, jamais filtré).
+  // Préfixe pour identifier la config et différencier d'un nom de film normal.
+  var encodedName = 'STREM_TWEAKER_CFG_v1::' + cfgStr;
+  logDebug('[config] saveRemoteConfig → envoi (name encodé, '+encodedName.length+' chars) : '+encodedName.substring(0,200));
   try{
     var putResult = await watchTry('datastorePut', {
       type:'DatastorePut', authKey:state.authKey,
       collection:'libraryItem',
       changes:[{
         _id: CONFIG_ID,
-        name: 'Strem Tweaker Config',
+        name: encodedName,
         type: 'movie',
         removed: false,
-        _mtime: new Date().toISOString(),
-        config: cfg
+        _mtime: new Date().toISOString()
       }]
     });
     logDebug('[config] saveRemoteConfig → réponse Stremio : '+JSON.stringify(putResult).substring(0,200));
