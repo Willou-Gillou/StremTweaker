@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V5.9</title>
+  <title>Strem Tweaker V5.10</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -158,6 +158,10 @@
     /* login panel inside modal */
     .login-modal-body .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 
+    .install-pos-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:14px 10px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--muted);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s,color .2s,border-color .2s,transform .15s;}
+    .install-pos-btn:hover{background:rgba(125,168,255,.1);color:var(--blue);border-color:rgba(125,168,255,.25);}
+    .install-pos-btn.active{background:rgba(125,168,255,.18);color:var(--blue);border-color:rgba(125,168,255,.5);box-shadow:0 0 0 2px rgba(125,168,255,.15);}
+    .install-pos-btn:active{transform:scale(.97);}
     @keyframes flash{0%{transform:scale(.98)}50%{transform:scale(1.02);background:rgba(126,168,255,.1)}100%{transform:scale(1)}}
     @media(max-width:640px){
       .wrap{padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
@@ -356,6 +360,37 @@
     </section>
   </div>
 
+  <!-- ── MODAL INSTALLATION ADDON ── -->
+  <div id="modalInstall" class="modal-overlay">
+    <div class="modal-card" style="max-width:460px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <h3>Installer un addon</h3>
+        <button type="button" id="btnCloseInstallModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
+      </div>
+      <p class="sub">URL du manifest (ex&nbsp;: https://…/manifest.json) ou lien stremio://.</p>
+      <div class="field" style="margin-top:4px;">
+        <label for="installUrl">URL du manifest</label>
+        <input id="installUrl" type="url" placeholder="https://…/manifest.json" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+      </div>
+      <div class="field" style="margin-top:14px;">
+        <label>Position dans la liste</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+          <button type="button" id="installPosFirst" class="install-pos-btn active" data-pos="first">
+            <span style="font-size:16px;">⬆</span>
+            <span>En premier</span>
+          </button>
+          <button type="button" id="installPosLast" class="install-pos-btn" data-pos="last">
+            <span style="font-size:16px;">⬇</span>
+            <span>En dernier</span>
+          </button>
+        </div>
+      </div>
+      <div class="actions" style="margin-top:16px;">
+        <button type="button" id="btnInstallConfirm" class="primary">Installer</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── MODAL EDIT URL ── -->
   <div id="modalEdit" class="modal-overlay">
     <div class="modal-card">
@@ -458,6 +493,7 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.3</span></div><div class="history-note">Icône Archive bleue. RAZ addons : <code>addonsCard</code> reste visible. Toolbar historique : boutons compacts sur mobile.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.4</span></div><div class="history-note">RAZ historique visionnage : les entrées réapparaissaient après refresh. Deux causes : (1) <code>CONFIG_ID</code> inclus dans la RAZ → config détruite. (2) Stremio ne persiste pas les suppressions en batch (success:true sans persistance réelle). Corrigé : <code>CONFIG_ID</code> exclu + envoi 1 item à la fois comme <code>deleteWatchEntryOnServer</code> qui fonctionne.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.4b</span></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V5.10</span></div><div class="history-note">Installation addon : le bouton <b>+</b> ouvre désormais un modal dédié avec un champ URL et un sélecteur de position (<b>En premier</b> / <b>En dernier</b>) avant de lancer l'installation.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.9</span></div><div class="history-note">Hero : icône 🎬 à côté du titre, cliquable pour ouvrir l'historique de visionnage (sans texte). Filtres historique : labels remplacés par ∗ / 🎬 / 📺 pour tenir sur une ligne sans troncature. Classe <code>wfb-filter</code> pour style compact.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.8</span></div><div class="history-note">Correctif poubelle RAZ addons : <code>syncOrder</code> utilisait encore <code>Content-Type: application/json</code> → échouait sur Safari iOS → <code>loadAddons()</code> dans le catch cachait <code>addonsCard</code>. Corrigé : passage en <code>text/plain</code> sur tous les appels fetch restants (login, getUser, addonCollectionGet, syncOrder). Le catch de <code>syncOrder</code> ne rappelle <code>loadAddons</code> que si la liste n'est pas volontairement vide.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V5.7</span></div><div class="history-note">Toolbar Mes addons : icônes centrées, séparateur à gauche de la poubelle (RAZ), poubelle positionnée tout à droite. Historique visionnage : boutons encore plus compacts sur mobile (10px, padding 3px). Infos utilisateur : nom affiché = <code>fullname</code> ou partie avant le <code>@</code> de l'email.</div></div>
@@ -536,7 +572,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V5.9';
+const APP_VERSION = 'V5.10';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -653,28 +689,7 @@ function bind(){
   el.btnOpenLoginModal.addEventListener('click', openLoginModal);
 
   // Toolbar
-  el.btnInstall.addEventListener('click', async () => {
-    let url = prompt('URL du manifest à installer (ex: https://.../manifest.json) :', '');
-    if(!url || !url.trim()) return;
-    url = url.trim();
-    if(url.startsWith('stremio://')) url = 'https://' + url.substring(10);
-    if(!url.endsWith('manifest.json')) url = url.replace(/\/?$/, '/manifest.json');
-    setStatus('orange', 'Installation en cours...');
-    try {
-      const res = await fetch(url);
-      if(!res.ok) throw new Error('Manifest inaccessible');
-      const manifest = await res.json();
-      if(!manifest || !manifest.id) throw new Error('Manifest invalide');
-      if(state.addons.find(a => a.transportUrl === url)) throw new Error('Addon déjà installé');
-      state.addons.push({ transportUrl: url, transportName: 'http', manifest: manifest });
-      renderList();
-      saveLocal();
-      await syncOrder();
-      setStatus('green', manifest.name + ' installé !');
-    } catch(e) {
-      setStatus('red', 'Erreur install: ' + e.message);
-    }
-  });
+  el.btnInstall.addEventListener('click', openInstallModal);
   el.btnSaveJson.addEventListener('click', exportAddons);
   el.btnRestoreJson.addEventListener('click', () => el.fileRestore.click());
   if(el.btnClearAddons) el.btnClearAddons.addEventListener('click', clearAllAddons);
@@ -696,6 +711,64 @@ function bind(){
   window.addEventListener('mousemove', onMove, {passive:false});
   window.addEventListener('mouseup', onEnd, {passive:false});
 }
+
+/* ============ MODAL INSTALL ADDON ============ */
+(function(){
+  const mInstall   = document.getElementById('modalInstall');
+  const iUrl       = document.getElementById('installUrl');
+  const btnFirst   = document.getElementById('installPosFirst');
+  const btnLast    = document.getElementById('installPosLast');
+  const btnConfirm = document.getElementById('btnInstallConfirm');
+  const btnClose   = document.getElementById('btnCloseInstallModal');
+
+  function setPos(pos){
+    btnFirst.classList.toggle('active', pos==='first');
+    btnLast.classList.toggle('active',  pos==='last');
+  }
+  setPos('first');
+
+  btnFirst.addEventListener('click', ()=>setPos('first'));
+  btnLast.addEventListener('click',  ()=>setPos('last'));
+
+  function close(){ mInstall.classList.remove('active'); iUrl.value=''; }
+  btnClose.addEventListener('click', close);
+  mInstall.addEventListener('click', e=>{ if(e.target===mInstall) close(); });
+  iUrl.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doInstall(); } if(e.key==='Escape') close(); });
+
+  async function doInstall(){
+    let url = iUrl.value.trim();
+    if(!url) return;
+    if(url.startsWith('stremio://')) url = 'https://' + url.substring(10);
+    if(!url.endsWith('manifest.json')) url = url.replace(/\/?$/, '/manifest.json');
+    const pos = btnFirst.classList.contains('active') ? 'first' : 'last';
+    close();
+    setStatus('orange', 'Installation en cours…');
+    try {
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('Manifest inaccessible');
+      const manifest = await res.json();
+      if(!manifest || !manifest.id) throw new Error('Manifest invalide');
+      if(state.addons.find(a => a.transportUrl === url)) throw new Error('Addon déjà installé');
+      const addon = { transportUrl: url, transportName: 'http', manifest: manifest };
+      if(pos === 'first') state.addons.unshift(addon);
+      else                state.addons.push(addon);
+      renderList();
+      saveLocal();
+      await syncOrder();
+      setStatus('green', manifest.name + ' installé ' + (pos==='first' ? 'en premier ↑' : 'en dernier ↓') + ' !');
+    } catch(e) {
+      setStatus('red', 'Erreur install : ' + e.message);
+    }
+  }
+  btnConfirm.addEventListener('click', doInstall);
+
+  window.openInstallModal = function(){
+    iUrl.value = '';
+    setPos('first');
+    mInstall.classList.add('active');
+    setTimeout(()=>iUrl.focus(), 80);
+  };
+})();
 
 function openLoginModal(){
   el.userDropdown.classList.add('hidden');
