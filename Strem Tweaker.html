@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V4.8</title>
+  <title>Strem Tweaker V4.9b</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -264,7 +264,7 @@
     <section class="hero glass">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <h1>Strem Tweaker</h1>
-        <span class="version-badge">V4.8</span>
+        <span class="version-badge">V4.9b</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -436,7 +436,9 @@
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.5</span></div><div class="history-note"><code>deletedAddons</code> migré du localStorage vers la librairie Stremio.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.6</span></div><div class="history-note">localStorage réduit à <code>email</code> + <code>authKey</code>. Menu : "Config appli" avec tableaux localStorage / config librairie et 4 boutons export/raz.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V4.7</span></div><div class="history-note">Correctif tableau "Config librairie" vide : <code>all:true</code> + filtre <code>CONFIG_ID</code>. Fallback sur <code>_lastRemoteCfg</code>.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.8</span></div><div class="history-note">Config appli : valeurs exactes affichées (<code>deletedAddons</code> en JSON scrollable, booléens et chaînes sans troncature). Export config librairie corrigé : utilisait <code>ids:[CONFIG_ID]</code> → remplacé par <code>all:true</code> + filtre.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.8</span></div><div class="history-note">Config appli : valeurs exactes. Export config librairie : <code>all:true</code> + filtre.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.9</span></div><div class="history-note">Correctif config librairie écrasée : <code>all:true</code> + filtre + init <code>_lastRemoteCfg</code> après chargement.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V4.9b</span></div><div class="history-note">Correctif sync multi-appareils : extraction robuste de l'entrée config via <code>fetchRemoteConfigEntry()</code> — gère les formats dict <code>result[CONFIG_ID]</code>, tableau et valeurs brutes. Double tentative : requête ciblée <code>ids:[CONFIG_ID]</code> d'abord (légère), fallback <code>all:true</code> si vide. Utilisé par <code>loadRemoteConfig</code>, <code>renderAppConfigTables</code> et <code>exportRemoteConfig</code>.</div></div>
       </div>
     </div>
   </div>
@@ -509,7 +511,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V4.8';
+const APP_VERSION = 'V4.9b';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -1140,41 +1142,25 @@ function renderAppConfigTables(){
     }).join('');
   }
 
-  // Essai 1 : utiliser le cache en mémoire (_lastRemoteCfg) si dispo
+  // Essai 1 : cache mémoire
   if(_lastRemoteCfg){
-    try{ renderCfg(JSON.parse(_lastRemoteCfg)); return; }catch(_){}
+    try{ renderCfg(JSON.parse(_lastRemoteCfg)); }catch(_){}
+    // Rafraîchir en arrière-plan
   }
 
-  // Essai 2 : relire depuis Stremio
-  watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[], all:true })
-    .then(function(raw){
-      var allItems = watchExtract(raw);
-      // Fallback si watchExtract ne trouve rien : chercher dans les valeurs brutes
-      if(!allItems.length && raw && typeof raw === 'object'){
-        allItems = Object.values(raw).filter(function(x){ return x && typeof x === 'object' && (x._id || x.id); });
-      }
-      var entry = allItems.find(function(i){ return (i._id||i.id) === CONFIG_ID; });
-      var cfg = (entry && entry.config) ? entry.config : null;
-      if(!cfg){
-        remoteTable.innerHTML = '<tr><td colspan="2" style="color:var(--muted);padding:8px;">Config non encore créée.</td></tr>';
-        return;
-      }
-      renderCfg(cfg);
-    })
-    .catch(function(){
-      remoteTable.innerHTML = '<tr><td colspan="2" style="color:var(--ko);padding:8px;">Erreur de lecture.</td></tr>';
-    });
+  // Lecture distante (toujours, pour avoir les données fraîches)
+  fetchRemoteConfigEntry().then(function(cfg){
+    if(!cfg){ remoteTable.innerHTML = '<tr><td colspan="2" style="color:var(--muted);padding:8px;">Config non encore créée.</td></tr>'; return; }
+    renderCfg(cfg);
+  }).catch(function(){
+    remoteTable.innerHTML = '<tr><td colspan="2" style="color:var(--ko);padding:8px;">Erreur de lecture.</td></tr>';
+  });
 }
 
 async function exportRemoteConfig(){
   if(!state.authKey){ setStatus('orange','Non connecté.'); return; }
-  var raw = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[], all:true });
-  var allItems = watchExtract(raw);
-  if(!allItems.length && raw && typeof raw === 'object'){
-    allItems = Object.values(raw).filter(function(x){ return x && typeof x === 'object' && (x._id || x.id); });
-  }
-  var entry = allItems.find(function(i){ return (i._id||i.id) === CONFIG_ID; });
-  var cfg = (entry && entry.config) ? entry.config : {};
+  var cfg = await fetchRemoteConfigEntry();
+  cfg = cfg || {};
   var ts = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
   var a = document.createElement('a');
   a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(cfg, null, 2));
@@ -1326,20 +1312,54 @@ function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({email:st
 async function loadRemoteConfig(){
   if(!state.authKey) return;
   try{
-    var raw = await watchTry('datastoreGet', {
-      type:'DatastoreGet', authKey:state.authKey,
-      collection:'libraryItem', ids:[CONFIG_ID], all:false
-    });
-    var items = watchExtract(raw);
-    var entry = items.find(function(i){ return (i._id||i.id) === CONFIG_ID; });
-    if(!entry || !entry.config) return;
-    var cfg = entry.config;
+    var cfg = await fetchRemoteConfigEntry();
+    if(!cfg){ logDebug('loadRemoteConfig : entrée config non trouvée'); return; }
     if(cfg.debugOpen !== undefined){ state.debugOpen = !!cfg.debugOpen; renderDebug(state.debugOpen, el.debugWrap, el.debugToggle); renderDebug(state.debugOpen, el.m_debugWrap, el.m_debugToggle); }
     if(cfg.loginCollapsed !== undefined){ state.loginCollapsed = !!cfg.loginCollapsed; renderLoginState(); }
     if(Array.isArray(cfg.deletedAddons)){ deletedAddons = cfg.deletedAddons; renderDeletedList(); }
-    saveLocal(); // Sync localStorage avec les valeurs distantes
+    // Initialiser _lastRemoteCfg pour éviter d'écraser la config au premier saveRemoteConfig
+    _lastRemoteCfg = JSON.stringify({ debugOpen: state.debugOpen, loginCollapsed: state.loginCollapsed, deletedAddons: deletedAddons });
+    saveLocal();
     logDebug('Config distante chargée : ' + JSON.stringify(cfg));
   }catch(e){ logDebug('loadRemoteConfig erreur : ' + (e&&e.message||e)); }
+}
+
+// Extrait la config depuis la librairie Stremio.
+// Essai 1 : requête légère ids:[CONFIG_ID] — évite de charger toute la librairie.
+// Essai 2 : fallback all:true si l'essai 1 ne retourne rien.
+async function fetchRemoteConfigEntry(){
+  function findInRaw(raw){
+    if(!raw) return null;
+    // Format dict : { result: { "strem-tweaker-config": {...} } }
+    if(raw.result && typeof raw.result === 'object' && raw.result[CONFIG_ID]){
+      var e = raw.result[CONFIG_ID];
+      return (e && e.config) ? e.config : null;
+    }
+    // Format tableau via watchExtract
+    var items = watchExtract(raw);
+    // Format dict sans result
+    if(!items.length && typeof raw === 'object'){
+      items = Object.values(raw).filter(function(x){ return x && typeof x === 'object' && (x._id||x.id); });
+    }
+    var entry = items.find(function(i){ return (i._id||i.id) === CONFIG_ID; });
+    return (entry && entry.config) ? entry.config : null;
+  }
+
+  // Essai 1 : requête ciblée
+  var raw1 = await watchTry('datastoreGet', {
+    type:'DatastoreGet', authKey:state.authKey,
+    collection:'libraryItem', ids:[CONFIG_ID], all:false
+  });
+  var cfg1 = findInRaw(raw1);
+  if(cfg1) return cfg1;
+
+  // Essai 2 : fallback all:true (plus lourd mais exhaustif)
+  logDebug('fetchRemoteConfigEntry : essai 1 vide, fallback all:true');
+  var raw2 = await watchTry('datastoreGet', {
+    type:'DatastoreGet', authKey:state.authKey,
+    collection:'libraryItem', ids:[], all:true
+  });
+  return findInRaw(raw2);
 }
 
 // Évite les appels inutiles : ne sauvegarde que si un booléen a changé
