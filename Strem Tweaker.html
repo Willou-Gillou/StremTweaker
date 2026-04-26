@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V2.0.0</title>
+  <title>Strem Tweaker V2.0.1</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -272,7 +272,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </button>
         </div>
-        <span class="version-badge">V2.0.0</span>
+        <span class="version-badge">V2.0.1</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -423,6 +423,7 @@
         <button type="button" id="btnCloseHistoryModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
       </div>
       <div class="history-list">
+        <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.1</span></div><div class="history-note">Historique visionnage : suppression du filtre <code>removed:true</code> — de nombreux films visionnés ont ce flag dans Stremio sans avoir été supprimés. Seuls la config (<code>CONFIG_ID</code>) et les items supprimés dans la session courante sont exclus.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.0</span></div><div class="history-note"><b>Refonte majeure.</b> Synthèse de toutes les versions V1.7 → V5.9 :<br><br>
         <b>Gestion des addons</b> — réorganisation par drag &amp; drop, activation/désactivation, suppression avec corbeille (restauration possible), RAZ complète avec sauvegarde auto, installation par URL avec choix de position (premier/dernier), vérification et application des mises à jour unitaires et groupées (<em>Tout mettre à jour</em>), sauvegarde/restauration JSON.<br><br>
         <b>Historique de visionnage</b> — liste groupée par date locale, filtres Films/Séries, heure de visionnage, badge dernier épisode (séries), suppression individuelle, RAZ complète, import/export JSON, recherche.<br><br>
@@ -504,7 +505,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V2.0.0';
+const APP_VERSION = 'V2.0.1';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -685,7 +686,7 @@ function closeWatchModal(){ el.modalWatch.classList.remove('active'); }
 function safeText(s){ return String(s || '').replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); }); }
 function watchExtract(data){ if(!data) return []; if(Array.isArray(data)) return data; var r = data.result; if(!r) return []; if(Array.isArray(r)) return r; if(Array.isArray(r.items)) return r.items; if(Array.isArray(r.libraryItems)) return r.libraryItems; if(typeof r === 'object'){ var vals = Object.values(r).filter(function(x){ return x && typeof x === 'object' && (x._id || x.id); }); if(vals.length) return vals; } return []; }
 async function watchTry(endpoint, body){ try{ var resp = await fetch(API_BASE + endpoint, { method:'POST', headers:{'Content-Type':'text/plain;charset=UTF-8'}, body: JSON.stringify(body) }); if(!resp.ok) return null; return await resp.json(); }catch(e){ return null; } }
-async function fetchWatchHistory(){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Chargement…</div>'; var items = [], rawData = null; rawData = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[], all:true }); if(rawData) items = watchExtract(rawData); if(!items.length){ rawData = await watchTry('libraryGet', { type:'LibraryGet', authKey:state.authKey, collection:'libraryItem' }); if(rawData) items = watchExtract(rawData); } if(!items.length){ rawData = await watchTry('addonCollectionGet', { type:'AddonCollectionGet', authKey:state.authKey, update:true }); if(rawData){ var lib = (rawData.result && rawData.result.library) || rawData.library; items = Array.isArray(lib) ? lib : watchExtract(rawData); } } if($('watchDebugBox')) { try{ $('watchDebugBox').textContent = JSON.stringify(rawData, null, 2).substring(0, 4000); }catch(e){} } if(!items.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Bibliothèque vide ou inaccessible.</div>'; return; } /* V5.4b — Exclure removed:true, config et session locale */ items = items.filter(function(i){ if(i && i.removed === true) return false; var id = (i && (i._id || i.id)) || ''; return id !== CONFIG_ID && watchRemovedIds.indexOf(id) === -1; }); var watched = items.filter(function(i){ var s = i._state || i.state || {}; return s.timesWatched > 0 || s.lastWatched || s.flaggedWatched; }); watchItems = watched.length ? watched : items; watchItems.sort(function(a,b){ var sa=a._state||a.state||{}, sb=b._state||b.state||{}; return new Date(sb.lastWatched || 0) - new Date(sa.lastWatched || 0); }); renderWatchList(); }
+async function fetchWatchHistory(){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Chargement…</div>'; var items = [], rawData = null; rawData = await watchTry('datastoreGet', { type:'DatastoreGet', authKey:state.authKey, collection:'libraryItem', ids:[], all:true }); if(rawData) items = watchExtract(rawData); if(!items.length){ rawData = await watchTry('libraryGet', { type:'LibraryGet', authKey:state.authKey, collection:'libraryItem' }); if(rawData) items = watchExtract(rawData); } if(!items.length){ rawData = await watchTry('addonCollectionGet', { type:'AddonCollectionGet', authKey:state.authKey, update:true }); if(rawData){ var lib = (rawData.result && rawData.result.library) || rawData.library; items = Array.isArray(lib) ? lib : watchExtract(rawData); } } if($('watchDebugBox')) { try{ $('watchDebugBox').textContent = JSON.stringify(rawData, null, 2).substring(0, 4000); }catch(e){} } if(!items.length){ el.watchList.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">Bibliothèque vide ou inaccessible.</div>'; return; } /* Exclure uniquement la config et les items supprimés dans la session courante */ items = items.filter(function(i){ var id = (i && (i._id || i.id)) || ''; return id !== CONFIG_ID && watchRemovedIds.indexOf(id) === -1; }); var watched = items.filter(function(i){ var s = i._state || i.state || {}; return s.timesWatched > 0 || s.lastWatched || s.flaggedWatched; }); watchItems = watched.length ? watched : items; watchItems.sort(function(a,b){ var sa=a._state||a.state||{}, sb=b._state||b.state||{}; return new Date(sb.lastWatched || 0) - new Date(sa.lastWatched || 0); }); renderWatchList(); }
 function watchMatches(item){ var meta = item._manifestItem || item.meta || item; var s = item._state || item.state || {}; var id = item._id || item.id || ''; var type = item.type || id.split(':')[0] || ''; if(wState.filter !== 'all' && type !== wState.filter) return false; if(!wState.query) return true; var text = [meta.name || item.name || '', meta.year || '', id, String(s.timesWatched || '')].join(' ').toLowerCase(); return text.indexOf(wState.query) !== -1; }
 function watchPoster(item){ var meta = item._manifestItem || item.meta || item; if(meta.poster) return meta.poster; var id = item._id || item.id || ''; var m = id.match(/tt\d+/); if(m) return 'https://images.metahub.space/poster/medium/' + m[0] + '/img'; return ''; }
 function formatWatchDate(d){ try{ return new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' }); }catch(e){ return ''; } }
