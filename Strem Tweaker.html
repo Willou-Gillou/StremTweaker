@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V5.10</title>
+  <title>Strem Tweaker V2.0.0</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -158,10 +158,6 @@
     /* login panel inside modal */
     .login-modal-body .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 
-    .install-pos-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:14px 10px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--muted);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s,color .2s,border-color .2s,transform .15s;}
-    .install-pos-btn:hover{background:rgba(125,168,255,.1);color:var(--blue);border-color:rgba(125,168,255,.25);}
-    .install-pos-btn.active{background:rgba(125,168,255,.18);color:var(--blue);border-color:rgba(125,168,255,.5);box-shadow:0 0 0 2px rgba(125,168,255,.15);}
-    .install-pos-btn:active{transform:scale(.97);}
     @keyframes flash{0%{transform:scale(.98)}50%{transform:scale(1.02);background:rgba(126,168,255,.1)}100%{transform:scale(1)}}
     @media(max-width:640px){
       .wrap{padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
@@ -252,10 +248,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
               Paramètres
             </div>
-            <div class="dropdown-item" id="btnOpenWatchModal">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
-              Historique visionnage
-            </div>
+            <div class="dropdown-divider"></div>
             <div class="dropdown-item" id="btnOpenHistoryModal">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="9"></circle></svg>
               Historique versions
@@ -279,7 +272,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </button>
         </div>
-        <span class="version-badge">V5.9</span>
+        <span class="version-badge">V2.0.0</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -330,6 +323,10 @@
           <button id="btnCheckUpdates" class="pill-btn" title="Vérifier les mises à jour" style="color:var(--wait);border-color:rgba(255,184,77,.3);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
           </button>
+          <button id="btnUpdateAll" class="pill-btn hidden" title="Tout mettre à jour" style="color:var(--wait);border-color:rgba(255,184,77,.3);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <span style="font-size:10px;margin-left:3px;">Tout</span>
+          </button>
           <div style="width:1px;height:20px;background:var(--line);margin:0 4px;"></div>
           <button id="btnInstall" class="pill-btn" title="Installer">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -358,37 +355,6 @@
       </div>
       <div id="emptyState" class="empty hidden">Aucun addon trouvé.</div>
     </section>
-  </div>
-
-  <!-- ── MODAL INSTALLATION ADDON ── -->
-  <div id="modalInstall" class="modal-overlay">
-    <div class="modal-card" style="max-width:460px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-        <h3>Installer un addon</h3>
-        <button type="button" id="btnCloseInstallModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
-      </div>
-      <p class="sub">URL du manifest (ex&nbsp;: https://…/manifest.json) ou lien stremio://.</p>
-      <div class="field" style="margin-top:4px;">
-        <label for="installUrl">URL du manifest</label>
-        <input id="installUrl" type="url" placeholder="https://…/manifest.json" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
-      </div>
-      <div class="field" style="margin-top:14px;">
-        <label>Position dans la liste</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
-          <button type="button" id="installPosFirst" class="install-pos-btn active" data-pos="first">
-            <span style="font-size:16px;">⬆</span>
-            <span>En premier</span>
-          </button>
-          <button type="button" id="installPosLast" class="install-pos-btn" data-pos="last">
-            <span style="font-size:16px;">⬇</span>
-            <span>En dernier</span>
-          </button>
-        </div>
-      </div>
-      <div class="actions" style="margin-top:16px;">
-        <button type="button" id="btnInstallConfirm" class="primary">Installer</button>
-      </div>
-    </div>
   </div>
 
   <!-- ── MODAL EDIT URL ── -->
@@ -457,48 +423,14 @@
         <button type="button" id="btnCloseHistoryModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
       </div>
       <div class="history-list">
-        <div class="history-item"><div class="history-head"><span class="history-ver">V1.6b</span></div><div class="history-note">Hero simplifié.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V1.7</span></div><div class="history-note">CSP compatible fichier unique.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V1.7a</span></div><div class="history-note">Constante <code>APP_VERSION</code>.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V2.6</span></div><div class="history-note">Popup Historique versions.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V3.0b</span></div><div class="history-note">Correctif suppression entrée historique : <code>persistWatchDeletion()</code> non défini empêchait l'appel serveur.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V3.1</span></div><div class="history-note">Historique visionnage : boutons <b>RAZ</b> et <b>Importer</b>.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V3.2</span></div><div class="history-note">Correctif filtres : handler restreint aux boutons <code>[data-filter]</code> ; filtre forcé sur "Tout" après import.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V3.3</span></div><div class="history-note">Correctif RAZ : filtre <code>removed:true</code> dans <code>fetchWatchHistory</code> ; payload complet dans <code>resetWatchHistory</code>.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V3.4</span></div><div class="history-note">Mes addons : icône poubelle — supprime tous les addons avec sauvegarde automatique préalable.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V3.5</span></div><div class="history-note">Icône Restaurer → dossier simple. Icône Configurer tronquée : <code>viewBox="-1 -1 26 26"</code> + <code>overflow:visible</code>.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V3.6</span></div><div class="history-note">Icône Installer remplacée par un <b>+</b>. Historique versions raccourci.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V3.7</span></div><div class="history-note">Historique visionnage : suppression du filtre <code>removed:true</code> — il excluait des films réellement visionnés. Seuls les items supprimés dans la session courante (<code>watchRemovedIds</code>) sont désormais exclus.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V3.8</span></div><div class="history-note">Regroupement par date locale : la clé de groupe utilisait <code>toISOString()</code> (UTC) — un film vu à 23h en France tombait le lendemain en UTC, dupliquant le groupe de date. Corrigé avec <code>getFullYear/Month/Date</code> (fuseau local).</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V3.9</span></div><div class="history-note">Carte visionnage : heure du visionnage sous la barre de progression. Séries : badge dernier épisode (S01 E05) affiché uniquement sur l'occurrence la plus récente de chaque série.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.0</span></div><div class="history-note">Correctif badge épisode invisible : détection élargie à <code>s.season</code>, <code>s.episode</code> et <code>s.video_id</code>.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.0a</span></div><div class="history-note">Correctif S00 E00 sur toutes les cartes : valeurs strictement <code>&gt; 0</code> requises. Détection série restreinte à <code>type === 'series'</code> explicite.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.0b</span></div><div class="history-note">Badge épisode ajusté à son contenu : <code>display:inline-block</code> + <code>width:fit-content</code> dans un wrapper block.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.1</span></div><div class="history-note">Config distante : <code>debugOpen</code> et <code>loginCollapsed</code> synchronisés dans la librairie Stremio. Paramètres : boutons Exporter/RAZ localStorage.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.2</span></div><div class="history-note">Addons supprimés déplacés dans un modal dédié. Badge rouge compteur. Restaurer à la position d'origine ou Supprimer définitivement.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.3</span></div><div class="history-note">Correctif : <code>deleteAddon</code> ne peuplait pas <code>deletedAddons</code>. Aligné sur <code>hideAddon</code>.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.4</span></div><div class="history-note">Menu : section "Infos utilisateur". Icône DeletedAddons → Archive. Compteur addons dans le titre.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.4a</span></div><div class="history-note">Date premium : timestamp Unix secondes → ms. Champ "Compte anonyme" supprimé.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.4b</span></div><div class="history-note">Premium : <code>premium_expire = 0</code> → "Gratuit". Garde-fou <code>getFullYear() > 2000</code>.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.5</span></div><div class="history-note"><code>deletedAddons</code> migré du localStorage vers la librairie Stremio.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.6</span></div><div class="history-note">localStorage réduit à <code>email</code> + <code>authKey</code>. Menu : "Config appli" avec tableaux localStorage / config librairie et 4 boutons export/raz.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.7</span></div><div class="history-note">Correctif tableau "Config librairie" vide : <code>all:true</code> + filtre <code>CONFIG_ID</code>. Fallback sur <code>_lastRemoteCfg</code>.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.8</span></div><div class="history-note">Config appli : valeurs exactes. Export config librairie : <code>all:true</code> + filtre.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.9</span></div><div class="history-note">Correctif config librairie écrasée : <code>all:true</code> + filtre + init <code>_lastRemoteCfg</code> après chargement.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V4.9b</span></div><div class="history-note">Extraction config robuste via <code>fetchRemoteConfigEntry()</code>.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.0</span></div><div class="history-note">Correctif fatal : <code>init()</code> n'appelait jamais <code>loadRemoteConfig</code> au démarrage. Garde-fou <code>_remoteConfigLoaded</code>.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.0b</span></div><div class="history-note">Logs exhaustifs pour diagnostic config librairie.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.1</span></div><div class="history-note"><code>type:'other'</code> → <code>type:'movie'</code>. Pas suffisant.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.2</span></div><div class="history-note">Config encodée dans le champ <code>name</code> (préfixe <code>STREM_TWEAKER_CFG_v1::</code>) car Stremio strippe les champs non-standard.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.3</span></div><div class="history-note">Icône Archive bleue. RAZ addons : <code>addonsCard</code> reste visible. Toolbar historique : boutons compacts sur mobile.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.4</span></div><div class="history-note">RAZ historique visionnage : les entrées réapparaissaient après refresh. Deux causes : (1) <code>CONFIG_ID</code> inclus dans la RAZ → config détruite. (2) Stremio ne persiste pas les suppressions en batch (success:true sans persistance réelle). Corrigé : <code>CONFIG_ID</code> exclu + envoi 1 item à la fois comme <code>deleteWatchEntryOnServer</code> qui fonctionne.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.4b</span></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.10</span></div><div class="history-note">Installation addon : le bouton <b>+</b> ouvre désormais un modal dédié avec un champ URL et un sélecteur de position (<b>En premier</b> / <b>En dernier</b>) avant de lancer l'installation.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.9</span></div><div class="history-note">Hero : icône 🎬 à côté du titre, cliquable pour ouvrir l'historique de visionnage (sans texte). Filtres historique : labels remplacés par ∗ / 🎬 / 📺 pour tenir sur une ligne sans troncature. Classe <code>wfb-filter</code> pour style compact.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.8</span></div><div class="history-note">Correctif poubelle RAZ addons : <code>syncOrder</code> utilisait encore <code>Content-Type: application/json</code> → échouait sur Safari iOS → <code>loadAddons()</code> dans le catch cachait <code>addonsCard</code>. Corrigé : passage en <code>text/plain</code> sur tous les appels fetch restants (login, getUser, addonCollectionGet, syncOrder). Le catch de <code>syncOrder</code> ne rappelle <code>loadAddons</code> que si la liste n'est pas volontairement vide.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.7</span></div><div class="history-note">Toolbar Mes addons : icônes centrées, séparateur à gauche de la poubelle (RAZ), poubelle positionnée tout à droite. Historique visionnage : boutons encore plus compacts sur mobile (10px, padding 3px). Infos utilisateur : nom affiché = <code>fullname</code> ou partie avant le <code>@</code> de l'email.</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.6</span></div><div class="history-note">Config appli : bouton "Exporter librairie complète" — exporte tous les <code>libraryItem</code> du compte (sans filtre <code>removed</code>) dans un JSON horodaté avec métadonnées (<code>exportedAt</code>, <code>totalItems</code>).</div></div>
-        <div class="history-item"><div class="history-head"><span class="history-ver">V5.5</span></div><div class="history-note">Config librairie : si l'entrée <code>CONFIG_ID</code> est trouvée avec <code>removed:true</code> (suite à une RAZ Stremio officielle ou externe), elle est automatiquement réécrite avec <code>removed:false</code>. Extraction brute sans filtre <code>removed</code> dans <code>fetchRemoteConfigEntry</code> pour retrouver l'entrée même supprimée.</div></div><div class="history-note">RAZ historique : "Bibliothèque déjà vide" alors que les items réapparaissaient. Cause : items avaient bien <code>removed:true</code> côté serveur mais <code>fetchWatchHistory</code> ne filtrait plus ce flag (retiré en V3.7). Double correction : (1) filtre <code>removed:true</code> réintroduit dans <code>fetchWatchHistory</code>. (2) <code>resetWatchHistory</code> traite tous les items (même déjà removed) pour forcer la mise à jour.</div></div>
+        <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.0</span></div><div class="history-note"><b>Refonte majeure.</b> Synthèse de toutes les versions V1.7 → V5.9 :<br><br>
+        <b>Gestion des addons</b> — réorganisation par drag &amp; drop, activation/désactivation, suppression avec corbeille (restauration possible), RAZ complète avec sauvegarde auto, installation par URL avec choix de position (premier/dernier), vérification et application des mises à jour unitaires et groupées (<em>Tout mettre à jour</em>), sauvegarde/restauration JSON.<br><br>
+        <b>Historique de visionnage</b> — liste groupée par date locale, filtres Films/Séries, heure de visionnage, badge dernier épisode (séries), suppression individuelle, RAZ complète, import/export JSON, recherche.<br><br>
+        <b>Config librairie Stremio</b> — stockage de <code>loginCollapsed</code> et <code>deletedAddons</code> dans un <code>libraryItem</code> dédié (<code>strem-tweaker-config</code>) pour synchronisation multi-appareils. Encodage dans le champ <code>name</code> (champs non-standard strippés par Stremio). Auto-résurrection si <code>removed:true</code>.<br><br>
+        <b>Infos utilisateur</b> — popup avec avatar, nom, email, date d'inscription, statut premium, langue.<br><br>
+        <b>Config appli</b> — tableau localStorage vs config librairie, export localStorage, RAZ localStorage, export/RAZ config librairie, export librairie complète.<br><br>
+        <b>UI</b> — menu utilisateur avec Infos utilisateur / Config appli / Paramètres / Historique versions / Déconnexion. Icône historique visionnage dans le hero. Toolbar addons centrée avec séparateur. Compteur addons dans le titre. Modal addons supprimés avec badge. Boutons historique compacts sur mobile.
+        </div></div>
       </div>
     </div>
   </div>
@@ -572,7 +504,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V5.10';
+const APP_VERSION = 'V2.0.0';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -594,7 +526,7 @@ const el = {
   countLabel: $('countLabel'), fitWrap: $('fitWrap'),
   headerUserMenu: $('headerUserMenu'), headerEmail: $('headerEmail'), headerEmailText: $('headerEmailText'), userDropdown: $('userDropdown'),
   btnLogout: $('btnLogout'), btnOpenLoginModal: $('btnOpenLoginModal'),
-  btnInstall: $('btnInstall'), btnSaveJson: $('btnSaveJson'), btnRestoreJson: $('btnRestoreJson'), btnClearAddons: $('btnClearAddons'), fileRestore: $('fileRestore'), btnCheckUpdates: $('btnCheckUpdates'),
+  btnInstall: $('btnInstall'), btnSaveJson: $('btnSaveJson'), btnRestoreJson: $('btnRestoreJson'), btnClearAddons: $('btnClearAddons'), fileRestore: $('fileRestore'), btnCheckUpdates: $('btnCheckUpdates'), btnUpdateAll: $('btnUpdateAll'),
   // Modal connexion fields
   m_email: $('m_email'), m_password: $('m_password'), m_authKey: $('m_authKey'),
   m_toggleAuthKey: $('m_toggleAuthKey'), m_copyAuthKey: $('m_copyAuthKey'),
@@ -653,7 +585,7 @@ function bind(){
   el.m_debugToggle.addEventListener('click', () => { const open = el.m_debugWrap.classList.toggle('hidden'); el.m_debugToggle.textContent = open ? 'Masquer debug' : 'Afficher debug'; });
   el.btnCloseLoginModal.addEventListener('click', closeLoginModal);
   el.modalLogin.addEventListener('click', e => { if(e.target===el.modalLogin) closeLoginModal(); });
-  el.btnOpenWatchModal.addEventListener('click', openWatchModal);
+  if(el.btnOpenWatchModal) el.btnOpenWatchModal.addEventListener('click', openWatchModal);
   if($('btnOpenWatchModalHero')) $('btnOpenWatchModalHero').addEventListener('click', openWatchModal);
   el.btnCloseWatchModal.addEventListener('click', closeWatchModal);
   el.modalWatch.addEventListener('click', function(e){ if(e.target===el.modalWatch) closeWatchModal(); });
@@ -689,12 +621,36 @@ function bind(){
   el.btnOpenLoginModal.addEventListener('click', openLoginModal);
 
   // Toolbar
-  el.btnInstall.addEventListener('click', openInstallModal);
+  el.btnInstall.addEventListener('click', async () => {
+    let url = prompt('URL du manifest à installer (ex: https://.../manifest.json) :', '');
+    if(!url || !url.trim()) return;
+    url = url.trim();
+    if(url.startsWith('stremio://')) url = 'https://' + url.substring(10);
+    if(!url.endsWith('manifest.json')) url = url.replace(/\/?$/, '/manifest.json');
+    setStatus('orange', 'Installation en cours...');
+    try {
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('Manifest inaccessible');
+      const manifest = await res.json();
+      if(!manifest || !manifest.id) throw new Error('Manifest invalide');
+      if(state.addons.find(a => a.transportUrl === url)) throw new Error('Addon déjà installé');
+      const pos = confirm('"' + manifest.name + '" — Placer en premier ?\n\nOK = En premier\nAnnuler = En dernier');
+      if(pos) state.addons.unshift({ transportUrl: url, transportName: 'http', manifest: manifest });
+      else     state.addons.push(   { transportUrl: url, transportName: 'http', manifest: manifest });
+      renderList();
+      saveLocal();
+      await syncOrder();
+      setStatus('green', manifest.name + ' installé ' + (pos ? 'en premier' : 'en dernier') + ' !');
+    } catch(e) {
+      setStatus('red', 'Erreur install: ' + e.message);
+    }
+  });
   el.btnSaveJson.addEventListener('click', exportAddons);
   el.btnRestoreJson.addEventListener('click', () => el.fileRestore.click());
   if(el.btnClearAddons) el.btnClearAddons.addEventListener('click', clearAllAddons);
   el.fileRestore.addEventListener('change', importAddons);
   el.btnCheckUpdates.addEventListener('click', checkUpdates);
+  if(el.btnUpdateAll) el.btnUpdateAll.addEventListener('click', updateAll);
 
   // Modal edit
   el.btnEditCancel.addEventListener('click', () => closeEditModal(false));
@@ -711,64 +667,6 @@ function bind(){
   window.addEventListener('mousemove', onMove, {passive:false});
   window.addEventListener('mouseup', onEnd, {passive:false});
 }
-
-/* ============ MODAL INSTALL ADDON ============ */
-(function(){
-  const mInstall   = document.getElementById('modalInstall');
-  const iUrl       = document.getElementById('installUrl');
-  const btnFirst   = document.getElementById('installPosFirst');
-  const btnLast    = document.getElementById('installPosLast');
-  const btnConfirm = document.getElementById('btnInstallConfirm');
-  const btnClose   = document.getElementById('btnCloseInstallModal');
-
-  function setPos(pos){
-    btnFirst.classList.toggle('active', pos==='first');
-    btnLast.classList.toggle('active',  pos==='last');
-  }
-  setPos('first');
-
-  btnFirst.addEventListener('click', ()=>setPos('first'));
-  btnLast.addEventListener('click',  ()=>setPos('last'));
-
-  function close(){ mInstall.classList.remove('active'); iUrl.value=''; }
-  btnClose.addEventListener('click', close);
-  mInstall.addEventListener('click', e=>{ if(e.target===mInstall) close(); });
-  iUrl.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doInstall(); } if(e.key==='Escape') close(); });
-
-  async function doInstall(){
-    let url = iUrl.value.trim();
-    if(!url) return;
-    if(url.startsWith('stremio://')) url = 'https://' + url.substring(10);
-    if(!url.endsWith('manifest.json')) url = url.replace(/\/?$/, '/manifest.json');
-    const pos = btnFirst.classList.contains('active') ? 'first' : 'last';
-    close();
-    setStatus('orange', 'Installation en cours…');
-    try {
-      const res = await fetch(url);
-      if(!res.ok) throw new Error('Manifest inaccessible');
-      const manifest = await res.json();
-      if(!manifest || !manifest.id) throw new Error('Manifest invalide');
-      if(state.addons.find(a => a.transportUrl === url)) throw new Error('Addon déjà installé');
-      const addon = { transportUrl: url, transportName: 'http', manifest: manifest };
-      if(pos === 'first') state.addons.unshift(addon);
-      else                state.addons.push(addon);
-      renderList();
-      saveLocal();
-      await syncOrder();
-      setStatus('green', manifest.name + ' installé ' + (pos==='first' ? 'en premier ↑' : 'en dernier ↓') + ' !');
-    } catch(e) {
-      setStatus('red', 'Erreur install : ' + e.message);
-    }
-  }
-  btnConfirm.addEventListener('click', doInstall);
-
-  window.openInstallModal = function(){
-    iUrl.value = '';
-    setPos('first');
-    mInstall.classList.add('active');
-    setTimeout(()=>iUrl.focus(), 80);
-  };
-})();
 
 function openLoginModal(){
   el.userDropdown.classList.add('hidden');
@@ -1398,7 +1296,7 @@ function razLocalStorage(){
 
 function openHistoryModal(){ el.userDropdown.classList.add('hidden'); el.modalHistory.classList.add('active'); }
 function closeHistoryModal(){ el.modalHistory.classList.remove('active'); }
-window.addEventListener('keydown', function(e){ if(e.key!=='Escape') return; if(el.modalUserInfo && el.modalUserInfo.classList.contains('active')) closeUserInfoModal(); if(el.modalAppConfig && el.modalAppConfig.classList.contains('active')) closeAppConfigModal(); if(el.modalWatch && el.modalWatch.classList.contains('active')) closeWatchModal(); if(el.modalLogin.classList.contains('active')) closeLoginModal(); if(el.modalHistory.classList.contains('active')) closeHistoryModal(); if(el.modalEdit.classList.contains('active')) closeEditModal(false); });
+window.addEventListener('keydown', function(e){ if(e.key!=='Escape') return; if(el.modalDeleted && el.modalDeleted.classList.contains('active')){ closeDeletedModal(); return; } if(el.modalUserInfo && el.modalUserInfo.classList.contains('active')) closeUserInfoModal(); if(el.modalAppConfig && el.modalAppConfig.classList.contains('active')) closeAppConfigModal(); if(el.modalWatch && el.modalWatch.classList.contains('active')) closeWatchModal(); if(el.modalLogin.classList.contains('active')) closeLoginModal(); if(el.modalHistory.classList.contains('active')) closeHistoryModal(); if(el.modalEdit.classList.contains('active')) closeEditModal(false); });
 
 function togglePassVisibility(input, icon){
   if(input.type==='password'){
@@ -1604,7 +1502,7 @@ function updateLoginPill(){
 
 function setStatus(color,text){ el.statusDot.className='dot '+color; el.statusText.textContent=text; }
 function logDebug(v){ const s=typeof v==='string'?v:JSON.stringify(v,null,2); el.debugBox.value=s; el.m_debugBox.value=s; }
-function disableTop(flag){ [el.loginBtn,el.m_loginBtn,el.btnSaveJson,el.btnRestoreJson,el.btnClearAddons,el.btnCheckUpdates].forEach(b=>b.disabled=flag); }
+function disableTop(flag){ [el.loginBtn,el.m_loginBtn,el.btnSaveJson,el.btnRestoreJson,el.btnClearAddons,el.btnCheckUpdates,el.btnUpdateAll].forEach(b=>{ if(b) b.disabled=flag; }); }
 
 async function copyValue(value){
   try{
@@ -1765,8 +1663,8 @@ async function checkUpdates(){
     } catch(e){}
   }));
   el.btnCheckUpdates.disabled=false;
-  if(count>0){ setStatus('green',count+' mise(s) à jour !'); renderList(); }
-  else setStatus('green','Tous les addons sont à jour.');
+  if(count>0){ setStatus('green',count+' mise(s) à jour disponible(s) !'); renderList(); if(el.btnUpdateAll) el.btnUpdateAll.classList.remove('hidden'); }
+  else { setStatus('green','Tous les addons sont à jour.'); if(el.btnUpdateAll) el.btnUpdateAll.classList.add('hidden'); }
 }
 
 // SVGs
@@ -1818,6 +1716,16 @@ function deleteAddon(addon){
   }
 }
 function applyUpdate(addon){ if(!addon._hasUpdate) return; addon.manifest=addon._hasUpdate; addon._hasUpdate=null; renderList(); syncOrder(); }
+
+async function updateAll(){
+  const toUpdate = state.addons.filter(a => a._hasUpdate);
+  if(!toUpdate.length){ setStatus('orange','Aucune mise à jour à appliquer.'); return; }
+  toUpdate.forEach(addon=>{ addon.manifest=addon._hasUpdate; addon._hasUpdate=null; });
+  if(el.btnUpdateAll) el.btnUpdateAll.classList.add('hidden');
+  renderList();
+  await syncOrder();
+  setStatus('green', toUpdate.length+' addon(s) mis à jour !');
+}
 function toggleAddon(addon){
   addon._disabled=!addon._disabled;
   if(addon._disabled){ if(!addon.transportUrl.startsWith(DISABLED_PREFIX)) addon.transportUrl=DISABLED_PREFIX+encodeURIComponent(addon.transportUrl); }
@@ -1872,14 +1780,10 @@ function renderDeletedList(){
       </div>
       <div class="addon-actions" style="display:flex;flex-wrap:wrap;gap:8px;">
         <div class="action-btn btn-restore" title="Restaurer">↺</div>
-        <div class="action-btn btn-copy-url" title="Copier l'URL">⧉</div>
-        <div class="action-btn btn-copy-id" title="Copier l'ID">ID</div>
         <div style="flex:1;"></div>
         <div class="action-btn btn-forget" style="color:var(--ko);border-color:rgba(255,109,134,0.3);background:rgba(255,109,134,0.1);" title="Supprimer définitivement">✕</div>
       </div>`;
     card.querySelector('.btn-restore').addEventListener('click', ()=>restoreDeleted(addon));
-    card.querySelector('.btn-copy-url').addEventListener('click', ()=>navigator.clipboard.writeText(url));
-    card.querySelector('.btn-copy-id').addEventListener('click', ()=>navigator.clipboard.writeText(id));
     card.querySelector('.btn-forget').addEventListener('click', ()=>forgetDeleted(addon));
     el.deletedList.appendChild(card);
   });
