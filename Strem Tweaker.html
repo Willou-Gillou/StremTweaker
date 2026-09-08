@@ -1165,9 +1165,9 @@ function renderAppConfigTables(){
       var val;
       if(e[0] === 'deletedAddons'){
         // Afficher le JSON complet dans un bloc scrollable
-        val = '<pre style="margin:0;max-height:120px;overflow-y:auto;font-size:10px;white-space:pre-wrap;word-break:break-all;">'+JSON.stringify(e[1], null, 2)+'</pre>';
+        val = '<pre style="margin:0;max-height:120px;overflow-y:auto;font-size:10px;white-space:pre-wrap;word-break:break-all;">'+esc(JSON.stringify(e[1], null, 2))+'</pre>';
       } else {
-        val = '<span style="word-break:break-all;">'+JSON.stringify(e[1])+'</span>';
+        val = '<span style="word-break:break-all;">'+esc(JSON.stringify(e[1]))+'</span>';
       }
       return '<tr><td>'+e[0]+'</td><td>'+val+'</td></tr>';
     }).join('');
@@ -1238,7 +1238,7 @@ function renderUserInfo(u){
   function row(label, val){ return '<div class="user-info-row"><span class="user-info-label">'+label+'</span><span class="user-info-val">'+val+'</span></div>'; }
 
   var avatarHtml = u.avatar
-    ? '<img class="user-info-avatar" src="'+u.avatar+'" alt="avatar" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'grid\'"><div class="user-info-avatar-ph" style="display:none;">👤</div>'
+    ? '<img class="user-info-avatar" src="'+esc(u.avatar)+'" alt="avatar" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'grid\'"><div class="user-info-avatar-ph" style="display:none;">👤</div>'
     : '<div class="user-info-avatar-ph">👤</div>';
 
   var premiumHtml = '<span class="user-info-free">Gratuit</span>';
@@ -1256,17 +1256,17 @@ function renderUserInfo(u){
   var html = '<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line);">'
     + avatarHtml
     + '<div>'
-    + '<div style="font-size:16px;font-weight:700;margin-bottom:2px;">'+(u.fullname || (u.email ? u.email.split('@')[0] : '—'))+'</div>'
-    + (u.fullname && u.email ? '<div style="font-size:12px;color:var(--muted);">'+u.email+'</div>' : '')
+    + '<div style="font-size:16px;font-weight:700;margin-bottom:2px;">'+esc(u.fullname || (u.email ? u.email.split('@')[0] : '—'))+'</div>'
+    + (u.fullname && u.email ? '<div style="font-size:12px;color:var(--muted);">'+esc(u.email)+'</div>' : '')
     + '</div></div>';
 
-  html += row('Email', u.email || '—');
-  html += row('Nom complet', u.fullname || '—');
-  html += row('Inscription', fmt(u.dateRegistered || u.date_registered));
-  html += row('Dernière modif.', fmt(u.lastModified || u.last_modified));
+  html += row('Email', esc(u.email || '—'));
+  html += row('Nom complet', esc(u.fullname || '—'));
+  html += row('Inscription', esc(fmt(u.dateRegistered || u.date_registered)));
+  html += row('Dernière modif.', esc(fmt(u.lastModified || u.last_modified)));
   html += row('Premium', premiumHtml);
-  html += row('Langue', u.lang || '—');
-  html += row('ID', u._id || '—');
+  html += row('Langue', esc(u.lang || '—'));
+  html += row('ID', esc(u._id || '—'));
 
   el.userInfoBody.innerHTML = html;
 }
