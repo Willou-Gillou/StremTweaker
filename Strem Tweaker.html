@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V2.0.2</title>
+  <title>Strem Tweaker V2.0.3</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -272,7 +272,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </button>
         </div>
-        <span class="version-badge">V2.0.2</span>
+        <span class="version-badge">V2.0.3</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -423,6 +423,7 @@
         <button type="button" id="btnCloseHistoryModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
       </div>
       <div class="history-list">
+        <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.3</span></div><div class="history-note">Nettoyage : suppression du code mort (<code>renderAppConfig</code>, <code>exportLibraryConfig</code>, <code>razLibraryConfig</code>, remplacés depuis V4.7 par <code>renderAppConfigTables</code>/<code>exportRemoteConfig</code>/<code>razRemoteConfig</code>) et des déclarations dupliquées de <code>openDeletedModal</code>/<code>closeDeletedModal</code>/<code>openAppConfigModal</code>/<code>closeAppConfigModal</code>. Aucun changement fonctionnel.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.2</span></div><div class="history-note">Sécurité : correction de deux failles XSS stockées (échappement HTML manquant) dans les modals <em>Config appli</em> (dump JSON de <code>deletedAddons</code>) et <em>Infos utilisateur</em> (champs de profil Stremio : nom, email, langue, ID, avatar).</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.1</span></div><div class="history-note">Historique visionnage : suppression du filtre <code>removed:true</code> — de nombreux films visionnés ont ce flag dans Stremio sans avoir été supprimés. Seuls la config (<code>CONFIG_ID</code>) et les items supprimés dans la session courante sont exclus.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.0</span></div><div class="history-note"><b>Refonte majeure.</b> Synthèse de toutes les versions V1.7 → V5.9 :<br><br>
@@ -506,7 +507,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V2.0.2';
+const APP_VERSION = 'V2.0.3';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -1029,59 +1030,8 @@ async function importWatchJson(file){
     showWatchToast('Erreur pendant l\'import.', 'toast-err');
   }
 }
-// V4.1 — Export localStorage
 function openDeletedModal(){ renderDeletedList(); el.modalDeleted.classList.add('active'); }
 function closeDeletedModal(){ el.modalDeleted.classList.remove('active'); }
-
-function openDeletedModal(){ renderDeletedList(); el.modalDeleted.classList.add('active'); }
-function closeDeletedModal(){ el.modalDeleted.classList.remove('active'); }
-
-function openAppConfigModal(){ el.userDropdown.classList.add('hidden'); el.modalAppConfig.classList.add('active'); renderAppConfig(); }
-function closeAppConfigModal(){ el.modalAppConfig.classList.remove('active'); }
-
-async function renderAppConfig(){
-  var lsData = {};
-  try{ var raw=localStorage.getItem(STORAGE_KEY); if(raw) lsData=JSON.parse(raw); }catch(_){}
-  var remCfg = {};
-  if(state.authKey){
-    try{
-      var raw2=await watchTry('datastoreGet',{type:'DatastoreGet',authKey:state.authKey,collection:'libraryItem',ids:[CONFIG_ID],all:false});
-      var items=watchExtract(raw2);
-      var entry=items.find(function(i){ return (i._id||i.id)===CONFIG_ID; });
-      if(entry&&entry.config) remCfg=entry.config;
-    }catch(_){}
-  }
-  function maskVal(key,val){
-    if(val===undefined||val===null||val==='') return '<span style="color:var(--muted)">—</span>';
-    if(key==='authKey'&&typeof val==='string'&&val.length>8) return '<span style="font-family:monospace;font-size:11px;">'+val.substring(0,4)+'…'+val.slice(-4)+'</span>';
-    if(typeof val==='object') return '<span style="font-size:11px;color:var(--muted);">['+( Array.isArray(val)?val.length+' éléments':'objet')+']</span>';
-    return '<span>'+String(val)+'</span>';
-  }
-  var lsRows=Object.keys(lsData).map(function(k){ return '<tr><td style="color:var(--muted);font-size:11px;padding:6px 8px 6px 0;white-space:nowrap;">'+k+'</td><td style="padding:6px 0;font-size:12px;">'+maskVal(k,lsData[k])+'</td></tr>'; }).join('');
-  var remKeys=Object.keys(remCfg).filter(function(k){ return k!=='deletedAddons'; });
-  var remRows=remKeys.map(function(k){ return '<tr><td style="color:var(--muted);font-size:11px;padding:6px 8px 6px 0;white-space:nowrap;">'+k+'</td><td style="padding:6px 0;font-size:12px;">'+maskVal(k,remCfg[k])+'</td></tr>'; }).join('');
-  var deletedCount=Array.isArray(remCfg.deletedAddons)?remCfg.deletedAddons.length:0;
-  var html='<div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">LocalStorage</div>'
-    +'<table style="width:100%;border-collapse:collapse;margin-bottom:16px;">'+(lsRows||'<tr><td colspan="2" style="color:var(--muted);font-size:12px;padding:6px 0;">Vide</td></tr>')+'</table>'
-    +'<div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Config librairie Stremio</div>'
-    +'<table style="width:100%;border-collapse:collapse;margin-bottom:8px;">'+(remRows||'<tr><td colspan="2" style="color:var(--muted);font-size:12px;padding:6px 0;">—</td></tr>')
-    +'<tr><td style="color:var(--muted);font-size:11px;padding:6px 8px 6px 0;">deletedAddons</td><td style="font-size:12px;padding:6px 0;"><span style="color:var(--muted);">['+deletedCount+' addon'+(deletedCount!==1?'s':'')+']</span></td></tr></table>';
-  el.appConfigBody.innerHTML=html;
-}
-
-async function exportLibraryConfig(){
-  if(!state.authKey){ setStatus('orange','Non connecté.'); return; }
-  try{
-    var raw=await watchTry('datastoreGet',{type:'DatastoreGet',authKey:state.authKey,collection:'libraryItem',ids:[CONFIG_ID],all:false});
-    var items=watchExtract(raw);
-    var entry=items.find(function(i){ return (i._id||i.id)===CONFIG_ID; });
-    var ts=new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
-    var a=document.createElement('a');
-    a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(entry||{},null,2));
-    a.download='strem-tweaker-library-config-'+ts+'.json';
-    document.body.appendChild(a); a.click(); a.remove();
-  }catch(e){ setStatus('red','Export config librairie échoué.'); }
-}
 
 async function exportFullLibrary(){
   if(!state.authKey){ setStatus('orange','Non connecté.'); return; }
@@ -1115,18 +1065,6 @@ async function exportFullLibrary(){
     setStatus('green','✓ Librairie exportée (' + items.length + ' items).');
   }catch(e){ setStatus('red','Export librairie échoué.'); }
 }
-async function razLibraryConfig(){
-  if(!state.authKey){ setStatus('orange','Non connecté.'); return; }
-  if(!confirm('Effacer la config librairie Stremio ?\n(debugOpen, loginCollapsed, deletedAddons seront réinitialisés)')) return;
-  try{
-    await watchTry('datastorePut',{type:'DatastorePut',authKey:state.authKey,collection:'libraryItem',changes:[{_id:CONFIG_ID,name:'Strem Tweaker Config',type:'movie',removed:true,_mtime:new Date().toISOString()}]});
-    state.debugOpen=false; state.loginCollapsed=false; deletedAddons=[];
-    _lastRemoteCfg=null;
-    renderDeletedList(); renderAppConfigTables();
-    setStatus('green','Config librairie réinitialisée.');
-  }catch(e){ setStatus('red','RAZ config librairie échouée.'); }
-}
-
 function openAppConfigModal(){
   el.userDropdown.classList.add('hidden');
   el.modalAppConfig.classList.add('active');
