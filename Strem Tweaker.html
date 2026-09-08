@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V2.0.7</title>
+  <title>Strem Tweaker V2.0.8</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -112,6 +112,9 @@
     .addon-update-badge{flex:0 0 auto;font-size:10px;color:var(--wait);border:1px solid var(--wait);padding:2px 4px;border-radius:4px;white-space:nowrap;}
     .addon-dead-badge{flex:0 0 auto;font-size:10px;color:var(--ko);border:1px solid var(--ko);padding:2px 4px;border-radius:4px;white-space:nowrap;}
     .addon-dup-badge{flex:0 0 auto;font-size:10px;color:var(--blue);border:1px solid var(--blue);padding:2px 4px;border-radius:4px;white-space:nowrap;}
+    .addon-lock{flex:0 0 auto;display:inline-flex;align-items:center;color:rgba(255,255,255,.25);}
+    .addon-lock svg{width:13px;height:13px;}
+    .addon-lock.protected{color:var(--wait);}
     .addon-actions{display:none;align-items:center;gap:8px;padding:2px 8px 12px 46px;flex-wrap:wrap;width:100%;}
     .addon-card.expanded .addon-actions{display:flex;}
     .action-btn{flex:0 0 36px;width:36px;height:36px;display:grid;place-items:center;color:var(--blue);cursor:pointer;border-radius:10px;transition:background .2s,color .2s;background:rgba(125,168,255,0.08);border:1px solid rgba(125,168,255,0.1);}
@@ -276,7 +279,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </button>
         </div>
-        <span class="version-badge">V2.0.7</span>
+        <span class="version-badge">V2.0.8</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -427,6 +430,7 @@
         <button type="button" id="btnCloseHistoryModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
       </div>
       <div class="history-list">
+        <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.8</span></div><div class="history-note">Nouveau : icône de cadenas à côté de chaque addon indiquant s'il est marqué "protégé" par Stremio (<code>flags.protected</code>, ex. Cinemeta). Cadenas fermé = protégé, ouvert = non protégé. La suppression d'un addon protégé affiche désormais un avertissement explicite avant confirmation.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.7</span></div><div class="history-note">Nouveau : détection des addons injoignables (badge "⚠ Hors ligne", via le bouton "Vérifier les mises à jour") et des doublons (même ID d'addon installé plusieurs fois, badge "⧉ Doublon", détecté automatiquement). Détection uniquement — aucune suppression automatique.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.6</span></div><div class="history-note">Correction visuelle : le bouton "Annuler" de la modal d'édition utilisait la classe <code>ghost</code>, jamais stylée — il se confondait visuellement avec les boutons standards. Ajout d'un style transparent/discret pour bien le distinguer du bouton "Sauvegarder" (<code>primary</code>).</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.5</span></div><div class="history-note">Correction visuelle : les modals <em>Addons supprimés</em>, <em>Infos utilisateur</em> et <em>Config appli</em> utilisaient la classe CSS <code>modal-box</code>, jamais stylée (fond, bordure, padding et coins arrondis absents). Remplacée par <code>modal-card</code>, comme les autres modals.</div></div>
@@ -515,7 +519,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V2.0.7';
+const APP_VERSION = 'V2.0.8';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -1643,6 +1647,8 @@ const svgCross='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
 const svgUpdate='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>';
 const svgToTop='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 12 6 7 11"></polyline><line x1="12" y1="18" x2="12" y2="6"></line><line x1="4" y1="3" x2="20" y2="3"></line></svg>';
 const svgToBottom='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 13 12 18 17 13"></polyline><line x1="12" y1="6" x2="12" y2="18"></line><line x1="4" y1="21" x2="20" y2="21"></line></svg>';
+const svgLockClosed='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>';
+const svgLockOpen='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>';
 
 // Edit modal
 function showEditModal(title, label, value, cb){
@@ -1663,7 +1669,9 @@ function closeEditModal(save){
 // Addon actions
 function deleteAddon(addon){
   const t=(addon.manifest&&addon.manifest.name)||'cet addon';
-  if(confirm('Supprimer "'+t+'" ?')){
+  const isProtected=!!(addon.flags&&addon.flags.protected);
+  const msg=isProtected?'⚠️ "'+t+'" est marqué comme protégé par Stremio (addon officiel/système). Le supprimer quand même ?':'Supprimer "'+t+'" ?';
+  if(confirm(msg)){
     const i=state.addons.indexOf(addon);
     if(i>-1){
       // V4.3 — Ajouter à deletedAddons (comme hideAddon) pour apparaître dans la corbeille
@@ -1849,6 +1857,8 @@ function renderList(activeAddon){
     const versionBadge=version?`<span class="addon-version">${version}</span>`:'';
     const deadBadge=(addon._dead&&!addon._disabled)?`<span class="addon-dead-badge" title="manifest.json inaccessible lors de la dernière vérification">⚠ Hors ligne</span>`:'';
     const dupBadge=addon._duplicate?`<span class="addon-dup-badge" title="Cet ID d'addon est installé plusieurs fois">⧉ Doublon</span>`:'';
+    const isProtected=!!(addon.flags&&addon.flags.protected);
+    const lockIcon=`<span class="addon-lock${isProtected?' protected':''}" title="${isProtected?'Addon protégé (officiel Stremio)':'Addon non protégé'}">${isProtected?svgLockClosed:svgLockOpen}</span>`;
     card.innerHTML=`
       <div class="addon-main">
         <div class="rank">${index+1}</div>
@@ -1857,6 +1867,7 @@ function renderList(activeAddon){
           <div class="addon-title" title="${esc(title)}">${esc(title)}</div>
           ${versionBadge}${updateBadge}${deadBadge}${dupBadge}
         </div>
+        ${lockIcon}
         <div class="action-btn toggle-btn" title="Afficher/Masquer">${addon._disabled?svgEyeOff:svgEye}</div>
         <div class="drag-handle">${svgGrip}</div>
       </div>
