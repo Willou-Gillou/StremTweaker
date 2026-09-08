@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V2.0.3</title>
+  <title>Strem Tweaker V2.0.4</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -272,7 +272,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </button>
         </div>
-        <span class="version-badge">V2.0.3</span>
+        <span class="version-badge">V2.0.4</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -423,6 +423,7 @@
         <button type="button" id="btnCloseHistoryModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
       </div>
       <div class="history-list">
+        <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.4</span></div><div class="history-note">Nettoyage : le formulaire de connexion (panel principal + modal Paramètres) partage désormais une seule fonction de câblage (<code>bindLoginForm</code>) au lieu de deux copies dupliquées. Aucun changement fonctionnel.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.3</span></div><div class="history-note">Nettoyage : suppression du code mort (<code>renderAppConfig</code>, <code>exportLibraryConfig</code>, <code>razLibraryConfig</code>, remplacés depuis V4.7 par <code>renderAppConfigTables</code>/<code>exportRemoteConfig</code>/<code>razRemoteConfig</code>) et des déclarations dupliquées de <code>openDeletedModal</code>/<code>closeDeletedModal</code>/<code>openAppConfigModal</code>/<code>closeAppConfigModal</code>. Aucun changement fonctionnel.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.2</span></div><div class="history-note">Sécurité : correction de deux failles XSS stockées (échappement HTML manquant) dans les modals <em>Config appli</em> (dump JSON de <code>deletedAddons</code>) et <em>Infos utilisateur</em> (champs de profil Stremio : nom, email, langue, ID, avatar).</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.1</span></div><div class="history-note">Historique visionnage : suppression du filtre <code>removed:true</code> — de nombreux films visionnés ont ce flag dans Stremio sans avoir été supprimés. Seuls la config (<code>CONFIG_ID</code>) et les items supprimés dans la session courante sont exclus.</div></div>
@@ -507,7 +508,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V2.0.3';
+const APP_VERSION = 'V2.0.4';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -565,12 +566,23 @@ async function init(){
   }
 }
 
+// Câble un formulaire de connexion (champs + bouton + boutons afficher/copier AuthKey).
+// Partagé entre le panel principal et la modal Paramètres pour éviter que les deux
+// copies divergent (cause des 2 XSS corrigées en V2.0.2 : un correctif appliqué
+// à une seule des deux copies).
+function bindLoginForm(fields, onSubmit){
+  fields.loginBtn.addEventListener('click', onSubmit);
+  [fields.email, fields.password, fields.authKey].forEach(i => i.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); onSubmit(); } }));
+  fields.toggleAuthKey.addEventListener('click', () => togglePassVisibility(fields.authKey, fields.toggleAuthKey));
+  fields.copyAuthKeyIcon.addEventListener('click', () => copyValue(fields.authKey.value));
+}
+
 function bind(){
   // Main login form
-  el.loginBtn.addEventListener('click', () => loginAndGetKey(el.email.value, el.password.value, el.authKey.value));
-  [el.email, el.password, el.authKey].forEach(i => i.addEventListener('keydown', e => { if(e.key==='Enter'){e.preventDefault(); loginAndGetKey(el.email.value, el.password.value, el.authKey.value);} }));
-  el.toggleAuthKey.addEventListener('click', () => togglePassVisibility(el.authKey, el.toggleAuthKey));
-  el.copyAuthKeyIcon.addEventListener('click', () => copyValue(el.authKey.value));
+  bindLoginForm(
+    { email: el.email, password: el.password, authKey: el.authKey, loginBtn: el.loginBtn, toggleAuthKey: el.toggleAuthKey, copyAuthKeyIcon: el.copyAuthKeyIcon },
+    () => loginAndGetKey(el.email.value, el.password.value, el.authKey.value)
+  );
   el.debugToggle.addEventListener('click', () => { state.debugOpen=!state.debugOpen; renderDebug(state.debugOpen, el.debugWrap, el.debugToggle); saveLocal(); saveRemoteConfig(); });
   $('loginHead').addEventListener('click', e => {
     if(e.target.closest('button')||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
@@ -581,10 +593,10 @@ function bind(){
   });
 
   // Modal connexion form
-  el.m_loginBtn.addEventListener('click', () => { loginAndGetKey(el.m_email.value, el.m_password.value, el.m_authKey.value); closeLoginModal(); });
-  [el.m_email, el.m_password, el.m_authKey].forEach(i => i.addEventListener('keydown', e => { if(e.key==='Enter'){e.preventDefault(); loginAndGetKey(el.m_email.value, el.m_password.value, el.m_authKey.value); closeLoginModal();} }));
-  el.m_toggleAuthKey.addEventListener('click', () => togglePassVisibility(el.m_authKey, el.m_toggleAuthKey));
-  el.m_copyAuthKey.addEventListener('click', () => copyValue(el.m_authKey.value));
+  bindLoginForm(
+    { email: el.m_email, password: el.m_password, authKey: el.m_authKey, loginBtn: el.m_loginBtn, toggleAuthKey: el.m_toggleAuthKey, copyAuthKeyIcon: el.m_copyAuthKey },
+    () => { loginAndGetKey(el.m_email.value, el.m_password.value, el.m_authKey.value); closeLoginModal(); }
+  );
   el.m_debugToggle.addEventListener('click', () => { const open = el.m_debugWrap.classList.toggle('hidden'); el.m_debugToggle.textContent = open ? 'Masquer debug' : 'Afficher debug'; });
   el.btnCloseLoginModal.addEventListener('click', closeLoginModal);
   el.modalLogin.addEventListener('click', e => { if(e.target===el.modalLogin) closeLoginModal(); });
