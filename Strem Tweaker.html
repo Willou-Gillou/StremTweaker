@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V2.0.8</title>
+  <title>Strem Tweaker V2.0.9</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -279,7 +279,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </button>
         </div>
-        <span class="version-badge">V2.0.8</span>
+        <span class="version-badge">V2.0.9</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -430,6 +430,7 @@
         <button type="button" id="btnCloseHistoryModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
       </div>
       <div class="history-list">
+        <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.9</span></div><div class="history-note">Nouveau : "Tout mettre à jour" télécharge désormais une sauvegarde JSON automatique avant d'appliquer les mises à jour (même filet de sécurité que la RAZ complète des addons). Une mise à jour peut changer le comportement d'un addon sans avertissement — ce backup permet de revenir en arrière via "Restaurer (JSON)".</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.8</span></div><div class="history-note">Nouveau : icône de cadenas à côté de chaque addon indiquant s'il est marqué "protégé" par Stremio (<code>flags.protected</code>, ex. Cinemeta). Cadenas fermé = protégé, ouvert = non protégé. La suppression d'un addon protégé affiche désormais un avertissement explicite avant confirmation.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.7</span></div><div class="history-note">Nouveau : détection des addons injoignables (badge "⚠ Hors ligne", via le bouton "Vérifier les mises à jour") et des doublons (même ID d'addon installé plusieurs fois, badge "⧉ Doublon", détecté automatiquement). Détection uniquement — aucune suppression automatique.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.6</span></div><div class="history-note">Correction visuelle : le bouton "Annuler" de la modal d'édition utilisait la classe <code>ghost</code>, jamais stylée — il se confondait visuellement avec les boutons standards. Ajout d'un style transparent/discret pour bien le distinguer du bouton "Sauvegarder" (<code>primary</code>).</div></div>
@@ -519,7 +520,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V2.0.8';
+const APP_VERSION = 'V2.0.9';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -1574,20 +1575,28 @@ function importAddons(evt){
 }
 
 // V3.4 — Supprime tous les addons du compte avec sauvegarde automatique préalable.
+// V2.0.9 — Backup JSON auto avant une action qui remplace/efface des addons sans
+// possibilité de retour en arrière côté Stremio (RAZ complète, mises à jour groupées).
+function downloadAddonsBackup(labelSuffix){
+  try{
+    const a = document.createElement('a');
+    const ts = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
+    a.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(state.addons, null, 2));
+    a.download = 'stremio-addons-backup-' + (labelSuffix ? labelSuffix+'-' : '') + ts + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    return true;
+  }catch(e){ return false; }
+}
+
 async function clearAllAddons(){
   if(!state.authKey){ setStatus('orange','Connecte-toi d\'abord.'); return; }
   if(!state.addons || !state.addons.length){ setStatus('orange','Aucun addon à supprimer.'); return; }
   if(!confirm('⚠️ Supprimer TOUS les addons du compte ?\n\nUne sauvegarde JSON sera téléchargée automatiquement avant la suppression.\n\nContinuer ?')) return;
 
   // 1) Sauvegarde automatique avant toute suppression
-  try{
-    const a = document.createElement('a');
-    const ts = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
-    a.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(state.addons, null, 2));
-    a.download = 'stremio-addons-backup-' + ts + '.json';
-    document.body.appendChild(a); a.click(); a.remove();
+  if(downloadAddonsBackup('before-clear')){
     setStatus('orange', 'Sauvegarde téléchargée. Suppression en cours…');
-  }catch(e){
+  }else{
     setStatus('red', 'Échec de la sauvegarde, suppression annulée.');
     return;
   }
@@ -1694,11 +1703,14 @@ function applyUpdate(addon){ if(!addon._hasUpdate) return; addon.manifest=addon.
 async function updateAll(){
   const toUpdate = state.addons.filter(a => a._hasUpdate);
   if(!toUpdate.length){ setStatus('orange','Aucune mise à jour à appliquer.'); return; }
+  // V2.0.9 — Backup auto : une mise à jour d'addon peut changer son comportement
+  // (catalogues, métadonnées...) sans avertissement ; ça permet de revenir en arrière.
+  const backedUp = downloadAddonsBackup('before-update-all');
   toUpdate.forEach(addon=>{ addon.manifest=addon._hasUpdate; addon._hasUpdate=null; });
   if(el.btnUpdateAll) el.btnUpdateAll.classList.add('hidden');
   renderList();
   await syncOrder();
-  setStatus('green', toUpdate.length+' addon(s) mis à jour !');
+  setStatus('green', toUpdate.length+' addon(s) mis à jour !'+(backedUp?' Backup pré-mise à jour téléchargé.':''));
 }
 function toggleAddon(addon){
   addon._disabled=!addon._disabled;
