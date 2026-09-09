@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V2.0.13</title>
+  <title>Strem Tweaker V2.0.14</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -278,7 +278,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </button>
         </div>
-        <span class="version-badge">V2.0.13</span>
+        <span class="version-badge">V2.0.14</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -400,7 +400,7 @@
         <h3 style="margin:0;">Points de sauvegarde</h3>
         <button type="button" id="btnCloseSnapshotsModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
       </div>
-      <p class="sub" style="margin-bottom:12px;">Créés manuellement, stockés dans ce navigateur (localStorage). Restaurer remplace la liste actuelle d'addons — un point de sauvegarde de l'état présent est créé automatiquement avant.</p>
+      <p class="sub" style="margin-bottom:12px;">Créés manuellement, synchronisés via ton compte Stremio (multi-appareils, limité aux 5 plus récents). Restaurer remplace la liste actuelle d'addons — un point de sauvegarde de l'état présent est créé automatiquement avant.</p>
       <div class="actions" style="margin-bottom:14px;"><button id="btnCreateSnapshot" class="primary" type="button">+ Créer un point de sauvegarde</button></div>
       <div id="snapshotsList" class="list" style="max-height:50dvh;overflow-y:auto;"></div>
       <div id="snapshotsEmpty" class="muted" style="text-align:center;padding:24px;display:none;">Aucun point de sauvegarde.</div>
@@ -446,6 +446,7 @@
         <button type="button" id="btnCloseHistoryModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
       </div>
       <div class="history-list">
+        <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.14</span></div><div class="history-note">Les points de sauvegarde sont désormais synchronisés via ton compte Stremio (multi-appareils) au lieu du localStorage, dans une entrée de librairie dédiée et séparée de la config principale — pour ne jamais risquer de casser la synchro des addons supprimés/verrouillés si les sauvegardes grossissent. Limité aux 5 plus récentes. Migration automatique et transparente des points déjà créés localement.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.13</span></div><div class="history-note">Corrections points de sauvegarde : le titre n'est plus barré (réutilisait par erreur le style des addons supprimés) ; la restauration ne crée plus de sauvegarde automatique fantôme à 0 addon quand la liste actuelle est déjà vide.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.12</span></div><div class="history-note">Nouveau : section "Où sont stockées mes données ?" dans Paramètres (légende expliquant l'emplacement de chaque réglage : localStorage vs bibliothèque Stremio). Nouveau : Points de sauvegarde (icône dans la toolbar addons) — snapshots nommés créés à la demande, stockés dans ce navigateur, restaurables en un clic (avec sauvegarde automatique de l'état courant avant restauration).</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.11</span></div><div class="history-note">La position d'un addon verrouillé est désormais protégée de façon absolue : plus aucun autre addon ne peut prendre sa place, même en glissant un autre addon par-dessus (avant, la position pouvait décaler d'un cran par effet de bord). Un addon qui tente de "passer devant" un addon verrouillé est automatiquement redirigé juste avant lui, et tout ce qui se trouvait entre les deux se décale en conséquence.</div></div>
@@ -544,19 +545,25 @@
           <div class="user-info-row"><span class="user-info-label">Addons verrouillés (cadenas)</span><span class="user-info-val">Bibliothèque Stremio — multi-appareils</span></div>
           <div class="user-info-row"><span class="user-info-label">Debug affiché / panel réduit</span><span class="user-info-val">Bibliothèque Stremio — multi-appareils</span></div>
           <div class="user-info-row"><span class="user-info-label">Historique de visionnage</span><span class="user-info-val">Bibliothèque Stremio (natif, géré par Stremio)</span></div>
-          <div class="user-info-row"><span class="user-info-label">Points de sauvegarde</span><span class="user-info-val">localStorage du navigateur (cet appareil)</span></div>
+          <div class="user-info-row"><span class="user-info-label">Points de sauvegarde</span><span class="user-info-val">Bibliothèque Stremio — multi-appareils (5 plus récents)</span></div>
         </div>
       </div>
     </div>
   </div>
 
 <script>
-const APP_VERSION = 'V2.0.13';
+const APP_VERSION = 'V2.0.14';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
 const CONFIG_ID = 'strem-tweaker-config'; // ID de l'entrée de config dans la librairie Stremio
-const SNAPSHOTS_KEY = 'strem-tweaker-snapshots'; // V2.0.12 — points de sauvegarde, stockés localement (cet appareil)
+// V2.0.14 — Les points de sauvegarde ont leur PROPRE entrée de librairie Stremio (isolée de
+// CONFIG_ID) pour que leur taille ne puisse jamais mettre en péril la sync de deletedAddons/
+// lockedAddonIds/debugOpen si elle grossit. MAX_SNAPSHOTS borne le nombre conservé (les plus
+// anciens sont supprimés automatiquement) pour éviter un champ "name" trop volumineux côté API.
+const SNAPSHOTS_ID = 'strem-tweaker-snapshots';
+const MAX_SNAPSHOTS = 5;
+const SNAPSHOTS_LOCAL_KEY = 'strem-tweaker-snapshots'; // V2.0.12/13 — ancien stockage local, lu une fois pour migration puis abandonné
 const FALLBACK_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMykiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTkuNDM5IDE4LjUzMkExMCAxMCAwIDAgMSAzLjQ2NSAxNCIvPjxwYXRoIGQ9Ik0xOS40MzkgNS40NjhBMTAgMTAgMCAwIDEgMjAuNTM1IDEwIi8+PHBhdGggZD0iTTQuNTYxIDUuNDY4QTEwIDEwIDAgMCAxIDEyIDIiLz48cGF0aCBkPSJNMTIgMjJhMTAgMTAgMCAwIDEtNy40MzktNC41NjgiLz48cGF0aCBkPSJNMTEgMTJoMiIvPjxwYXRoIGQ9Ik0xMiAxMXYyIi8+PC9zdmc+';
 
 const state = { email:'', password:'', authKey:'', addons:[], syncing:false, debugOpen:false, dragItem:null, dragClone:null, dragOffsetY:0, dragChanged:false, lastPointerY:0, scrollSpeed:0 };
@@ -604,7 +611,6 @@ init();
 
 async function init(){
   loadLocal();
-  loadSnapshots();
   bind();
   hydrateForms();
   updateLoginPill();
@@ -615,6 +621,7 @@ async function init(){
     // V5.0 — CRITIQUE : charger la config distante avant que toute interaction
     // ne déclenche un saveRemoteConfig qui écraserait la config avec des valeurs vides.
     await loadRemoteConfig();
+    await loadSnapshotsRemote();
   }
 }
 
@@ -1101,15 +1108,63 @@ async function importWatchJson(file){
 function openDeletedModal(){ renderDeletedList(); el.modalDeleted.classList.add('active'); }
 function closeDeletedModal(){ el.modalDeleted.classList.remove('active'); }
 
-// V2.0.12 — Points de sauvegarde : snapshots nommés de state.addons, stockés en
-// localStorage (cet appareil), créés/restaurés/supprimés depuis leur propre modal.
-function loadSnapshots(){
-  try{ const raw=localStorage.getItem(SNAPSHOTS_KEY); snapshots = raw ? JSON.parse(raw) : []; }
-  catch(_){ snapshots = []; }
+// V2.0.14 — Points de sauvegarde : snapshots nommés de state.addons, synchronisés dans
+// une entrée de librairie Stremio DÉDIÉE (SNAPSHOTS_ID, distincte de CONFIG_ID) pour ne
+// jamais risquer de casser la sync de deletedAddons/lockedAddonIds/debugOpen si les
+// snapshots grossissent. Plafonnés à MAX_SNAPSHOTS (les plus anciens sont abandonnés).
+var _lastSnapshotsCfg = null;
+
+async function fetchSnapshotsEntry(){
+  function decode(entry){
+    if(!entry||typeof entry.name!=='string'||entry.name.indexOf('STREM_TWEAKER_SNAP_v1::')!==0) return null;
+    try{ return JSON.parse(entry.name.substring('STREM_TWEAKER_SNAP_v1::'.length)); }catch(e){ return null; }
+  }
+  function findEntry(raw){
+    if(!raw) return null;
+    var items=watchExtract(raw);
+    if(!items.length&&raw&&typeof raw==='object') items=Object.values(raw).filter(function(x){ return x&&typeof x==='object'&&(x._id||x.id); });
+    return items.find(function(i){ return (i._id||i.id)===SNAPSHOTS_ID; })||null;
+  }
+  var raw1=await watchTry('datastoreGet',{type:'DatastoreGet',authKey:state.authKey,collection:'libraryItem',ids:[SNAPSHOTS_ID],all:false});
+  var decoded=decode(findEntry(raw1));
+  if(decoded) return decoded;
+  var raw2=await watchTry('datastoreGet',{type:'DatastoreGet',authKey:state.authKey,collection:'libraryItem',ids:[],all:true});
+  return decode(findEntry(raw2));
 }
-function saveSnapshots(){
-  try{ localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(snapshots)); }catch(_){}
+
+async function saveSnapshotsRemote(){
+  if(!state.authKey) return;
+  if(snapshots.length>MAX_SNAPSHOTS) snapshots=snapshots.slice(0,MAX_SNAPSHOTS);
+  var payload=JSON.stringify(snapshots);
+  if(payload===_lastSnapshotsCfg) return;
+  _lastSnapshotsCfg=payload;
+  try{
+    await watchTry('datastorePut',{type:'DatastorePut',authKey:state.authKey,collection:'libraryItem',changes:[{
+      _id:SNAPSHOTS_ID, name:'STREM_TWEAKER_SNAP_v1::'+payload, type:'movie', removed:false, _mtime:new Date().toISOString()
+    }]});
+  }catch(e){}
 }
+
+async function loadSnapshotsRemote(){
+  if(!state.authKey) return;
+  try{
+    var remote=await fetchSnapshotsEntry();
+    if(Array.isArray(remote)){
+      snapshots=remote;
+    }else{
+      // Migration depuis l'ancien stockage local (V2.0.12/13), une seule fois.
+      var legacy=[];
+      try{ var raw=localStorage.getItem(SNAPSHOTS_LOCAL_KEY); legacy=raw?JSON.parse(raw):[]; }catch(_){}
+      snapshots=Array.isArray(legacy)?legacy:[];
+    }
+    if(snapshots.length>MAX_SNAPSHOTS) snapshots=snapshots.slice(0,MAX_SNAPSHOTS);
+    _lastSnapshotsCfg=null; // forcer l'écriture (première utilisation, migration ou troncature)
+    await saveSnapshotsRemote();
+    try{ localStorage.removeItem(SNAPSHOTS_LOCAL_KEY); }catch(_){}
+    renderSnapshotsList();
+  }catch(e){}
+}
+
 function makeSnapshot(label){
   return { id: Date.now()+'-'+Math.random().toString(36).slice(2,8), label: label, createdAt: new Date().toISOString(), addons: JSON.parse(JSON.stringify(state.addons)) };
 }
@@ -1117,13 +1172,15 @@ function openSnapshotsModal(){ el.userDropdown.classList.add('hidden'); renderSn
 function closeSnapshotsModal(){ el.modalSnapshots.classList.remove('active'); }
 
 function createSnapshot(){
+  if(!state.authKey){ setStatus('orange','Connecte-toi d\'abord.'); return; }
   if(!state.addons||!state.addons.length){ setStatus('orange','Aucun addon à sauvegarder.'); return; }
   const label=(prompt('Nom du point de sauvegarde (optionnel) :','')||'').trim()||('Sauvegarde du '+new Date().toLocaleString('fr-FR'));
   const snap=makeSnapshot(label);
   snapshots.unshift(snap);
-  saveSnapshots();
+  const dropped=snapshots.length>MAX_SNAPSHOTS;
+  saveSnapshotsRemote();
   renderSnapshotsList();
-  setStatus('green','Point de sauvegarde créé : '+label);
+  setStatus('green','Point de sauvegarde créé : '+label+(dropped?' (le plus ancien a été retiré, limite de '+MAX_SNAPSHOTS+')':''));
 }
 
 function restoreSnapshot(id){
@@ -1135,7 +1192,7 @@ function restoreSnapshot(id){
   // V2.0.13 — Pas de snapshot de sécurité vide : rien à sauvegarder si la liste actuelle est déjà vide.
   if(hasCurrent) snapshots.unshift(makeSnapshot('Avant restauration de « '+snap.label+' »'));
   state.addons=JSON.parse(JSON.stringify(snap.addons));
-  saveSnapshots();
+  saveSnapshotsRemote();
   renderList();
   renderSnapshotsList();
   syncOrder();
@@ -1147,7 +1204,7 @@ function deleteSnapshot(id){
   if(!snap) return;
   if(!confirm('Supprimer définitivement le point de sauvegarde "'+snap.label+'" ?')) return;
   snapshots=snapshots.filter(s=>s.id!==id);
-  saveSnapshots();
+  saveSnapshotsRemote();
   renderSnapshotsList();
 }
 
@@ -1625,6 +1682,7 @@ async function loginAndGetKey(email, password, authKeyValue){
     await fetchUserEmail();
     await loadAddons();
     await loadRemoteConfig();
+    await loadSnapshotsRemote();
     return;
   }
   email=(email||'').trim(); password=password||'';
@@ -1640,6 +1698,7 @@ async function loginAndGetKey(email, password, authKeyValue){
     setStatus('green','Connecté. Chargement des addons...');
     await loadAddons();
     await loadRemoteConfig();
+    await loadSnapshotsRemote();
   } catch(err){
     state.authKey=''; saveLocal(); updateLoginPill(); renderLoginState();
     setStatus('red','Erreur : '+(err.message||'échec'));
