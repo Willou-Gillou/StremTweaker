@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V2.1.7</title>
+  <title>Strem Tweaker V2.1.8</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -284,7 +284,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </button>
         </div>
-        <span class="version-badge" id="versionBadge" title="Recharger la page" style="cursor:pointer;">V2.1.7</span>
+        <span class="version-badge" id="versionBadge" title="Recharger la page" style="cursor:pointer;">V2.1.8</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -452,6 +452,7 @@
         <button type="button" id="btnCloseHistoryModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
       </div>
       <div class="history-list">
+        <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.8</span></div><div class="history-note">Correction : après un échec réseau transitoire pendant une resynchronisation en arrière-plan (typiquement "Load failed" sur Safari, ex. juste après "Tout mettre à jour"), la liste d'addons déjà affichée était effacée et le panel masqué, même si les addons existaient toujours côté Stremio. La liste précédente est désormais conservée dans ce cas (avec message d'erreur explicite), au lieu d'un écran vide.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.7</span></div><div class="history-note">Le numéro de version (en haut à droite) est maintenant cliquable et recharge la page.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.6</span></div><div class="history-note">"Tout mettre à jour" affichait "X addon(s) mis à jour !" en vert même si la synchronisation avec Stremio avait échoué derrière, masquant un vrai problème. Le message reflète désormais le résultat réel (échec de sync, ou liste d'addons vide après coup → message rouge avec indication de restaurer le backup). Les notifications de téléchargement JSON précisent maintenant "dossier Téléchargements du navigateur".</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.5</span></div><div class="history-note">Un addon verrouillé ne peut plus être développé du tout (la carte reste fermée et ignore le clic) — corrige la V2.1.4 qui allait dans le mauvais sens. Verrouiller un addon actuellement développé le referme immédiatement. Déverrouiller ne le rouvre pas automatiquement.</div></div>
@@ -576,7 +577,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V2.1.7';
+const APP_VERSION = 'V2.1.8';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -1808,6 +1809,12 @@ function clearAll(){
 // cas d'échec, plutôt que de le laisser bloqué sur un écran vide (voir loginAndGetKey/init).
 async function loadAddons(){
   if(!state.authKey){ setStatus('red','AuthKey manquante.'); el.addonsCard.classList.add('hidden'); return false; }
+  // V2.1.8 — loadAddons() est aussi appelée en arrière-plan par syncOrder() après un
+  // échec de sync, pour re-synchroniser l'état réel. Si CETTE tentative échoue à son
+  // tour (ex: "Load failed" de Safari sur un hoquet réseau transitoire), on ne doit
+  // pas effacer une liste déjà affichée — ça remplaçait un pépin passager par un
+  // écran vide durable (cf. cas rapporté après une mise à jour groupée).
+  const hadAddons=state.addons.length>0;
   setStatus('orange','Chargement des addons...'); disableTop(true);
   let ok=true;
   try{
@@ -1824,8 +1831,12 @@ async function loadAddons(){
     setStatus('green',state.addons.length?'Addons synchronisés.':'Aucun addon trouvé.');
   } catch(err){
     ok=false;
-    state.addons=[]; renderList(); el.addonsCard.classList.add('hidden');
-    setStatus('red','Erreur : '+(err.message||'échec'));
+    if(hadAddons){
+      setStatus('red','Erreur : '+(err.message||'échec')+' — liste précédente conservée (peut-être obsolète). Recharge la page (icône version) pour vérifier.');
+    } else {
+      state.addons=[]; renderList(); el.addonsCard.classList.add('hidden');
+      setStatus('red','Erreur : '+(err.message||'échec'));
+    }
   } finally{ disableTop(false); }
   return ok;
 }
