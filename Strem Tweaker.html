@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V2.1.10</title>
+  <title>Strem Tweaker V2.1.11</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -284,7 +284,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </button>
         </div>
-        <span class="version-badge" id="versionBadge" title="Recharger la page" style="cursor:pointer;">V2.1.10</span>
+        <span class="version-badge" id="versionBadge" title="Recharger la page" style="cursor:pointer;">V2.1.11</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -452,6 +452,7 @@
         <button type="button" id="btnCloseHistoryModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
       </div>
       <div class="history-list">
+        <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.11</span></div><div class="history-note">Correction : en mode "écran d'accueil" (app ajoutée à l'écran d'accueil sur iOS), Safari retire toute son interface de navigateur — y compris le gestionnaire de téléchargements — et les sauvegardes JSON (backup addons, export bibliothèque, config distante, localStorage) ne se téléchargeaient plus du tout, sans message d'erreur. Toutes les sauvegardes utilisent désormais le Partage natif dans ce mode, qui fonctionne en "écran d'accueil" et permet en plus de choisir où enregistrer le fichier (ex. "Enregistrer dans Fichiers").</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.10</span></div><div class="history-note">Le nom exact du fichier de backup (avant mise à jour groupée ou avant suppression de tous les addons) est désormais affiché dans la notification. Une page web ne peut pas ouvrir le dossier Téléchargements du navigateur pour des raisons de sécurité (restriction imposée par tous les navigateurs), mais connaître le nom exact permet de le retrouver facilement via une recherche de fichiers.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.9</span></div><div class="history-note">Nouvelle tentative automatique (jusqu'à 2 fois, avec courte pause) sur tous les appels à l'API Stremio en cas d'échec réseau transitoire ("Load failed"), avant d'abandonner et d'afficher une erreur. Objectif : que ces hoquets passagers redeviennent invisibles au lieu de déclencher un message d'erreur, comme c'était le cas avant les derniers ajouts.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.8</span></div><div class="history-note">Correction : après un échec réseau transitoire pendant une resynchronisation en arrière-plan (typiquement "Load failed" sur Safari, ex. juste après "Tout mettre à jour"), la liste d'addons déjà affichée était effacée et le panel masqué, même si les addons existaient toujours côté Stremio. La liste précédente est désormais conservée dans ce cas (avec message d'erreur explicite), au lieu d'un écran vide.</div></div>
@@ -579,7 +580,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V2.1.10';
+const APP_VERSION = 'V2.1.11';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -1295,6 +1296,37 @@ function renderSnapshotsList(){
   });
 }
 
+// V2.1.11 — Téléchargement/partage unifié pour tous les exports JSON de l'app. En mode
+// "écran d'accueil" (PWA standalone), Safari retire toute son interface de navigateur, y
+// compris le gestionnaire de téléchargements : <a download> ne fait alors plus rien du
+// tout (silencieusement, sans erreur). On utilise dans ce cas le Partage natif (Web Share
+// API), qui fonctionne en standalone et laisse en prime choisir où enregistrer le fichier
+// (ex. "Enregistrer dans Fichiers"). Le lien <a download> classique reste utilisé partout
+// ailleurs (Safari normal, desktop, autres navigateurs). Retourne le nom du fichier en cas
+// de succès (utile pour l'afficher dans les notifications), ou null en cas d'échec.
+async function downloadOrShareJson(filename, jsonString){
+  const isStandalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  if(isStandalone && navigator.share && navigator.canShare){
+    try{
+      const file = new File([jsonString], filename, {type:'application/json'});
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({files:[file], title: filename});
+        return filename;
+      }
+    }catch(e){
+      if(e && e.name === 'AbortError') return null; // partage annulé par l'utilisateur
+      // sinon : on retente via le téléchargement classique ci-dessous
+    }
+  }
+  try{
+    const a = document.createElement('a');
+    a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonString);
+    a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    return filename;
+  }catch(e){ return null; }
+}
+
 async function exportFullLibrary(){
   if(!state.authKey){ setStatus('orange','Non connecté.'); return; }
   setStatus('orange','Chargement de la librairie…');
@@ -1320,11 +1352,10 @@ async function exportFullLibrary(){
       totalItems: items.length,
       items: items
     };
-    var a = document.createElement('a');
-    a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(payload, null, 2));
-    a.download = 'stremio-library-full-' + ts + '.json';
-    document.body.appendChild(a); a.click(); a.remove();
-    setStatus('green','✓ Librairie exportée (' + items.length + ' items, dossier Téléchargements du navigateur).');
+    var filename = 'stremio-library-full-' + ts + '.json';
+    var saved = await downloadOrShareJson(filename, JSON.stringify(payload, null, 2));
+    if(saved) setStatus('green','✓ Librairie exportée : '+saved+' (' + items.length + ' items).');
+    else setStatus('red','Export librairie échoué (ou partage annulé).');
   }catch(e){ setStatus('red','Export librairie échoué.'); }
 }
 function openAppConfigModal(){
@@ -1428,10 +1459,8 @@ async function exportRemoteConfig(){
   var cfg = await fetchRemoteConfigEntry();
   cfg = cfg || {};
   var ts = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
-  var a = document.createElement('a');
-  a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(cfg, null, 2));
-  a.download = 'strem-tweaker-remote-config-' + ts + '.json';
-  document.body.appendChild(a); a.click(); a.remove();
+  var filename = 'strem-tweaker-remote-config-' + ts + '.json';
+  await downloadOrShareJson(filename, JSON.stringify(cfg, null, 2));
 }
 
 async function razRemoteConfig(){
@@ -1508,15 +1537,13 @@ function renderUserInfo(u){
   el.userInfoBody.innerHTML = html;
 }
 
-function exportLocalStorage(){
+async function exportLocalStorage(){
   try{
     var data = localStorage.getItem(STORAGE_KEY);
     var payload = data ? JSON.parse(data) : {};
     var ts = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
-    var a = document.createElement('a');
-    a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(payload, null, 2));
-    a.download = 'strem-tweaker-localstorage-' + ts + '.json';
-    document.body.appendChild(a); a.click(); a.remove();
+    var filename = 'strem-tweaker-localstorage-' + ts + '.json';
+    await downloadOrShareJson(filename, JSON.stringify(payload, null, 2));
   }catch(e){ setStatus('red','Export localStorage échoué.'); }
 }
 
@@ -1859,13 +1886,11 @@ async function loadAddons(){
   return ok;
 }
 
-function exportAddons(){
+async function exportAddons(){
   if(!state.addons||!state.addons.length) return setStatus('orange','Rien à sauvegarder.');
-  const a=document.createElement('a');
-  a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(state.addons,null,2));
-  a.download="stremio-addons-backup.json";
-  document.body.appendChild(a); a.click(); a.remove();
-  setStatus('green','Backup JSON téléchargé (dossier Téléchargements du navigateur).');
+  const saved = await downloadOrShareJson('stremio-addons-backup.json', JSON.stringify(state.addons,null,2));
+  if(saved) setStatus('green','Backup JSON effectué : '+saved+'.');
+  else setStatus('red','Échec de la sauvegarde (ou partage annulé).');
 }
 
 function importAddons(evt){
@@ -1889,16 +1914,12 @@ function importAddons(evt){
 // appelants puissent l'afficher dans leur notification : impossible d'ouvrir le dossier
 // de téléchargement depuis une page web (restriction de sécurité du navigateur), mais
 // connaître le nom exact permet de le retrouver facilement (recherche de fichiers).
-function downloadAddonsBackup(labelSuffix){
-  try{
-    const a = document.createElement('a');
-    const ts = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
-    const filename = 'stremio-addons-backup-' + (labelSuffix ? labelSuffix+'-' : '') + ts + '.json';
-    a.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(state.addons, null, 2));
-    a.download = filename;
-    document.body.appendChild(a); a.click(); a.remove();
-    return filename;
-  }catch(e){ return null; }
+// V2.1.11 — Utilise désormais downloadOrShareJson() (voir plus haut) pour fonctionner
+// aussi en mode "écran d'accueil" (PWA standalone), où <a download> seul ne fait rien.
+async function downloadAddonsBackup(labelSuffix){
+  const ts = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
+  const filename = 'stremio-addons-backup-' + (labelSuffix ? labelSuffix+'-' : '') + ts + '.json';
+  return downloadOrShareJson(filename, JSON.stringify(state.addons, null, 2));
 }
 
 async function clearAllAddons(){
@@ -1907,9 +1928,9 @@ async function clearAllAddons(){
   if(!confirm('⚠️ Supprimer TOUS les addons du compte ?\n\nUne sauvegarde JSON sera téléchargée automatiquement avant la suppression.\n\nContinuer ?')) return;
 
   // 1) Sauvegarde automatique avant toute suppression
-  const clearBackupFile = downloadAddonsBackup('before-clear');
+  const clearBackupFile = await downloadAddonsBackup('before-clear');
   if(clearBackupFile){
-    setStatus('orange', 'Sauvegarde téléchargée : '+clearBackupFile+' (dossier Téléchargements du navigateur). Suppression en cours…');
+    setStatus('orange', 'Sauvegarde effectuée : '+clearBackupFile+'. Suppression en cours…');
   }else{
     setStatus('red', 'Échec de la sauvegarde, suppression annulée.');
     return;
@@ -2018,7 +2039,7 @@ async function updateAll(){
   if(!toUpdate.length){ setStatus('orange','Aucune mise à jour à appliquer.'); return; }
   // V2.0.9 — Backup auto : une mise à jour d'addon peut changer son comportement
   // (catalogues, métadonnées...) sans avertissement ; ça permet de revenir en arrière.
-  const backedUp = downloadAddonsBackup('before-update-all');
+  const backedUp = await downloadAddonsBackup('before-update-all');
   toUpdate.forEach(addon=>{ addon.manifest=addon._hasUpdate; addon._hasUpdate=null; });
   if(el.btnUpdateAll) el.btnUpdateAll.classList.add('hidden');
   renderList();
@@ -2028,7 +2049,7 @@ async function updateAll(){
   // masquer le problème derrière un message vert trompeur.
   // V2.1.10 — Nom exact du fichier dans la notification (impossible d'ouvrir le dossier
   // de téléchargement depuis une page web, mais ça permet de le retrouver facilement).
-  const backupNote=backedUp?' Backup pré-mise à jour téléchargé : '+backedUp+' (dossier Téléchargements du navigateur).':'';
+  const backupNote=backedUp?' Backup pré-mise à jour effectué : '+backedUp+'.':'';
   if(syncOk){
     if(state.addons.length){
       setStatus('green', toUpdate.length+' addon(s) mis à jour !'+backupNote);
