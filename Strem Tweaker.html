@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V2.1.9</title>
+  <title>Strem Tweaker V2.1.10</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -284,7 +284,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </button>
         </div>
-        <span class="version-badge" id="versionBadge" title="Recharger la page" style="cursor:pointer;">V2.1.9</span>
+        <span class="version-badge" id="versionBadge" title="Recharger la page" style="cursor:pointer;">V2.1.10</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -452,6 +452,7 @@
         <button type="button" id="btnCloseHistoryModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
       </div>
       <div class="history-list">
+        <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.10</span></div><div class="history-note">Le nom exact du fichier de backup (avant mise à jour groupée ou avant suppression de tous les addons) est désormais affiché dans la notification. Une page web ne peut pas ouvrir le dossier Téléchargements du navigateur pour des raisons de sécurité (restriction imposée par tous les navigateurs), mais connaître le nom exact permet de le retrouver facilement via une recherche de fichiers.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.9</span></div><div class="history-note">Nouvelle tentative automatique (jusqu'à 2 fois, avec courte pause) sur tous les appels à l'API Stremio en cas d'échec réseau transitoire ("Load failed"), avant d'abandonner et d'afficher une erreur. Objectif : que ces hoquets passagers redeviennent invisibles au lieu de déclencher un message d'erreur, comme c'était le cas avant les derniers ajouts.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.8</span></div><div class="history-note">Correction : après un échec réseau transitoire pendant une resynchronisation en arrière-plan (typiquement "Load failed" sur Safari, ex. juste après "Tout mettre à jour"), la liste d'addons déjà affichée était effacée et le panel masqué, même si les addons existaient toujours côté Stremio. La liste précédente est désormais conservée dans ce cas (avec message d'erreur explicite), au lieu d'un écran vide.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.7</span></div><div class="history-note">Le numéro de version (en haut à droite) est maintenant cliquable et recharge la page.</div></div>
@@ -578,7 +579,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V2.1.9';
+const APP_VERSION = 'V2.1.10';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -1884,15 +1885,20 @@ function importAddons(evt){
 // V3.4 — Supprime tous les addons du compte avec sauvegarde automatique préalable.
 // V2.0.9 — Backup JSON auto avant une action qui remplace/efface des addons sans
 // possibilité de retour en arrière côté Stremio (RAZ complète, mises à jour groupées).
+// V2.1.10 — Retourne le nom du fichier (au lieu d'un simple true/false) pour que les
+// appelants puissent l'afficher dans leur notification : impossible d'ouvrir le dossier
+// de téléchargement depuis une page web (restriction de sécurité du navigateur), mais
+// connaître le nom exact permet de le retrouver facilement (recherche de fichiers).
 function downloadAddonsBackup(labelSuffix){
   try{
     const a = document.createElement('a');
     const ts = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
+    const filename = 'stremio-addons-backup-' + (labelSuffix ? labelSuffix+'-' : '') + ts + '.json';
     a.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(state.addons, null, 2));
-    a.download = 'stremio-addons-backup-' + (labelSuffix ? labelSuffix+'-' : '') + ts + '.json';
+    a.download = filename;
     document.body.appendChild(a); a.click(); a.remove();
-    return true;
-  }catch(e){ return false; }
+    return filename;
+  }catch(e){ return null; }
 }
 
 async function clearAllAddons(){
@@ -1901,8 +1907,9 @@ async function clearAllAddons(){
   if(!confirm('⚠️ Supprimer TOUS les addons du compte ?\n\nUne sauvegarde JSON sera téléchargée automatiquement avant la suppression.\n\nContinuer ?')) return;
 
   // 1) Sauvegarde automatique avant toute suppression
-  if(downloadAddonsBackup('before-clear')){
-    setStatus('orange', 'Sauvegarde téléchargée (dossier Téléchargements du navigateur). Suppression en cours…');
+  const clearBackupFile = downloadAddonsBackup('before-clear');
+  if(clearBackupFile){
+    setStatus('orange', 'Sauvegarde téléchargée : '+clearBackupFile+' (dossier Téléchargements du navigateur). Suppression en cours…');
   }else{
     setStatus('red', 'Échec de la sauvegarde, suppression annulée.');
     return;
@@ -2019,7 +2026,9 @@ async function updateAll(){
   // V2.1.6 — Ne plus afficher un succès inconditionnel : si la sync a échoué ou si la
   // liste d'addons se retrouve vide après coup, on l'affiche clairement au lieu de
   // masquer le problème derrière un message vert trompeur.
-  const backupNote=backedUp?' Backup pré-mise à jour téléchargé (dossier Téléchargements du navigateur).':'';
+  // V2.1.10 — Nom exact du fichier dans la notification (impossible d'ouvrir le dossier
+  // de téléchargement depuis une page web, mais ça permet de le retrouver facilement).
+  const backupNote=backedUp?' Backup pré-mise à jour téléchargé : '+backedUp+' (dossier Téléchargements du navigateur).':'';
   if(syncOk){
     if(state.addons.length){
       setStatus('green', toUpdate.length+' addon(s) mis à jour !'+backupNote);
