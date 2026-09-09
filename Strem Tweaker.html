@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V2.0.14</title>
+  <title>Strem Tweaker V2.0.15</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -278,7 +278,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </button>
         </div>
-        <span class="version-badge">V2.0.14</span>
+        <span class="version-badge">V2.0.15</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -446,6 +446,7 @@
         <button type="button" id="btnCloseHistoryModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
       </div>
       <div class="history-list">
+        <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.15</span></div><div class="history-note">Nouveau dans Config appli : "État de la mémoire (bibliothèque Stremio)" — nombre total d'éléments dans ta bibliothèque, et taille en Ko des 2 entrées propres à l'app (config + points de sauvegarde), pour surveiller si elles approchent une limite de taille côté API.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.14</span></div><div class="history-note">Les points de sauvegarde sont désormais synchronisés via ton compte Stremio (multi-appareils) au lieu du localStorage, dans une entrée de librairie dédiée et séparée de la config principale — pour ne jamais risquer de casser la synchro des addons supprimés/verrouillés si les sauvegardes grossissent. Limité aux 5 plus récentes. Migration automatique et transparente des points déjà créés localement.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.13</span></div><div class="history-note">Corrections points de sauvegarde : le titre n'est plus barré (réutilisait par erreur le style des addons supprimés) ; la restauration ne crée plus de sauvegarde automatique fantôme à 0 addon quand la liste actuelle est déjà vide.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.12</span></div><div class="history-note">Nouveau : section "Où sont stockées mes données ?" dans Paramètres (légende expliquant l'emplacement de chaque réglage : localStorage vs bibliothèque Stremio). Nouveau : Points de sauvegarde (icône dans la toolbar addons) — snapshots nommés créés à la demande, stockés dans ce navigateur, restaurables en un clic (avec sauvegarde automatique de l'état courant avant restauration).</div></div>
@@ -498,6 +499,14 @@
         <table id="appConfigTableLocal" style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:18px;"></table>
         <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">Config librairie Stremio</p>
         <table id="appConfigTableRemote" style="width:100%;border-collapse:collapse;font-size:12px;"></table>
+        <!-- V2.0.15 — État live de la mémoire utilisée dans la bibliothèque Stremio -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;margin-bottom:10px;">
+          <p style="font-size:12px;color:var(--muted);margin:0;">État de la mémoire (bibliothèque Stremio)</p>
+          <button type="button" id="btnRefreshMemoryStatus" style="width:26px;height:26px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);" title="Rafraîchir">↻</button>
+        </div>
+        <div id="memoryStatusBody">
+          <div class="muted" style="padding:8px 0;">Chargement…</div>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;">
         <button id="btnExportLocalStorage" class="watch-filter-btn" style="color:var(--ok);border-color:rgba(56,211,159,.3);" type="button">⬇ Exporter localStorage</button>
@@ -552,7 +561,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V2.0.14';
+const APP_VERSION = 'V2.0.15';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -592,6 +601,7 @@ const el = {
   modalSnapshots: $('modalSnapshots'), btnOpenSnapshotsModal: $('btnOpenSnapshotsModal'), btnCloseSnapshotsModal: $('btnCloseSnapshotsModal'), snapshotsList: $('snapshotsList'), snapshotsEmpty: $('snapshotsEmpty'), btnCreateSnapshot: $('btnCreateSnapshot'),
   modalUserInfo: $('modalUserInfo'), btnOpenUserInfoModal: $('btnOpenUserInfoModal'), btnCloseUserInfoModal: $('btnCloseUserInfoModal'), userInfoBody: $('userInfoBody'),
   modalAppConfig: $('modalAppConfig'), btnOpenAppConfigModal: $('btnOpenAppConfigModal'), btnCloseAppConfigModal: $('btnCloseAppConfigModal'),
+  memoryStatusBody: $('memoryStatusBody'), btnRefreshMemoryStatus: $('btnRefreshMemoryStatus'),
   // Modal edit
   modalEdit: $('modalEdit'), modalEditTitle: $('modalEditTitle'), modalEditLabel: $('modalEditLabel'), modalEditInput: $('modalEditInput'),
   btnEditCancel: $('btnEditCancel'), btnEditSave: $('btnEditSave'),
@@ -677,6 +687,7 @@ function bind(){
   if(el.modalUserInfo) el.modalUserInfo.addEventListener('click', function(e){ if(e.target===el.modalUserInfo) closeUserInfoModal(); });
   if(el.btnOpenAppConfigModal) el.btnOpenAppConfigModal.addEventListener('click', openAppConfigModal);
   if(el.btnCloseAppConfigModal) el.btnCloseAppConfigModal.addEventListener('click', closeAppConfigModal);
+  if(el.btnRefreshMemoryStatus) el.btnRefreshMemoryStatus.addEventListener('click', renderMemoryStatus);
   if(el.modalAppConfig) el.modalAppConfig.addEventListener('click', function(e){ if(e.target===el.modalAppConfig) closeAppConfigModal(); });
   if(el.btnOpenDeletedModal) el.btnOpenDeletedModal.addEventListener('click', openDeletedModal);
   if(el.btnCloseDeletedModal) el.btnCloseDeletedModal.addEventListener('click', closeDeletedModal);
@@ -1273,8 +1284,42 @@ function openAppConfigModal(){
   el.userDropdown.classList.add('hidden');
   el.modalAppConfig.classList.add('active');
   renderAppConfigTables();
+  renderMemoryStatus();
 }
 function closeAppConfigModal(){ el.modalAppConfig.classList.remove('active'); }
+
+// V2.0.15 — État live de la mémoire utilisée dans la bibliothèque Stremio : nombre
+// total d'éléments et taille (en octets) des 2 entrées propres à l'app (config +
+// snapshots), pour surveiller le risque de champ "name" trop volumineux côté API.
+function fmtBytes(bytes){
+  if(bytes<1024) return bytes+' o';
+  return (bytes/1024).toFixed(1)+' Ko';
+}
+async function renderMemoryStatus(){
+  if(!el.memoryStatusBody) return;
+  if(!state.authKey){ el.memoryStatusBody.innerHTML='<div class="muted" style="padding:8px 0;">Non connecté.</div>'; return; }
+  el.memoryStatusBody.innerHTML='<div class="muted" style="padding:8px 0;">Chargement…</div>';
+  try{
+    const raw=await watchTry('datastoreGet',{type:'DatastoreGet',authKey:state.authKey,collection:'libraryItem',ids:[],all:true});
+    if(!raw){ el.memoryStatusBody.innerHTML='<div class="muted" style="padding:8px 0;">Lecture impossible.</div>'; return; }
+    let items=watchExtract(raw);
+    if(!items.length&&typeof raw==='object') items=Object.values(raw).filter(x=>x&&typeof x==='object'&&(x._id||x.id));
+    const total=items.length;
+    const cfgEntry=items.find(i=>(i._id||i.id)===CONFIG_ID);
+    const snapEntry=items.find(i=>(i._id||i.id)===SNAPSHOTS_ID);
+    function sizeOf(entry){
+      if(!entry||typeof entry.name!=='string') return 0;
+      try{ return new Blob([entry.name]).size; }catch(e){ return entry.name.length; }
+    }
+    const cfgSize=sizeOf(cfgEntry), snapSize=sizeOf(snapEntry);
+    el.memoryStatusBody.innerHTML=
+      '<div class="user-info-row"><span class="user-info-label">Éléments dans la bibliothèque</span><span class="user-info-val">'+total+'</span></div>'+
+      '<div class="user-info-row"><span class="user-info-label">Config appli (verrous, corbeille…)</span><span class="user-info-val">'+(cfgEntry?fmtBytes(cfgSize):'Pas encore créée')+'</span></div>'+
+      '<div class="user-info-row"><span class="user-info-label">Points de sauvegarde ('+snapshots.length+'/'+MAX_SNAPSHOTS+')</span><span class="user-info-val">'+(snapEntry?fmtBytes(snapSize):'Pas encore créée')+'</span></div>';
+  }catch(e){
+    el.memoryStatusBody.innerHTML='<div class="muted" style="padding:8px 0;">Erreur de lecture.</div>';
+  }
+}
 
 function renderAppConfigTables(){
   // Tableau LocalStorage
