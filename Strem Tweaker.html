@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V2.0.10</title>
+  <title>Strem Tweaker V2.0.11</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -277,7 +277,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </button>
         </div>
-        <span class="version-badge">V2.0.10</span>
+        <span class="version-badge">V2.0.11</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -428,6 +428,7 @@
         <button type="button" id="btnCloseHistoryModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
       </div>
       <div class="history-list">
+        <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.11</span></div><div class="history-note">La position d'un addon verrouillé est désormais protégée de façon absolue : plus aucun autre addon ne peut prendre sa place, même en glissant un autre addon par-dessus (avant, la position pouvait décaler d'un cran par effet de bord). Un addon qui tente de "passer devant" un addon verrouillé est automatiquement redirigé juste avant lui, et tout ce qui se trouvait entre les deux se décale en conséquence.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.10</span></div><div class="history-note">Le cadenas devient un bouton cliquable (vert = non verrouillé, rouge = verrouillé). Un addon verrouillé ne peut plus être supprimé ni déplacé (drag & drop, monter/descendre), mais reste éligible aux mises à jour. Pré-verrouillé automatiquement pour les addons marqués "protégés" par Stremio à la première utilisation, entièrement modifiable ensuite. Réglage synchronisé multi-appareils comme les addons supprimés.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.9</span></div><div class="history-note">Nouveau : "Tout mettre à jour" télécharge désormais une sauvegarde JSON automatique avant d'appliquer les mises à jour (même filet de sécurité que la RAZ complète des addons). Une mise à jour peut changer le comportement d'un addon sans avertissement — ce backup permet de revenir en arrière via "Restaurer (JSON)".</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.8</span></div><div class="history-note">Nouveau : icône de cadenas à côté de chaque addon indiquant s'il est marqué "protégé" par Stremio (<code>flags.protected</code>, ex. Cinemeta). Cadenas fermé = protégé, ouvert = non protégé. La suppression d'un addon protégé affiche désormais un avertissement explicite avant confirmation.</div></div>
@@ -519,7 +520,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V2.0.10';
+const APP_VERSION = 'V2.0.11';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -1737,12 +1738,15 @@ function openEditUrl(addon){
 }
 function moveToTop(addon){
   if(isAddonLocked(addon)) return;
-  const i=state.addons.indexOf(addon); if(i>0){ state.addons.splice(i,1); state.addons.unshift(addon); renderList(addon); syncOrder(); el.fitWrap.scrollTo({top:0,behavior:'smooth'}); }
+  const unlockedOnly=state.addons.filter(a=>!isAddonLocked(a));
+  const i=unlockedOnly.indexOf(addon);
+  if(i>0){ unlockedOnly.splice(i,1); unlockedOnly.unshift(addon); applyUnlockedOrder(unlockedOnly); renderList(addon); syncOrder(); el.fitWrap.scrollTo({top:0,behavior:'smooth'}); }
 }
 function moveToBottom(addon){
   if(isAddonLocked(addon)) return;
-  const i=state.addons.indexOf(addon);
-  if(i!==-1&&i<state.addons.length-1){ state.addons.splice(i,1); state.addons.push(addon); renderList(addon); syncOrder(); el.fitWrap.scrollTo({top:el.fitWrap.scrollHeight,behavior:'smooth'}); }
+  const unlockedOnly=state.addons.filter(a=>!isAddonLocked(a));
+  const i=unlockedOnly.indexOf(addon);
+  if(i!==-1&&i<unlockedOnly.length-1){ unlockedOnly.splice(i,1); unlockedOnly.push(addon); applyUnlockedOrder(unlockedOnly); renderList(addon); syncOrder(); el.fitWrap.scrollTo({top:el.fitWrap.scrollHeight,behavior:'smooth'}); }
 }
 
 function renderDeletedList(){
@@ -1863,6 +1867,18 @@ function seedLockedFromFlags(){
     .filter(a=>a.flags&&a.flags.protected)
     .map(a=>a.manifest&&a.manifest.id)
     .filter(Boolean);
+}
+
+// V2.0.11 — Position absolue protégée : reconstruit state.addons à partir d'un nouvel
+// ordre pour les addons NON verrouillés, en gardant chaque addon verrouillé exactement
+// à l'index absolu qu'il occupe déjà (jamais déplacé, même indirectement).
+function applyUnlockedOrder(newUnlockedOrder){
+  const lockedEntries=state.addons.map((a,i)=>({a,i})).filter(e=>isAddonLocked(e.a));
+  const result=new Array(state.addons.length);
+  lockedEntries.forEach(e=>{ result[e.i]=e.a; });
+  let u=0;
+  for(let i=0;i<result.length;i++){ if(result[i]===undefined) result[i]=newUnlockedOrder[u++]; }
+  state.addons=result;
 }
 
 function renderList(activeAddon){
@@ -1997,10 +2013,18 @@ function onMove(evt){
   checkDragSwap(pt.y);
 }
 function checkDragSwap(clientY){
-  const ni=indexFromY(clientY); const ci=state.addons.indexOf(state.dragItem);
+  let ni=indexFromY(clientY); const ci=state.addons.indexOf(state.dragItem);
+  // V2.0.11 — Un addon verrouillé occupe une position absolue fixe : on ne peut pas
+  // déposer dessus, on recule jusqu'à la première position libre avant lui.
+  while(ni>=0&&state.addons[ni]&&isAddonLocked(state.addons[ni])) ni--;
   if(ni!==-1&&ni!==ci){
-    const r=state.dragClone&&state.dragClone.querySelector('.rank'); if(r) r.textContent=ni+1;
-    state.addons.splice(ci,1); state.addons.splice(ni,0,state.dragItem);
+    const unlockedOnly=state.addons.filter(a=>!isAddonLocked(a));
+    const uCi=unlockedOnly.indexOf(state.dragItem);
+    const uNi=state.addons.slice(0,ni).filter(a=>!isAddonLocked(a)).length;
+    unlockedOnly.splice(uCi,1);
+    unlockedOnly.splice(uNi,0,state.dragItem);
+    applyUnlockedOrder(unlockedOnly);
+    const r=state.dragClone&&state.dragClone.querySelector('.rank'); if(r) r.textContent=state.addons.indexOf(state.dragItem)+1;
     state.dragChanged=true; renderList(state.dragItem);
   }
 }
