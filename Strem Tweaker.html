@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V2.1.1</title>
+  <title>Strem Tweaker V2.1.2</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -284,7 +284,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </button>
         </div>
-        <span class="version-badge">V2.1.1</span>
+        <span class="version-badge">V2.1.2</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -452,6 +452,7 @@
         <button type="button" id="btnCloseHistoryModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
       </div>
       <div class="history-list">
+        <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.2</span></div><div class="history-note">Un addon verrouillé (cadenas rouge) ne peut plus non plus changer de visibilité (afficher/masquer) — s'ajoute au blocage suppression/déplacement déjà en place. Mise à jour toujours possible.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.1</span></div><div class="history-note">Nouveau lien dans le menu utilisateur : "Catalogue StremioFR" (ouvre stremiofr.me dans un nouvel onglet).</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.0</span></div><div class="history-note">Nouveau : logo/mascotte à côté du titre "Strem Tweaker" (chat mécano en illustration, fond transparent).</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.16</span></div><div class="history-note">Correction : en cas d'échec du chargement des addons juste après une connexion (AuthKey invalide, erreur ponctuelle...), l'interface restait bloquée sur un écran vide (panel de connexion ET panel addons masqués). Le formulaire de connexion se réaffiche désormais automatiquement pour permettre de réessayer.</div></div>
@@ -570,7 +571,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V2.1.1';
+const APP_VERSION = 'V2.1.2';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -1980,6 +1981,7 @@ async function updateAll(){
   setStatus('green', toUpdate.length+' addon(s) mis à jour !'+(backedUp?' Backup pré-mise à jour téléchargé.':''));
 }
 function toggleAddon(addon){
+  if(isAddonLocked(addon)) return;
   addon._disabled=!addon._disabled;
   if(addon._disabled){ if(!addon.transportUrl.startsWith(DISABLED_PREFIX)) addon.transportUrl=DISABLED_PREFIX+encodeURIComponent(addon.transportUrl); }
   else { if(addon.transportUrl.startsWith(DISABLED_PREFIX)) addon.transportUrl=decodeURIComponent(addon.transportUrl.substring(DISABLED_PREFIX.length)); }
@@ -2189,7 +2191,7 @@ function renderList(activeAddon){
           ${versionBadge}${updateBadge}${deadBadge}${dupBadge}
         </div>
         ${lockBtn}
-        <div class="action-btn toggle-btn" title="Afficher/Masquer">${addon._disabled?svgEyeOff:svgEye}</div>
+        <div class="action-btn toggle-btn${isLocked?' locked-out':''}" title="${isLocked?'Verrouillé : visibilité bloquée':'Afficher/Masquer'}">${addon._disabled?svgEyeOff:svgEye}</div>
         <div class="drag-handle${isLocked?' locked-out':''}" title="${isLocked?'Verrouillé : déplacement bloqué':''}">${svgGrip}</div>
       </div>
       <div class="addon-actions">
@@ -2220,7 +2222,7 @@ function renderList(activeAddon){
     if(addon._hasUpdate) on('.btn-update',()=>applyUpdate(addon));
     if(!isLocked) on('.btn-delete',()=>deleteAddon(addon));
     on('.lock-btn',()=>toggleAddonLock(addon));
-    on('.toggle-btn',()=>toggleAddon(addon));
+    if(!isLocked) on('.toggle-btn',()=>toggleAddon(addon));
     on('.btn-edit',()=>openEditUrl(addon));
     if(isConfigurable) on('.btn-config',()=>{
       let url=addon.transportUrl;
