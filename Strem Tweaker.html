@@ -15,7 +15,7 @@
     frame-src 'none';
   ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Strem Tweaker V2.1.0</title>
+  <title>Strem Tweaker V2.1.1</title>
   <style>
     :root{
       --bg1:#0b1126;--bg2:#16203c;--glass:rgba(22,30,58,.65);--line:rgba(255,255,255,.08);--text:#f5f8ff;--muted:#aab7d7;
@@ -260,6 +260,11 @@
               Historique versions
             </div>
             <div class="dropdown-divider"></div>
+            <a class="dropdown-item" id="linkStremioFR" href="https://stremiofr.me/" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
+              <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAACo0lEQVR4Ac3WA6wdQRiG4cZpWNu2bdu2bdu2bds2o/ratm39zZfkn8yd3cP2IsmbcxaZZ71boOeifrla/gH3rPEeyrlcch3m7ec70lhYRy74RWAZs8DlcyKvzR0bT3IXT8dTJqVSaqp+WBb71p2Sd9hnK/WE532j4NxxEbcBmALj4+KRBkxa91VOQRVwdr89ZSYNiiW9ZDAyPIaeHYpE+C/A6Kc2lLzohQZFOLwacEAPj6mmQMYOD4hHMsqgbumr303XBUf0DickY5gGiEMIYE/3OAHiP+ZhGcCUGfesA9V27ghQMQ0acvkjJU+8BFTNMrBflwBaPcwLAyOD6INJDhQ37DBQNcMgBueAdWrtIbCtXSLoyKQgAPjPOKeiloOMYXC0vJU/3Tlng4sHhxDTYhnijWJULn3cSeMgY2s6hHEyyFcs9lgDY12gMX23mgYBocU9XDFQtuY29QAobny+//58d2MI8dFgFOmDTZv9mgasaRMXalzptEEQiArKG8jwvgbHKLjDYtMgqln3PVAgoqn1HASInOw9aN7IuzSi9FfGROtr7yC7JmMYNL2HSEUn1HAEiHNHy2ffA4T5mpbX2CWwxDbzkWEQkB6KveMA4Zf3WsVsag9iTJTSdfUMgyCnoNhDRtWwTIs1nGIdWL2OKw4hoqGFBSAwzMOy3+v2AeEYRcZBACq4cbMn2ds4ChQgwn9cOI7O7hR85DIl1xgjo6ZBDK4XHt64FXALMMoYNgTLIk9eo+TKQ4Gq6YN4ATOAPVNBfroABcQY5mEZwNjS/XVRjK0BUfnq99YZ2kP5jQ8I9yG/fFVQzqPmgGNGP6KA4spkjM+h/C0DiP8jLMM5lEH8/125y2azPxMLllhchcMhefDkeS1jXa7TsbpcvvoQztX+AtJ8ukhpnIbDAAAAAElFTkSuQmCC" alt="" style="width:16px;height:16px;border-radius:4px;flex-shrink:0;">
+              Catalogue StremioFR
+            </a>
+            <div class="dropdown-divider"></div>
             <div class="dropdown-item danger" id="btnLogout">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
               Se déconnecter
@@ -279,7 +284,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           </button>
         </div>
-        <span class="version-badge">V2.1.0</span>
+        <span class="version-badge">V2.1.1</span>
       </div>
       <p class="muted" id="heroSub"></p>
     </section>
@@ -447,6 +452,7 @@
         <button type="button" id="btnCloseHistoryModal" style="width:32px;height:32px;min-height:0;padding:0;border-radius:8px;background:rgba(255,255,255,.06);">✕</button>
       </div>
       <div class="history-list">
+        <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.1</span></div><div class="history-note">Nouveau lien dans le menu utilisateur : "Catalogue StremioFR" (ouvre stremiofr.me dans un nouvel onglet).</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.1.0</span></div><div class="history-note">Nouveau : logo/mascotte à côté du titre "Strem Tweaker" (chat mécano en illustration, fond transparent).</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.16</span></div><div class="history-note">Correction : en cas d'échec du chargement des addons juste après une connexion (AuthKey invalide, erreur ponctuelle...), l'interface restait bloquée sur un écran vide (panel de connexion ET panel addons masqués). Le formulaire de connexion se réaffiche désormais automatiquement pour permettre de réessayer.</div></div>
         <div class="history-item"><div class="history-head"><span class="history-ver">V2.0.15</span></div><div class="history-note">Nouveau dans Config appli : "État de la mémoire (bibliothèque Stremio)" — nombre total d'éléments dans ta bibliothèque, et taille en Ko des 2 entrées propres à l'app (config + points de sauvegarde), pour surveiller si elles approchent une limite de taille côté API.</div></div>
@@ -564,7 +570,7 @@
   </div>
 
 <script>
-const APP_VERSION = 'V2.1.0';
+const APP_VERSION = 'V2.1.1';
 const STORAGE_KEY = 'strem-tweaker-data';
 const API_BASE = 'https://api.strem.io/api/';
 const DISABLED_PREFIX = 'http://127.0.0.1:65432/strem-tweaker-disabled/?url=';
@@ -716,6 +722,7 @@ function bind(){
   // User menu
   el.headerEmail.addEventListener('click', e => { e.stopPropagation(); el.userDropdown.classList.toggle('hidden'); });
   document.addEventListener('click', e => { if(!e.target.closest('#headerUserMenu')) el.userDropdown.classList.add('hidden'); });
+  if($('linkStremioFR')) $('linkStremioFR').addEventListener('click', () => el.userDropdown.classList.add('hidden'));
   el.btnLogout.addEventListener('click', clearAll);
   el.btnOpenLoginModal.addEventListener('click', openLoginModal);
 
